@@ -33,9 +33,9 @@ export function LookbookSection() {
     <section
       id="lookbook"
       aria-labelledby="lookbook-heading"
-      className="border-b border-[var(--hairline)] bg-[var(--paper)]"
+      className="min-h-[calc(100dvh-7rem)] border-b border-[var(--hairline)] bg-[var(--paper)]"
     >
-      <div className="mx-auto max-w-[1360px] px-4 sm:px-8 py-12 sm:py-16">
+      <div className="mx-auto max-w-[1360px] px-4 sm:px-8 py-10 sm:py-16">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-[var(--hairline)] pb-6 mb-7">
           <div>
@@ -58,7 +58,9 @@ export function LookbookSection() {
         <div className="space-y-2.5 mb-8 border border-[var(--hairline)] bg-[var(--paper-elevated)] p-3 sm:p-4">
           <div className="flex flex-wrap items-center gap-2">
             <span className="micro-label text-[var(--muted)] mr-1">{UZ.stylist.step2Title.slice(3)}:</span>
-            {(['all', 'office', 'walk', 'party'] as const).map((oc) => (
+            {(
+              ['all', 'office', 'university', 'school', 'walk', 'party', 'date', 'sport', 'travel'] as const
+            ).map((oc) => (
               <button
                 key={oc}
                 type="button"

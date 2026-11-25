@@ -278,20 +278,56 @@ export async function setUserStep(tgId, step, payload = null) {
     .where(eq(users.tgId, tgId));
 }
 
+export async function touchPresence(tgId, { view, city, gender } = {}) {
+  const patch = { lastActiveAt: new Date() };
+  if (typeof view === 'string' && view.length > 0 && view.length <= 24) {
+    patch.lastView = view;
+  }
+  if (typeof city === 'string' && city.trim().length > 0 && city.trim().length <= 64) {
+    patch.city = city.trim();
+  }
+  if (gender === 'w' || gender === 'm' || gender === 'all') {
+    patch.genderPref = gender;
+  }
+  await db.update(users).set(patch).where(eq(users.tgId, tgId));
+}
+
 export async function getSystemStats() {
   const totalUsers = await db.$count(users);
   const blockedUsers = await db.$count(users, eq(users.isBlocked, true));
   const totalAdmins = await db.$count(admins);
   const totalOutfits = await db.$count(savedOutfits);
   const totalCustomGarments = await db.$count(customGarments);
-  const dayAgo = Math.floor(Date.now() / 1000) - 86400;
+
+  const nowSec = Math.floor(Date.now() / 1000);
+  const min5Ago = nowSec - 300;
+  const hour1Ago = nowSec - 3600;
+  const dayAgo = nowSec - 86400;
+
+  const online5mRow = await db.get(
+    sql`SELECT COUNT(*) as c FROM users WHERE last_active_at >= ${min5Ago}`,
+  );
+  const online1hRow = await db.get(
+    sql`SELECT COUNT(*) as c FROM users WHERE last_active_at >= ${hour1Ago}`,
+  );
   const activeTodayRow = await db.get(
     sql`SELECT COUNT(*) as c FROM users WHERE last_active_at >= ${dayAgo}`,
   );
+  const onlineUsersList = await db.all(
+    sql`SELECT tg_id, username, first_name, city, last_view, last_active_at FROM users WHERE last_active_at >= ${hour1Ago} ORDER BY last_active_at DESC LIMIT 15`,
+  );
+  const topCities = await db.all(
+    sql`SELECT city, COUNT(*) as cnt FROM users GROUP BY city ORDER BY cnt DESC LIMIT 5`,
+  );
+
   return {
     totalUsers,
     blockedUsers,
+    online5m: online5mRow?.c ?? 0,
+    online1h: online1hRow?.c ?? 0,
     activeToday: activeTodayRow?.c ?? 0,
+    onlineUsersList: Array.isArray(onlineUsersList) ? onlineUsersList : [],
+    topCities: Array.isArray(topCities) ? topCities : [],
     totalAdmins,
     totalOutfits,
     totalCustomGarments,

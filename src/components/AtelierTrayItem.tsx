@@ -73,9 +73,16 @@ export function AtelierTrayItem({
       <button
         type="button"
         onClick={() => onQuickPlace(garment)}
-        className="min-h-[44px] w-full border-t border-[var(--hairline)] px-2 py-1.5 text-left text-[11px] leading-tight text-[var(--ink)] hover:bg-[var(--paper-2)] transition-colors cursor-pointer flex items-center justify-between gap-1"
+        className="min-h-[46px] w-full border-t border-[var(--hairline)] px-2 py-1.5 text-left text-[11px] leading-tight text-[var(--ink)] hover:bg-[var(--paper-2)] transition-colors cursor-pointer flex items-center justify-between gap-1"
       >
-        <span className="line-clamp-2">{garment.name_uz}</span>
+        <div className="min-w-0 flex-1">
+          {garment.brand && (
+            <span className="block text-[9px] uppercase tracking-[0.08em] text-[var(--muted)] truncate">
+              {garment.brand}
+            </span>
+          )}
+          <span className="line-clamp-2 block">{garment.name_uz}</span>
+        </div>
         <span className="text-[var(--muted)] group-hover:text-[var(--accent)] shrink-0" aria-hidden="true">
           +
         </span>

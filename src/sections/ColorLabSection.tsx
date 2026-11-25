@@ -23,6 +23,7 @@ const COLOR_PRESETS: Array<{ label: string; colors: string[] }> = [
 export function ColorLabSection() {
   const manifest = useKapsulaStore((s) => s.manifest);
   const placeGarmentOnBoard = useKapsulaStore((s) => s.placeGarmentOnBoard);
+  const setActiveView = useKapsulaStore((s) => s.setActiveView);
 
   const [entries, setEntries] = useState<ColorSlotEntry[]>([
     { id: 'c1', hex: '#151412', draft: '#151412', invalid: false },
@@ -100,7 +101,7 @@ export function ColorLabSection() {
     <section
       id="ranglar"
       aria-labelledby="ranglar-heading"
-      className="border-b border-[var(--hairline)] bg-[var(--paper-2)]/45"
+      className="min-h-[calc(100dvh-7rem)] border-b border-[var(--hairline)] bg-[var(--paper-2)]/45"
     >
       <div className="mx-auto max-w-[1360px] px-4 sm:px-8 py-12 sm:py-16">
         {/* Header */}
@@ -265,7 +266,7 @@ export function ColorLabSection() {
                       type="button"
                       onClick={() => {
                         placeGarmentOnBoard(garment);
-                        document.getElementById('atelye')?.scrollIntoView({ behavior: 'smooth' });
+                        setActiveView('atelye');
                       }}
                       className="min-h-[40px] w-full border border-[var(--hairline-strong)] px-2 py-1.5 text-[10px] uppercase tracking-[0.12em] text-[var(--ink)] hover:border-[var(--ink)] hover:bg-[var(--paper-2)] cursor-pointer"
                     >
@@ -310,7 +311,7 @@ export function ColorLabSection() {
               </button>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 overflow-y-auto editorial-scroll pr-1">
-              {manifest.garments.map((g) => (
+              {manifest.garments.slice(0, 60).map((g) => (
                 <button
                   key={g.id}
                   type="button"

@@ -27,8 +27,13 @@ const WEATHER_CARDS: Array<{ id: WeatherBand }> = [
 
 const OCCASION_CARDS: Array<{ id: Occasion }> = [
   { id: 'office' },
+  { id: 'university' },
+  { id: 'school' },
   { id: 'walk' },
   { id: 'party' },
+  { id: 'date' },
+  { id: 'sport' },
+  { id: 'travel' },
 ];
 
 const GENDER_OPTIONS: Array<{ id: UserGenderFilter; label: string }> = [
@@ -54,6 +59,7 @@ export function StylistSection() {
   const loadItemsToBoard = useKapsulaStore((s) => s.loadItemsToBoard);
   const saveOutfit = useKapsulaStore((s) => s.saveOutfit);
   const setActiveLookId = useKapsulaStore((s) => s.setActiveLookId);
+  const setActiveView = useKapsulaStore((s) => s.setActiveView);
 
   const [debouncedQuery, setDebouncedQuery] = useState(query);
   useEffect(() => {
@@ -135,8 +141,7 @@ export function StylistSection() {
 
   const handleOpenInAtelier = (outfit: OutfitRecommendation) => {
     loadItemsToBoard(outfit.garments.map((g) => g.id));
-    const el = document.getElementById('atelye');
-    el?.scrollIntoView({ behavior: 'smooth' });
+    setActiveView('atelye');
   };
 
   const handleSaveTopPick = (outfit: OutfitRecommendation) => {
@@ -154,7 +159,7 @@ export function StylistSection() {
     <section
       id="stilist"
       aria-labelledby="stilist-heading"
-      className="border-b border-[var(--hairline)] bg-[var(--paper)]"
+      className="min-h-[calc(100dvh-7rem)] border-b border-[var(--hairline)] bg-[var(--paper)]"
     >
       <div className="mx-auto max-w-[1360px] px-4 sm:px-8 py-12 sm:py-16">
         {/* Section Header */}
@@ -391,7 +396,7 @@ export function StylistSection() {
           <div
             role="radiogroup"
             aria-label={UZ.stylist.step2Title}
-            className="grid grid-cols-1 md:grid-cols-3 gap-3"
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3"
           >
             {OCCASION_CARDS.map(({ id }, index) => {
               const info = UZ.occasions[id];

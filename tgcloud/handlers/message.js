@@ -16,6 +16,7 @@ import {
   buildAdminKeyboard,
   buildMainMenu,
   buildOwnerKeyboard,
+  buildReplyKeyboard,
   getMiniAppUrl,
 } from '../lib/menus.js';
 import { geocodeCity, getLiveWeatherForCoords } from '../lib/weather.js';
@@ -222,28 +223,117 @@ export default async function (message) {
     }
   }
 
-  // ==================== COMMANDS ====================
+  // ==================== COMMANDS & PERSISTENT MENU SHORTCUTS ====================
   if (text.startsWith('/start')) {
     const customWelcome = await getSetting('welcome_text', '');
+    const webAppUrl = await getMiniAppUrl();
+    try {
+      await api.setChatMenuButton({
+        chat_id: chatId,
+        menu_button: {
+          type: 'web_app',
+          text: '✨ Kapsula',
+          web_app: { url: webAppUrl },
+        },
+      });
+    } catch {
+      // Non-fatal if Telegram menu button update fails
+    }
+
     const greeting =
       customWelcome ||
       `Assalomu alaykum, <b>${from.first_name || 'doʻst'}</b>!\n\n` +
-        `<b>Kapsula — Garderob & Stilist</b> botiga xush kelibsiz.\n` +
-        `• Turgan shahringizdagi jonli ob-havoga qarab tayyor kiyim tavsiyasi oling\n` +
-        `• 2,100+ kiyim (hudi, palto, krossovka, liboslar) bilan Atelyeda obraz yigʻing\n` +
-        `• OKLCH rang laboratoriyasida uygʻunlik ballini tekshiring`;
+        `<b>Kapsula — Garderob & Stilist</b> Mini App va Telegram botiga xush kelibsiz.\n` +
+        `• Shahringizdagi jonli ob-havoga qarab tayyor kiyim tavsiyasi oling\n` +
+        `• <b>3,894+ brend buyumlari</b> (Zara, Massimo Dutti, Nike, 7SABER, Terra Pro...) va 59 xil kiyim turi\n` +
+        `• <b>Foto-tahlil</b>: kiyimingizni rasmga olib nima bilan kiyish va qaysi aksessuarni qoʻshishni bilib oling`;
 
     await api.sendMessage({
       chat_id: chatId,
       text: greeting,
       parse_mode: 'HTML',
+      reply_markup: buildReplyKeyboard(access),
+    });
+
+    await api.sendMessage({
+      chat_id: chatId,
+      text: '👇 Quyidagi Mini App boʻlimlaridan birini toʻgʻridan-toʻgʻri ochishingiz mumkin:',
       reply_markup: await buildMainMenu(access),
     });
     return;
   }
 
-  if (text.startsWith('/obhavo') || text.startsWith('/weather')) {
-    const arg = text.replace(/^\/(obhavo|weather)\s*/i, '').trim();
+  // Persistent Reply Keyboard button handlers
+  if (text === '🎯 Stilist') {
+    const webAppUrl = await getMiniAppUrl();
+    await api.sendMessage({
+      chat_id: chatId,
+      text: '🎯 <b>Shaxsiy Stilist</b> — ob-havo, ofis, universitet, maktab va sayr uchun tayyor obrazlar:',
+      parse_mode: 'HTML',
+      reply_markup: {
+        inline_keyboard: [[{ text: '🎯 Stilistni ochish', web_app: { url: `${webAppUrl}/?tab=stilist` } }]],
+      },
+    });
+    return;
+  }
+
+  if (text === '📸 Foto-tahlil') {
+    const webAppUrl = await getMiniAppUrl();
+    await api.sendMessage({
+      chat_id: chatId,
+      text: '📸 <b>Foto & Kamera Tahlili</b> — kiyimingiz rasmini yuklang va qaysi kiyimlar bilan kiyishni bitta bosishda koʻring:',
+      parse_mode: 'HTML',
+      reply_markup: {
+        inline_keyboard: [[{ text: '📸 Kamerada / Rasmda tekshirish', web_app: { url: `${webAppUrl}/?tab=skaner` } }]],
+      },
+    });
+    return;
+  }
+
+  if (text === '🏷 Brendlar') {
+    const webAppUrl = await getMiniAppUrl();
+    await api.sendMessage({
+      chat_id: chatId,
+      text: '🏷 <b>16 ta Brend Katalogi</b> (Zara, Massimo Dutti, COS, Uniqlo, Nike, Adidas, 7SABER, Terra Pro...):',
+      parse_mode: 'HTML',
+      reply_markup: {
+        inline_keyboard: [[{ text: '🏷 Brendlarni koʻrish', web_app: { url: `${webAppUrl}/?tab=brendlar` } }]],
+      },
+    });
+    return;
+  }
+
+  if (text === '🏫 Maktab / Universitet') {
+    const webAppUrl = await getMiniAppUrl();
+    await api.sendMessage({
+      chat_id: chatId,
+      text: '🏫 <b>Talaba va oʻquvchilar kapsulasi</b> — Maktab/Litsey yoki Universitet uslubini darhol oching:',
+      parse_mode: 'HTML',
+      reply_markup: {
+        inline_keyboard: [
+          [
+            { text: '🎓 Universitet', web_app: { url: `${webAppUrl}/?oc=university#stilist` } },
+            { text: '📚 Maktab / Litsey', web_app: { url: `${webAppUrl}/?oc=school#stilist` } },
+          ],
+          [{ text: '🏃 Sport / Fitnes', web_app: { url: `${webAppUrl}/?oc=sport#stilist` } }],
+        ],
+      },
+    });
+    return;
+  }
+
+  if (text === '🏙 Shahar') {
+    await setUserStep(user.tgId, 'awaiting_city');
+    await api.sendMessage({
+      chat_id: chatId,
+      text: '🏙 Shahar nomini yozing (masalan: <b>Samarqand</b>, <b>Andijon</b>, <b>Istanbul</b>) yoki Telegram joylashuvingizni yuboring.',
+      parse_mode: 'HTML',
+    });
+    return;
+  }
+
+  if (text === '🌦 Ob-havo' || text.startsWith('/obhavo') || text.startsWith('/weather')) {
+    const arg = text.startsWith('/') ? text.replace(/^\/(obhavo|weather)\s*/i, '').trim() : '';
     if (arg) {
       const geo = await geocodeCity(arg);
       if (geo) {
@@ -264,7 +354,7 @@ export default async function (message) {
 
   if (text.startsWith('/tavsiya')) {
     await sendWeatherSummary(
-      chatId,
+      chat_id,
       user,
       user.latitude,
       user.longitude,
@@ -274,7 +364,39 @@ export default async function (message) {
   }
 
   // OWNER EXCLUSIVE COMMANDS (@fayzbek1331)
-  if (text.startsWith('/owner')) {
+  if (text === '🟢 Hozir Online' || text.startsWith('/online')) {
+    if (!access.isOwner) {
+      await api.sendMessage({ chat_id: chatId, text: '⛔ Bu boʻlim faqat bot egasi (@fayzbek1331) uchun.' });
+      return;
+    }
+    const s = await getSystemStats();
+    const nowSec = Math.floor(Date.now() / 1000);
+    const listText =
+      s.onlineUsersList.length === 0
+        ? 'Soʻnggi 1 soatda faol foydalanuvchi yoʻq.'
+        : s.onlineUsersList
+            .map((u) => {
+              const secs = Math.max(0, nowSec - Number(u.last_active_at || nowSec));
+              const ago = secs < 60 ? 'hozir' : `${Math.floor(secs / 60)} daq`;
+              const who = u.username ? `@${u.username}` : u.first_name || u.tg_id;
+              return `🟢 ${who} · ${u.city || 'Toshkent'} · [${u.last_view || 'bot'}] (${ago})`;
+            })
+            .join('\n');
+    await api.sendMessage({
+      chat_id: chatId,
+      text:
+        `🟢 <b>Hozirgi Faollik</b>\n` +
+        `• 5 daqiqada: <b>${s.online5m}</b> ta\n` +
+        `• 1 soatda: <b>${s.online1h}</b> ta\n` +
+        `• Jami: <b>${s.totalUsers}</b> ta\n\n` +
+        listText,
+      parse_mode: 'HTML',
+      reply_markup: buildOwnerKeyboard(),
+    });
+    return;
+  }
+
+  if (text === '👑 Owner Panel' || text.startsWith('/owner')) {
     if (!access.isOwner) {
       await api.sendMessage({ chat_id: chatId, text: '⛔ Bu boʻlim faqat bot egasi (@fayzbek1331) uchun.' });
       return;
@@ -284,7 +406,8 @@ export default async function (message) {
       chat_id: chatId,
       text:
         `👑 <b>Owner Boshqaruv Markazi</b> (@fayzbek1331)\n\n` +
-        `👥 Foydalanuvchilar: <b>${stats.totalUsers}</b> (bugun faol: ${stats.activeToday})\n` +
+        `🟢 Hozir onlayn (5 daq): <b>${stats.online5m}</b> · 1 soatda: <b>${stats.online1h}</b>\n` +
+        `👥 Foydalanuvchilar: <b>${stats.totalUsers}</b> (bugun: ${stats.activeToday})\n` +
         `🛡 Adminlar: <b>${stats.totalAdmins}</b>\n` +
         `🧥 Maxsus kiyimlar: <b>${stats.totalCustomGarments}</b> · Saqlangan obrazlar: <b>${stats.totalOutfits}</b>`,
       parse_mode: 'HTML',
@@ -401,7 +524,7 @@ export default async function (message) {
   }
 
   // RESTRICTED ADMIN PANEL
-  if (text.startsWith('/admin')) {
+  if (text === '🛡 Admin Panel' || text.startsWith('/admin')) {
     if (!access.isAdmin && !access.isOwner) {
       await api.sendMessage({ chat_id: chatId, text: '⛔ Siz admin emassiz.' });
       return;

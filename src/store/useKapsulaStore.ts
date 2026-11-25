@@ -30,10 +30,49 @@ const STORAGE_FILTERS_KEY = 'kapsula_filters_v1';
 const STORAGE_SAVED_KEY = 'kapsula_saved_v1';
 const STORAGE_THEME_KEY = 'kapsula_theme_v1';
 const STORAGE_LOC_KEY = 'kapsula_location_v1';
+const STORAGE_CUSTOM_GARMENTS_KEY = 'kapsula_custom_garments_v1';
+const STORAGE_WEEKLY_PLAN_KEY = 'kapsula_weekly_plan_v1';
+const STORAGE_PACKING_KEY = 'kapsula_packing_v1';
 const MAX_SAVED_OUTFITS = 24;
+const MAX_CUSTOM_GARMENTS = 24;
 const MAX_HISTORY = 40;
 
 export type ThemeMode = 'light' | 'dark';
+export type ViewTab =
+  | 'cover'
+  | 'stilist'
+  | 'atelye'
+  | 'skaner'
+  | 'brendlar'
+  | 'lookbook'
+  | 'garderobim'
+  | 'ranglar';
+
+export const VIEW_TABS: readonly ViewTab[] = [
+  'cover',
+  'stilist',
+  'atelye',
+  'skaner',
+  'brendlar',
+  'lookbook',
+  'garderobim',
+  'ranglar',
+] as const;
+
+export function parseViewFromLocation(): ViewTab {
+  if (typeof window === 'undefined') return 'cover';
+  const params = new URLSearchParams(window.location.search);
+  const tabParam = params.get('tab');
+  if (tabParam && (VIEW_TABS as readonly string[]).includes(tabParam)) {
+    return tabParam as ViewTab;
+  }
+  const hash = window.location.hash.replace(/^#/, '');
+  if (hash && (VIEW_TABS as readonly string[]).includes(hash)) {
+    return hash as ViewTab;
+  }
+  if (params.get('items')) return 'atelye';
+  return 'cover';
+}
 
 export interface SavedOutfit {
   id: string;
@@ -172,11 +211,39 @@ function parseSavedOutfitsFromStorage(): SavedOutfit[] {
     .slice(0, MAX_SAVED_OUTFITS);
 }
 
+function parseCustomGarmentsFromStorage(): Garment[] {
+  const raw = safeReadStorage<unknown>(STORAGE_CUSTOM_GARMENTS_KEY, []);
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .filter(
+      (g): g is Garment =>
+        typeof g === 'object' &&
+        g !== null &&
+        typeof (g as Garment).id === 'string' &&
+        typeof (g as Garment).name_uz === 'string' &&
+        typeof (g as Garment).color === 'string',
+    )
+    .slice(0, MAX_CUSTOM_GARMENTS);
+}
+
+function mergeManifestWithCustom(base: Manifest, custom: Garment[]): Manifest {
+  if (custom.length === 0) return base;
+  const customIds = new Set(custom.map((g) => g.id));
+  const filteredBase = base.garments.filter((g) => !customIds.has(g.id));
+  return {
+    ...base,
+    garments: [...custom, ...filteredBase],
+  };
+}
+
 const initialParsed = parseInitialQueryFromStorageOrUrl();
-const initialRecs = recommendOutfits(SAMPLE_MANIFEST, initialParsed.query);
-const initialById = new Map(SAMPLE_MANIFEST.garments.map((g) => [g.id, g]));
+const initialCustomGarments = parseCustomGarmentsFromStorage();
+const initialMergedManifest = mergeManifestWithCustom(SAMPLE_MANIFEST, initialCustomGarments);
+const initialRecs = recommendOutfits(initialMergedManifest, initialParsed.query);
+const initialById = new Map(initialMergedManifest.garments.map((g) => [g.id, g]));
 const initialTheme = readInitialTheme();
 applyThemeToDocument(initialTheme);
+const initialActiveView = parseViewFromLocation();
 
 function resolveItemsToBoard(ids: string[], byId: Map<string, Garment>): { slots: BoardSlots; missingCount: number } {
   const resolved: Garment[] = [];
@@ -197,7 +264,13 @@ const initialBoardInfo = initialParsed.urlItems
     };
 
 export interface KapsulaState {
+  activeView: ViewTab;
+  baseManifest: Manifest;
   manifest: Manifest;
+  customGarments: Garment[];
+  weeklyPlan: Record<string, string[]>;
+  packingChecked: Record<string, boolean>;
+  atelierBrandFilter: string;
   isSampleData: boolean;
   hasWebpAssets: boolean;
   manifestLoaded: boolean;
@@ -217,6 +290,12 @@ export interface KapsulaState {
   activeLookId: string | null;
   lastScoreAnnouncement: string;
 
+  setActiveView: (view: ViewTab, syncHash?: boolean) => void;
+  setAtelierBrandFilter: (brand: string) => void;
+  addCustomGarment: (garment: Garment) => void;
+  removeCustomGarment: (id: string) => void;
+  setDayPlan: (dateStr: string, itemIds: string[]) => void;
+  togglePackingItem: (itemId: string) => void;
   setTheme: (theme: ThemeMode) => void;
   toggleTheme: () => void;
   setLocation: (location: GeoLocationInfo) => void;
@@ -243,7 +322,13 @@ export interface KapsulaState {
 }
 
 export const useKapsulaStore = create<KapsulaState>((set, get) => ({
-  manifest: SAMPLE_MANIFEST,
+  activeView: initialActiveView,
+  baseManifest: SAMPLE_MANIFEST,
+  manifest: initialMergedManifest,
+  customGarments: initialCustomGarments,
+  weeklyPlan: safeReadStorage<Record<string, string[]>>(STORAGE_WEEKLY_PLAN_KEY, {}),
+  packingChecked: safeReadStorage<Record<string, boolean>>(STORAGE_PACKING_KEY, {}),
+  atelierBrandFilter: 'all',
   isSampleData: true,
   hasWebpAssets: false,
   manifestLoaded: false,
@@ -262,6 +347,56 @@ export const useKapsulaStore = create<KapsulaState>((set, get) => ({
   randomSeedCounter: 1,
   activeLookId: null,
   lastScoreAnnouncement: '',
+
+  setActiveView: (view, syncHash = true) => {
+    if (syncHash && typeof window !== 'undefined') {
+      try {
+        const url = new URL(window.location.href);
+        url.searchParams.delete('tab');
+        url.hash = view === 'cover' ? '' : view;
+        window.history.replaceState(null, '', url.toString());
+      } catch {
+        // ignore
+      }
+      window.scrollTo({ top: 0, behavior: 'auto' });
+    }
+    set({ activeView: view });
+  },
+
+  setAtelierBrandFilter: (atelierBrandFilter) => set({ atelierBrandFilter }),
+
+  addCustomGarment: (garment) => {
+    const existing = get().customGarments.filter((g) => g.id !== garment.id);
+    const nextCustom = [garment, ...existing].slice(0, MAX_CUSTOM_GARMENTS);
+    safeWriteStorage(STORAGE_CUSTOM_GARMENTS_KEY, nextCustom);
+    const merged = mergeManifestWithCustom(get().baseManifest, nextCustom);
+    set({ customGarments: nextCustom, manifest: merged });
+  },
+
+  removeCustomGarment: (id) => {
+    const nextCustom = get().customGarments.filter((g) => g.id !== id);
+    safeWriteStorage(STORAGE_CUSTOM_GARMENTS_KEY, nextCustom);
+    const merged = mergeManifestWithCustom(get().baseManifest, nextCustom);
+    const prevSlots = get().slots;
+    const nextSlots: BoardSlots = { ...prevSlots };
+    for (const k of Object.keys(nextSlots) as SlotKey[]) {
+      if (nextSlots[k] === id) nextSlots[k] = null;
+    }
+    set({ customGarments: nextCustom, manifest: merged, slots: nextSlots });
+  },
+
+  setDayPlan: (dateStr, itemIds) => {
+    const nextPlan = { ...get().weeklyPlan, [dateStr]: itemIds };
+    safeWriteStorage(STORAGE_WEEKLY_PLAN_KEY, nextPlan);
+    set({ weeklyPlan: nextPlan });
+  },
+
+  togglePackingItem: (itemId) => {
+    const prev = get().packingChecked;
+    const next = { ...prev, [itemId]: !prev[itemId] };
+    safeWriteStorage(STORAGE_PACKING_KEY, next);
+    set({ packingChecked: next });
+  },
 
   setTheme: (theme) => {
     applyThemeToDocument(theme);
@@ -322,14 +457,16 @@ export const useKapsulaStore = create<KapsulaState>((set, get) => ({
     set({ autoWeatherEnabled });
   },
 
-  setManifestData: (manifest, isSampleData, hasWebpAssets = false) => {
+  setManifestData: (rawManifest, isSampleData, hasWebpAssets = false) => {
     const state = get();
-    const byId = new Map(manifest.garments.map((g) => [g.id, g]));
+    const merged = mergeManifestWithCustom(rawManifest, state.customGarments);
+    const byId = new Map(merged.garments.map((g) => [g.id, g]));
 
     if (initialParsed.urlItems && !state.manifestLoaded) {
       const info = resolveItemsToBoard(initialParsed.urlItems, byId);
       set({
-        manifest,
+        baseManifest: rawManifest,
+        manifest: merged,
         isSampleData,
         hasWebpAssets,
         manifestLoaded: true,
@@ -339,9 +476,10 @@ export const useKapsulaStore = create<KapsulaState>((set, get) => ({
       return;
     }
 
-    const recs = recommendOutfits(manifest, state.query);
+    const recs = recommendOutfits(merged, state.query);
     set({
-      manifest,
+      baseManifest: rawManifest,
+      manifest: merged,
       isSampleData,
       hasWebpAssets,
       manifestLoaded: true,

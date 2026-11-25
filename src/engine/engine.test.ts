@@ -9,6 +9,7 @@ import {
   findBestHarmonizeSwap,
   garmentsToBoardSlots,
   generateSeededOutfit,
+  getSmartPairingAdvice,
   recommendOutfits,
 } from './stylist';
 
@@ -120,11 +121,20 @@ describe('Stylist Engine — Coverage & Determinism', () => {
   const manifest = loadActiveManifestForTest();
   const weathers: WeatherBand[] = ['hot', 'warm', 'cool', 'cold'];
   const rainStates = [false, true];
-  const occasions: Occasion[] = ['office', 'walk', 'party'];
+  const occasions: Occasion[] = [
+    'office',
+    'university',
+    'school',
+    'walk',
+    'party',
+    'date',
+    'sport',
+    'travel',
+  ];
   const palettes: Array<PaletteId | 'any'> = ['sand', 'earth', 'marine', 'bloom', 'noir', 'any'];
   const genders: UserGenderFilter[] = ['w', 'm', 'all'];
 
-  it('returns >= 3 complete outfits for all 432 combinations of filters', { timeout: 15000 }, () => {
+  it('returns >= 3 complete outfits across all 8 occasions and filter combinations', { timeout: 25000 }, () => {
     for (const weather of weathers) {
       for (const rain of rainStates) {
         for (const occasion of occasions) {
@@ -210,5 +220,23 @@ describe('Stylist Engine — Coverage & Determinism', () => {
       'all',
     );
     expect(swapResult).not.toBeNull();
+  });
+
+  it('provides actionable SmartPairingAdvice when adding a hoodie and trousers without accessories or shoes', () => {
+    const hoodie = manifest.garments.find((g) => g.id.includes('hoodie') && g.category === 'top') ??
+      manifest.garments.find((g) => g.category === 'top')!;
+    const trousers = manifest.garments.find((g) => g.category === 'bottom')!;
+
+    const advice = getSmartPairingAdvice([hoodie, trousers], manifest, {
+      weather: 'cool',
+      rain: false,
+      occasion: 'university',
+      palette: 'sand',
+      gender: 'all',
+    });
+
+    expect(advice).not.toBeNull();
+    expect(advice?.recommendedAdd).not.toBeNull();
+    expect(advice?.summaryUz.length).toBeGreaterThan(20);
   });
 });

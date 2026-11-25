@@ -178,11 +178,55 @@ export default async function (cb) {
         message_id: messageId,
         text:
           `👑 <b>Owner Boshqaruv Markazi</b> (@fayzbek1331)\n\n` +
-          `👥 Foydalanuvchilar: <b>${stats.totalUsers}</b> (bugun faol: ${stats.activeToday})\n` +
+          `🟢 Hozir onlayn (5 daq): <b>${stats.online5m}</b> · Soʻnggi 1 soat: <b>${stats.online1h}</b>\n` +
+          `👥 Jami foydalanuvchilar: <b>${stats.totalUsers}</b> (bugun: ${stats.activeToday})\n` +
           `🛡 Adminlar: <b>${stats.totalAdmins}</b> · Bloklangan: ${stats.blockedUsers}\n` +
           `🧥 Maxsus kiyimlar: <b>${stats.totalCustomGarments}</b> · Saqlanganlar: <b>${stats.totalOutfits}</b>`,
         parse_mode: 'HTML',
         reply_markup: buildOwnerKeyboard(),
+      });
+      return;
+    }
+
+    if (data === 'owner:online') {
+      await answer();
+      const stats = await getSystemStats();
+      const nowSec = Math.floor(Date.now() / 1000);
+      const userLines =
+        stats.onlineUsersList.length === 0
+          ? 'Soʻnggi 1 soatda faol foydalanuvchilar yoʻq.'
+          : stats.onlineUsersList
+              .map((u) => {
+                const secs = Math.max(0, nowSec - Number(u.last_active_at || nowSec));
+                const ago = secs < 60 ? 'hozir' : `${Math.floor(secs / 60)} daq oldin`;
+                const name = u.username ? `@${u.username}` : u.first_name || u.tg_id;
+                const view = u.last_view || 'bot';
+                return `🟢 ${name} · ${u.city || 'Toshkent'} · [${view}] (${ago})`;
+              })
+              .join('\n');
+
+      const cityLines =
+        stats.topCities.length > 0
+          ? '\n\n🏙 <b>Top shaharlar:</b> ' +
+            stats.topCities.map((c) => `${c.city} (${c.cnt})`).join(' · ')
+          : '';
+
+      await api.editMessageText({
+        chat_id: chatId,
+        message_id: messageId,
+        text:
+          `🟢 <b>Jonli Faollik Monitori</b>\n` +
+          `• 5 daqiqada: <b>${stats.online5m}</b> ta\n` +
+          `• 1 soatda: <b>${stats.online1h}</b> ta\n` +
+          `• 24 soatda: <b>${stats.activeToday}</b> ta\n\n` +
+          `${userLines}${cityLines}`,
+        parse_mode: 'HTML',
+        reply_markup: {
+          inline_keyboard: [
+            [{ text: '🔄 Yangilash', callback_data: 'owner:online' }],
+            [{ text: '← Owner menyusi', callback_data: 'owner:menu' }],
+          ],
+        },
       });
       return;
     }
@@ -246,8 +290,10 @@ export default async function (cb) {
         message_id: messageId,
         text:
           `📊 <b>Kengaytirilgan Tizim Statistikasi</b>\n\n` +
-          `• Jami foydalanuvchilar: <b>${s.totalUsers}</b>\n` +
+          `• 🟢 Hozir onlayn (5 daq): <b>${s.online5m}</b>\n` +
+          `• 🕐 Soʻnggi 1 soatda: <b>${s.online1h}</b>\n` +
           `• Bugun faollar (24s): <b>${s.activeToday}</b>\n` +
+          `• Jami foydalanuvchilar: <b>${s.totalUsers}</b>\n` +
           `• Bloklanganlar: <b>${s.blockedUsers}</b>\n` +
           `• Faol adminlar: <b>${s.totalAdmins}</b>\n` +
           `• Saqlangan obrazlar: <b>${s.totalOutfits}</b>\n` +

@@ -23,6 +23,7 @@ export function LookbookModal({
 }: LookbookModalProps) {
   const manifest = useKapsulaStore((s) => s.manifest);
   const loadItemsToBoard = useKapsulaStore((s) => s.loadItemsToBoard);
+  const setActiveView = useKapsulaStore((s) => s.setActiveView);
   const reducedMotion = useReducedMotion();
   const modalRef = useRef<HTMLDivElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
@@ -109,9 +110,7 @@ export function LookbookModal({
     if (!look) return;
     loadItemsToBoard(look.items);
     onClose();
-    window.setTimeout(() => {
-      document.getElementById('atelye')?.scrollIntoView({ behavior: 'smooth' });
-    }, 60);
+    setActiveView('atelye');
   };
 
   return (

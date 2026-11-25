@@ -2,47 +2,72 @@ import { useId } from 'react';
 import type { Category } from '../data/schema';
 
 export type GarmentSubtype =
+  // Outerwear (12)
   | 'palto'
+  | 'peacoat'
   | 'trench'
   | 'blazer'
   | 'puffer'
   | 'parka'
   | 'bomber'
+  | 'varsity'
+  | 'leather_jacket'
+  | 'denim_jacket'
+  | 'vest'
   | 'cardigan'
+  // Tops (13)
   | 'hoodie'
   | 'ziphoodie'
   | 'sweatshirt'
+  | 'overshirt'
   | 'turtleneck'
   | 'sweater'
   | 'shirt'
+  | 'silk_blouse'
   | 'polo'
+  | 'longsleeve'
+  | 'track_top'
+  | 'tunic'
   | 'tee'
+  // Bottoms (9)
   | 'wide_trousers'
+  | 'pleated_trousers'
   | 'chinos'
   | 'cargo'
   | 'joggers'
+  | 'track_pants'
   | 'denim'
+  | 'shorts'
   | 'skirt'
+  // Dresses (4)
   | 'midi_silk'
   | 'shirt_dress'
   | 'knit_dress'
   | 'hoodie_dress'
+  // Shoes (7)
   | 'sneakers'
+  | 'running_shoes'
   | 'chelsea_boots'
   | 'lug_boots'
   | 'loafers'
+  | 'derbies'
   | 'sandals'
+  // Bags (4)
   | 'tote'
   | 'crossbody'
   | 'backpack'
   | 'clutch'
+  // Accessories (10)
   | 'scarf'
   | 'silk_scarf'
   | 'cap'
   | 'beanie'
   | 'sunglasses'
   | 'belt'
-  | 'watch';
+  | 'watch'
+  | 'tie'
+  | 'gloves'
+  | 'bracelet';
 
 interface GarmentSilhouetteProps {
   category: Category;
@@ -61,10 +86,15 @@ export function detectGarmentSubtype(
   const s = `${garmentId} ${nameHint}`.toLowerCase();
 
   if (category === 'outerwear') {
+    if (s.includes('peacoat') || s.includes('bortli')) return 'peacoat';
     if (s.includes('trench') || s.includes('yomgʻirplash')) return 'trench';
     if (s.includes('blazer') || s.includes('jaket')) return 'blazer';
     if (s.includes('puffer') || s.includes('quilted')) return 'puffer';
     if (s.includes('parka')) return 'parka';
+    if (s.includes('varsity') || s.includes('kollej')) return 'varsity';
+    if (s.includes('leather') || s.includes('charm')) return 'leather_jacket';
+    if (s.includes('denim') || s.includes('jinsi')) return 'denim_jacket';
+    if (s.includes('vest') || s.includes('nimcha') || s.includes('gilet')) return 'vest';
     if (s.includes('bomber')) return 'bomber';
     if (s.includes('cardigan') || s.includes('kardigan')) return 'cardigan';
     return 'palto';
@@ -73,15 +103,23 @@ export function detectGarmentSubtype(
     if (s.includes('ziphoodie') || s.includes('zip-up') || s.includes('zamokli')) return 'ziphoodie';
     if (s.includes('hoodie') || s.includes('hudi')) return 'hoodie';
     if (s.includes('sweatshirt') || s.includes('svitshot')) return 'sweatshirt';
+    if (s.includes('overshirt') || s.includes('koʻylak-kurtka')) return 'overshirt';
     if (s.includes('turtleneck') || s.includes('vodolazka')) return 'turtleneck';
     if (s.includes('sweater') || s.includes('sviter') || s.includes('knit') || s.includes('cashmere')) return 'sweater';
+    if (s.includes('blouse') || s.includes('bluza')) return 'silk_blouse';
+    if (s.includes('track_top') || s.includes('sportivnaya') || s.includes('olimp')) return 'track_top';
+    if (s.includes('tunic') || s.includes('tunika')) return 'tunic';
+    if (s.includes('longsleeve') || s.includes('longsliv') || s.includes('henley')) return 'longsleeve';
     if (s.includes('polo')) return 'polo';
     if (s.includes('tee') || s.includes('futbolka')) return 'tee';
     return 'shirt';
   }
   if (category === 'bottom') {
+    if (s.includes('pleated') || s.includes('burmali')) return 'pleated_trousers';
     if (s.includes('cargo') || s.includes('kargo')) return 'cargo';
     if (s.includes('jogger')) return 'joggers';
+    if (s.includes('track_pants') || s.includes('sport shim')) return 'track_pants';
+    if (s.includes('shorts') || s.includes('shorti') || s.includes('bermuda')) return 'shorts';
     if (s.includes('denim') || s.includes('jeans') || s.includes('jinsi')) return 'denim';
     if (s.includes('skirt') || s.includes('yubka')) return 'skirt';
     if (s.includes('chino')) return 'chinos';
@@ -94,9 +132,11 @@ export function detectGarmentSubtype(
     return 'midi_silk';
   }
   if (category === 'shoes') {
+    if (s.includes('running') || s.includes('yugurish')) return 'running_shoes';
     if (s.includes('sneaker') || s.includes('keda') || s.includes('krossovka')) return 'sneakers';
     if (s.includes('lug') || s.includes('botinka') || s.includes('qishki')) return 'lug_boots';
     if (s.includes('boot') || s.includes('chelsea') || s.includes('etik')) return 'chelsea_boots';
+    if (s.includes('derb') || s.includes('oxford') || s.includes('oksford') || s.includes('tufli')) return 'derbies';
     if (s.includes('sandal')) return 'sandals';
     return 'loafers';
   }
@@ -113,6 +153,9 @@ export function detectGarmentSubtype(
   if (s.includes('sunglass') || s.includes('koʻzoynak')) return 'sunglasses';
   if (s.includes('belt') || s.includes('kamar')) return 'belt';
   if (s.includes('watch') || s.includes('soat')) return 'watch';
+  if (s.includes('tie') || s.includes('galstuk')) return 'tie';
+  if (s.includes('glove') || s.includes('qoʻlqop')) return 'gloves';
+  if (s.includes('bracelet') || s.includes('bilaguzuk')) return 'bracelet';
   return 'scarf';
 }
 
@@ -126,8 +169,9 @@ function getLuminance(hex: string): number {
 }
 
 /**
- * Editorial, multi-layered fashion garment illustrations across 41 distinct subtypes.
- * Adaptive inner details ensure crisp visibility on both light and dark fabrics in Light & Dark modes.
+ * Editorial, multi-layered fashion illustrations across 59 bespoke garment subtypes.
+ * Includes fabric depth gradients, micro-rib/knit/pleat textures, collar & cuff modeling,
+ * buttons, hardware, eyelets, and sneaker sculpting with Dark & Light adaptive contrast.
  */
 export function GarmentSilhouette({
   category,
@@ -141,11 +185,13 @@ export function GarmentSilhouette({
   const sub = detectGarmentSubtype(category, garmentId, nameHint);
   const lum = getLuminance(color);
   const isVeryDark = lum < 0.09;
-  const outline = isVeryDark ? '#4B453C' : '#1A1815';
-  const detail = isVeryDark ? 'rgba(244,239,230,0.42)' : 'rgba(21,20,18,0.48)';
-  const softShade = isVeryDark ? 'rgba(255,255,255,0.09)' : 'rgba(21,20,18,0.11)';
-  const highlight = isVeryDark ? 'rgba(255,255,255,0.16)' : 'rgba(255,255,255,0.28)';
-  const accentFill = color2 ?? (isVeryDark ? '#8B8070' : '#D8D0BF');
+  const outline = isVeryDark ? '#5A5247' : '#1A1815';
+  const detail = isVeryDark ? 'rgba(244,239,230,0.44)' : 'rgba(21,20,18,0.45)';
+  const softShade = isVeryDark ? 'rgba(255,255,255,0.10)' : 'rgba(21,20,18,0.11)';
+  const deepShade = isVeryDark ? 'rgba(0,0,0,0.42)' : 'rgba(21,20,18,0.20)';
+  const highlight = isVeryDark ? 'rgba(255,255,255,0.20)' : 'rgba(255,255,255,0.38)';
+  const accentFill = color2 ?? (isVeryDark ? '#9A8E7E' : '#DDD4C3');
+  const metal = '#C8BA9E';
 
   return (
     <svg
@@ -156,111 +202,152 @@ export function GarmentSilhouette({
       focusable="false"
     >
       <defs>
-        <linearGradient id={`grad-${uid}`} x1="15%" y1="5%" x2="85%" y2="95%">
+        <linearGradient id={`grad-${uid}`} x1="15%" y1="5%" x2="88%" y2="95%">
           <stop offset="0%" stopColor={color} />
-          <stop offset="55%" stopColor={color} />
-          <stop offset="100%" stopColor={color} stopOpacity="0.88" />
+          <stop offset="48%" stopColor={color} />
+          <stop offset="100%" stopColor={color} stopOpacity="0.84" />
         </linearGradient>
+        <linearGradient id={`sheen-${uid}`} x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor="rgba(255,255,255,0.24)" />
+          <stop offset="35%" stopColor="rgba(255,255,255,0.04)" />
+          <stop offset="100%" stopColor="rgba(0,0,0,0.12)" />
+        </linearGradient>
+        <pattern id={`rib-${uid}`} width="6" height="6" patternUnits="userSpaceOnUse">
+          <path d="M0 0 V6" stroke={detail} strokeWidth="0.7" opacity="0.35" />
+        </pattern>
       </defs>
 
       {/* ==================== HOODIE & ZIP-HOODIE ==================== */}
       {(sub === 'hoodie' || sub === 'ziphoodie') && (
         <g>
-          {/* Hood back depth */}
+          {/* Hood volume + interior shadow */}
           <path
-            d="M72 48 C70 22 86 14 100 14 C114 14 130 22 128 48 Z"
+            d="M70 48 C68 20 84 12 100 12 C116 12 132 20 130 48 Z"
             fill={color}
             stroke={outline}
             strokeWidth="1.6"
           />
           <path
-            d="M78 46 C78 27 89 20 100 20 C111 20 122 27 122 46 Z"
-            fill={softShade}
+            d="M77 45 C77 25 88 18 100 18 C112 18 123 25 123 45 Z"
+            fill={deepShade}
             stroke={detail}
             strokeWidth="1"
           />
-          {/* Body + drop shoulders + sleeves */}
+          {/* Body & relaxed dropped shoulders */}
           <path
-            d="M66 44 L36 62 L24 138 L46 144 L54 88 L54 198 L146 198 L146 88 L154 144 L176 138 L164 62 L134 44 Q100 56 66 44 Z"
+            d="M66 44 L34 62 L22 140 L46 146 L54 90 L54 198 L146 198 L146 90 L154 146 L178 140 L166 62 L134 44 Q100 56 66 44 Z"
             fill={`url(#grad-${uid})`}
             stroke={outline}
             strokeWidth="1.6"
             strokeLinejoin="round"
           />
-          {/* Raglan seams */}
-          <path d="M66 44 L54 88 M134 44 L146 88" stroke={detail} strokeWidth="1" strokeDasharray="3 2" />
+          <path d="M56 54 L54 182 H146 L144 54" fill={`url(#sheen-${uid})`} opacity="0.45" />
+          {/* Raglan / armhole topstitch */}
+          <path d="M66 44 L54 90 M134 44 L146 90 M70 46 Q100 60 130 46" stroke={detail} strokeWidth="1" strokeDasharray="3 2" />
+          {/* Natural sleeve drape folds */}
+          <path d="M36 96 Q44 102 47 94 M164 96 Q156 102 153 94" stroke={detail} strokeWidth="0.9" />
           {/* Ribbed cuffs & hem */}
-          <path d="M25 128 L47 134 M175 128 L153 134 M54 184 L146 184" stroke={outline} strokeWidth="1.2" />
-          <path d="M54 184 H146 V198 H54 Z" fill={softShade} />
-          {/* Drawstrings */}
-          <path d="M91 49 C90 66 89 76 89 86 M109 49 C110 66 111 76 111 86" stroke={accentFill} strokeWidth="2.1" strokeLinecap="round" />
-          <circle cx="89" cy="87" r="1.8" fill={outline} />
-          <circle cx="111" cy="87" r="1.8" fill={outline} />
-          {/* Kangaroo pocket / Split pockets */}
+          <path d="M23 128 L47 134 L46 146 L22 140 Z M177 128 L153 134 L154 146 L178 140 Z" fill={softShade} stroke={outline} strokeWidth="1.2" />
+          <path d="M54 183 H146 V198 H54 Z" fill={softShade} stroke={outline} strokeWidth="1.1" />
+          <path d="M54 183 H146 V198 H54 Z" fill={`url(#rib-${uid})`} />
+          {/* Metallic eyelets & tipped drawstrings */}
+          <circle cx="91" cy="50" r="2.1" fill={metal} stroke={outline} strokeWidth="0.8" />
+          <circle cx="109" cy="50" r="2.1" fill={metal} stroke={outline} strokeWidth="0.8" />
+          <path d="M91 51 C90 68 89 78 89 88 M109 51 C110 68 111 78 111 88" stroke={accentFill} strokeWidth="2.3" strokeLinecap="round" />
+          <rect x="87.5" y="86" width="3" height="5" rx="1" fill={metal} />
+          <rect x="109.5" y="86" width="3" height="5" rx="1" fill={metal} />
+          {/* Kangaroo pocket or Zip split */}
           {sub === 'hoodie' ? (
-            <path
-              d="M72 136 H128 L134 172 H66 Z"
-              fill={softShade}
-              stroke={outline}
-              strokeWidth="1.2"
-              strokeLinejoin="round"
-            />
+            <>
+              <path
+                d="M72 135 H128 L135 173 H65 Z"
+                fill={softShade}
+                stroke={outline}
+                strokeWidth="1.2"
+                strokeLinejoin="round"
+              />
+              <path d="M74 139 L68 169 M126 139 L132 169" stroke={detail} strokeWidth="0.9" strokeDasharray="2 2" />
+            </>
           ) : (
             <>
-              <path d="M100 50 V198" stroke={accentFill} strokeWidth="2.2" />
+              <path d="M100 50 V198" stroke={metal} strokeWidth="2.4" />
               <path d="M100 50 V198" stroke={outline} strokeWidth="1" strokeDasharray="2 2" />
-              <rect x="97" y="54" width="6" height="8" rx="1" fill={accentFill} stroke={outline} strokeWidth="0.9" />
-              <path d="M68 142 H92 V174 H63 Z M108 142 H132 L137 174 H108 Z" fill={softShade} stroke={outline} strokeWidth="1.1" />
+              <rect x="97" y="55" width="6" height="9" rx="1" fill={metal} stroke={outline} strokeWidth="0.9" />
+              <path d="M68 142 H92 V174 H62 Z M108 142 H132 L138 174 H108 Z" fill={softShade} stroke={outline} strokeWidth="1.1" />
             </>
           )}
         </g>
       )}
 
-      {/* ==================== SWEATSHIRT / SWEATER / TURTLENECK ==================== */}
-      {(sub === 'sweatshirt' || sub === 'sweater' || sub === 'turtleneck') && (
+      {/* ==================== SWEATSHIRT / SWEATER / TURTLENECK / LONGSLEEVE ==================== */}
+      {(sub === 'sweatshirt' || sub === 'sweater' || sub === 'turtleneck' || sub === 'longsleeve') && (
         <g>
-          {/* Collar */}
           {sub === 'turtleneck' ? (
-            <path
-              d="M76 22 Q100 18 124 22 L126 52 Q100 58 74 52 Z"
-              fill={color}
-              stroke={outline}
-              strokeWidth="1.6"
-            />
+            <path d="M76 20 Q100 15 124 20 L127 52 Q100 58 73 52 Z" fill={color} stroke={outline} strokeWidth="1.6" />
           ) : (
-            <path
-              d="M72 38 Q100 52 128 38 L122 54 Q100 64 78 54 Z"
-              fill={softShade}
-              stroke={outline}
-              strokeWidth="1.3"
-            />
+            <path d="M72 38 Q100 53 128 38 L122 55 Q100 66 78 55 Z" fill={softShade} stroke={outline} strokeWidth="1.3" />
           )}
           <path
-            d="M72 40 L34 62 L24 140 L44 144 L54 88 L56 198 L144 198 L146 88 L156 144 L176 140 L166 62 L128 40 Q100 54 72 40 Z"
+            d="M72 40 L34 62 L23 142 L45 146 L54 88 L56 198 L144 198 L146 88 L155 146 L177 142 L166 62 L128 40 Q100 54 72 40 Z"
             fill={`url(#grad-${uid})`}
             stroke={outline}
             strokeWidth="1.6"
             strokeLinejoin="round"
           />
           {sub === 'turtleneck' && (
-            <path d="M77 35 Q100 40 123 35" stroke={detail} strokeWidth="1.1" />
+            <>
+              <path d="M77 35 Q100 40 123 35" stroke={detail} strokeWidth="1.1" />
+              <path d="M76 20 H124 V52 H76 Z" fill={`url(#rib-${uid})`} opacity="0.5" />
+            </>
           )}
           {sub === 'sweatshirt' && (
-            <path d="M93 52 L100 66 L107 52 Z" fill={softShade} stroke={detail} strokeWidth="1" />
+            <path d="M92 52 L100 68 L108 52 Z" fill={softShade} stroke={detail} strokeWidth="1" />
+          )}
+          {sub === 'longsleeve' && (
+            <>
+              <path d="M96 52 H104 V96 H96 Z" fill={softShade} stroke={detail} strokeWidth="1" />
+              <circle cx="100" cy="64" r="1.8" fill={accentFill} stroke={outline} strokeWidth="0.8" />
+              <circle cx="100" cy="78" r="1.8" fill={accentFill} stroke={outline} strokeWidth="0.8" />
+            </>
           )}
           {sub === 'sweater' && (
-            <g stroke={detail} strokeWidth="1" opacity="0.65">
-              <path d="M84 58 V182 M100 60 V182 M116 58 V182" strokeDasharray="4 3" />
+            <g>
+              <path d="M56 54 H144 V184 H56 Z" fill={`url(#rib-${uid})`} opacity="0.5" />
+              <path d="M84 58 C82 95 86 135 84 182 M100 60 C98 95 102 135 100 182 M116 58 C114 95 118 135 116 182" stroke={detail} strokeWidth="1" strokeDasharray="5 3" />
             </g>
           )}
-          {/* Ribbed cuffs & waistband */}
-          <path d="M25 130 L45 134 M175 130 L155 134" stroke={outline} strokeWidth="1.2" />
+          <path d="M24 130 L46 135 M176 130 L154 135" stroke={outline} strokeWidth="1.3" />
           <path d="M56 184 H144 V198 H56 Z" fill={softShade} stroke={outline} strokeWidth="1" />
         </g>
       )}
 
-      {/* ==================== SHIRT / POLO / TEE ==================== */}
-      {(sub === 'shirt' || sub === 'polo' || sub === 'tee') && (
+      {/* ==================== TRACK TOP (SPORTIVNAYA) ==================== */}
+      {sub === 'track_top' && (
+        <g>
+          <path d="M76 26 H124 L126 42 H74 Z" fill={softShade} stroke={outline} strokeWidth="1.5" />
+          <path
+            d="M72 40 L34 62 L24 140 L46 144 L54 88 L56 196 L144 196 L146 88 L154 144 L176 140 L166 62 L128 40 Z"
+            fill={`url(#grad-${uid})`}
+            stroke={outline}
+            strokeWidth="1.6"
+            strokeLinejoin="round"
+          />
+          {/* Dual sleeve sport stripes */}
+          <path d="M64 46 L31 134 M69 48 L36 136 M136 46 L169 134 M131 48 L164 136" stroke={accentFill} strokeWidth="2" />
+          <path d="M100 42 V196" stroke={metal} strokeWidth="2.2" />
+          <rect x="97" y="45" width="6" height="8" rx="1" fill={metal} stroke={outline} strokeWidth="0.9" />
+          <path d="M64 138 L80 166 M136 138 L120 166" stroke={outline} strokeWidth="1.4" />
+          <path d="M56 184 H144 V196 H56 Z" fill={softShade} stroke={outline} strokeWidth="1.1" />
+        </g>
+      )}
+
+      {/* ==================== SHIRT / OVERSHIRT / SILK BLOUSE / POLO / TEE / TUNIC ==================== */}
+      {(sub === 'shirt' ||
+        sub === 'overshirt' ||
+        sub === 'silk_blouse' ||
+        sub === 'polo' ||
+        sub === 'tee' ||
+        sub === 'tunic') && (
         <g>
           {sub === 'tee' ? (
             <path
@@ -278,6 +365,14 @@ export function GarmentSilhouette({
               strokeWidth="1.6"
               strokeLinejoin="round"
             />
+          ) : sub === 'tunic' ? (
+            <path
+              d="M74 32 Q100 48 126 32 L166 56 L156 146 L138 144 L138 88 L146 218 Q100 226 54 218 L62 88 L62 144 L44 146 L34 56 Z"
+              fill={`url(#grad-${uid})`}
+              stroke={outline}
+              strokeWidth="1.6"
+              strokeLinejoin="round"
+            />
           ) : (
             <path
               d="M74 32 L100 46 L126 32 L168 54 L166 146 L146 148 L140 88 L140 198 Q100 206 60 198 L60 88 L54 148 L34 146 L32 54 Z"
@@ -290,16 +385,30 @@ export function GarmentSilhouette({
 
           {sub === 'tee' && (
             <>
-              <path d="M74 38 Q100 60 126 38" stroke={outline} strokeWidth="1.5" fill="none" />
+              <path d="M74 38 Q100 60 126 38" stroke={outline} strokeWidth="1.6" fill="none" />
               <path d="M40 86 L58 92 M160 86 L142 92 M62 186 H138" stroke={detail} strokeWidth="1" strokeDasharray="2 2" />
             </>
           )}
 
-          {(sub === 'shirt' || sub === 'polo') && (
+          {sub === 'silk_blouse' && (
             <>
-              {/* Collar points */}
+              <path d="M74 32 Q100 62 126 32" fill={softShade} stroke={outline} strokeWidth="1.4" />
+              <path d="M100 50 C96 70 104 82 100 100 M80 68 Q94 128 84 188 M120 68 Q106 128 116 188" stroke={highlight} strokeWidth="1.3" />
+              <path d="M88 46 L100 68 L112 46" stroke={outline} strokeWidth="1.2" />
+            </>
+          )}
+
+          {sub === 'tunic' && (
+            <>
+              <path d="M88 44 V104" stroke={outline} strokeWidth="1.2" />
+              <path d="M62 126 H138" stroke={accentFill} strokeWidth="3" />
+              <path d="M56 180 V218 M144 180 V218" stroke={detail} strokeWidth="1" />
+            </>
+          )}
+
+          {(sub === 'shirt' || sub === 'polo' || sub === 'overshirt') && (
+            <>
               <path d="M74 32 L88 54 L100 46 L112 54 L126 32" fill={highlight} stroke={outline} strokeWidth="1.3" strokeLinejoin="round" />
-              {/* Placket & buttons */}
               <path
                 d={sub === 'polo' ? 'M96 48 H104 V92 H96 Z' : 'M96 48 H104 V199 H96 Z'}
                 fill={softShade}
@@ -309,9 +418,9 @@ export function GarmentSilhouette({
               {[62, 82].map((cy) => (
                 <circle key={cy} cx="100" cy={cy} r="2" fill={accentFill} stroke={outline} strokeWidth="0.8" />
               ))}
-              {sub === 'shirt' &&
+              {(sub === 'shirt' || sub === 'overshirt') &&
                 [108, 134, 160, 184].map((cy) => (
-                  <circle key={cy} cx="100" cy={cy} r="2" fill={accentFill} stroke={outline} strokeWidth="0.8" />
+                  <circle key={cy} cx="100" cy={cy} r="2.2" fill={accentFill} stroke={outline} strokeWidth="0.8" />
                 ))}
               {sub === 'shirt' && (
                 <>
@@ -319,60 +428,12 @@ export function GarmentSilhouette({
                   <path d="M35 136 L55 138 M165 136 L145 138" stroke={outline} strokeWidth="1.2" />
                 </>
               )}
-            </>
-          )}
-        </g>
-      )}
-
-      {/* ==================== PALTO / TRENCH / BLAZER / CARDIGAN ==================== */}
-      {(sub === 'palto' || sub === 'trench' || sub === 'blazer' || sub === 'cardigan') && (
-        <g>
-          <path
-            d={
-              sub === 'blazer'
-                ? 'M68 30 L88 22 L100 34 L112 22 L132 30 L170 54 L160 148 L142 146 L140 82 L138 184 L62 184 L60 82 L58 146 L40 148 L30 54 Z'
-                : sub === 'cardigan'
-                  ? 'M72 32 L100 76 L128 32 L166 56 L158 152 L140 150 L138 86 L138 202 L62 202 L62 86 L60 150 L42 152 L34 56 Z'
-                  : 'M68 26 L88 18 L100 32 L112 18 L132 26 L172 52 L162 152 L144 150 L142 82 L146 218 L54 218 L58 82 L56 150 L38 152 L28 52 Z'
-            }
-            fill={`url(#grad-${uid})`}
-            stroke={outline}
-            strokeWidth="1.6"
-            strokeLinejoin="round"
-          />
-          {/* Lapels / V-neck trim */}
-          {sub === 'cardigan' ? (
-            <>
-              <path d="M72 32 L100 78 L128 32" stroke={outline} strokeWidth="1.4" />
-              <path d="M100 78 V202" stroke={outline} strokeWidth="1.3" />
-              {[94, 120, 146, 172].map((cy) => (
-                <circle key={cy} cx="94" cy={cy} r="2.6" fill={accentFill} stroke={outline} strokeWidth="0.9" />
-              ))}
-              <rect x="68" y="138" width="22" height="24" fill={softShade} stroke={outline} strokeWidth="1" />
-              <rect x="110" y="138" width="22" height="24" fill={softShade} stroke={outline} strokeWidth="1" />
-            </>
-          ) : (
-            <>
-              {/* Notched collar & lapels */}
-              <path d="M88 18 L74 58 L86 64 L78 78 L100 102 L122 78 L114 64 L126 58 L112 18" fill={softShade} stroke={outline} strokeWidth="1.3" strokeLinejoin="round" />
-              <path d="M100 102 V216" stroke={detail} strokeWidth="1.1" />
-              {/* Pockets */}
-              <path d="M66 138 H86 M114 138 H134" stroke={outline} strokeWidth="1.5" strokeLinecap="round" />
-              {/* Buttons */}
-              {(sub === 'trench' ? [108, 134, 160] : [110, 140]).map((cy) => (
-                <g key={cy}>
-                  <circle cx="92" cy={cy} r="2.6" fill={accentFill} stroke={outline} strokeWidth="0.9" />
-                  {sub === 'trench' && (
-                    <circle cx="108" cy={cy} r="2.6" fill={accentFill} stroke={outline} strokeWidth="0.9" />
-                  )}
-                </g>
-              ))}
-              {/* Trench waist belt & storm epaulets */}
-              {sub === 'trench' && (
+              {sub === 'overshirt' && (
                 <>
-                  <path d="M56 120 H144 V130 H56 Z" fill={accentFill} stroke={outline} strokeWidth="1.2" />
-                  <rect x="94" y="118" width="12" height="14" rx="1" fill="none" stroke={outline} strokeWidth="1.4" />
-                  <path d="M52 38 L70 30 M148 38 L130 30" stroke={outline} strokeWidth="1.6" />
+                  <rect x="66" y="78" width="24" height="28" fill={softShade} stroke={outline} strokeWidth="1.2" />
+                  <rect x="110" y="78" width="24" height="28" fill={softShade} stroke={outline} strokeWidth="1.2" />
+                  <path d="M66 86 H90 M110 86 H134" stroke={outline} strokeWidth="1.1" />
+                  <path d="M35 136 L55 138 M165 136 L145 138" stroke={outline} strokeWidth="1.5" />
                 </>
               )}
             </>
@@ -380,58 +441,188 @@ export function GarmentSilhouette({
         </g>
       )}
 
-      {/* ==================== PUFFER / PARKA / BOMBER ==================== */}
-      {(sub === 'puffer' || sub === 'parka' || sub === 'bomber') && (
+      {/* ==================== PALTO / PEACOAT / TRENCH / BLAZER / CARDIGAN ==================== */}
+      {(sub === 'palto' || sub === 'peacoat' || sub === 'trench' || sub === 'blazer' || sub === 'cardigan') && (
         <g>
-          {/* Stand collar or storm hood */}
-          {sub === 'parka' ? (
-            <path d="M72 40 C72 16 128 16 128 40 Z" fill={softShade} stroke={outline} strokeWidth="1.5" />
-          ) : (
-            <path d="M74 28 Q100 36 126 28 L128 44 Q100 50 72 44 Z" fill={softShade} stroke={outline} strokeWidth="1.5" />
-          )}
           <path
             d={
-              sub === 'parka'
-                ? 'M68 40 L34 62 L24 148 L46 152 L54 88 L52 208 L148 208 L146 88 L154 152 L176 148 L166 62 L132 40 Z'
-                : sub === 'bomber'
-                  ? 'M72 40 L34 60 L26 138 L46 144 L54 86 L56 176 L144 176 L146 86 L154 144 L174 138 L166 60 L128 40 Z'
-                  : 'M68 40 L30 62 L22 142 L46 148 L54 88 L52 192 L148 192 L146 88 L154 148 L178 142 L170 62 L132 40 Z'
+              sub === 'blazer'
+                ? 'M68 30 L88 22 L100 34 L112 22 L132 30 L170 54 L160 148 L142 146 L140 82 L138 184 L62 184 L60 82 L58 146 L40 148 L30 54 Z'
+                : sub === 'peacoat'
+                  ? 'M68 28 L88 20 L100 33 L112 20 L132 28 L170 52 L160 150 L142 148 L140 82 L140 198 L60 198 L60 82 L58 148 L40 150 L30 52 Z'
+                  : sub === 'cardigan'
+                    ? 'M72 32 L100 76 L128 32 L166 56 L158 152 L140 150 L138 86 L138 202 L62 202 L62 86 L60 150 L42 152 L34 56 Z'
+                    : 'M68 26 L88 18 L100 32 L112 18 L132 26 L172 52 L162 152 L144 150 L142 82 L146 218 L54 218 L58 82 L56 150 L38 152 L28 52 Z'
             }
             fill={`url(#grad-${uid})`}
             stroke={outline}
             strokeWidth="1.6"
             strokeLinejoin="round"
           />
-          {/* Puffer quilted horizontal baffles */}
-          {sub === 'puffer' && (
-            <g stroke={outline} strokeWidth="1.1" opacity="0.72">
-              <path d="M54 76 H146 M53 106 H147 M53 136 H147 M52 166 H148" />
-              <path d="M29 90 L50 96 M25 116 L48 122 M171 90 L150 96 M175 116 L152 122" />
-            </g>
-          )}
-          {/* Center zip & storm flap */}
-          <path d="M100 42 V190" stroke={accentFill} strokeWidth="2.4" />
-          <path d="M100 42 V190" stroke={outline} strokeWidth="1" />
-          {/* Bomber rib hem & cuffs */}
-          {sub === 'bomber' && (
+          {sub === 'cardigan' ? (
             <>
-              <path d="M56 164 H144 V176 H56 Z" fill={softShade} stroke={outline} strokeWidth="1.1" />
-              <path d="M27 128 L47 134 M173 128 L153 134" stroke={outline} strokeWidth="1.4" />
-              <path d="M64 128 L82 146 M136 128 L118 146" stroke={outline} strokeWidth="1.4" />
+              <path d="M62 78 H138 V200 H62 Z" fill={`url(#rib-${uid})`} opacity="0.4" />
+              <path d="M72 32 L100 78 L128 32" stroke={outline} strokeWidth="1.4" />
+              <path d="M100 78 V202" stroke={outline} strokeWidth="1.3" />
+              {[94, 120, 146, 172].map((cy) => (
+                <circle key={cy} cx="94" cy={cy} r="2.7" fill={accentFill} stroke={outline} strokeWidth="0.9" />
+              ))}
+              <rect x="68" y="138" width="22" height="24" fill={softShade} stroke={outline} strokeWidth="1" />
+              <rect x="110" y="138" width="22" height="24" fill={softShade} stroke={outline} strokeWidth="1" />
             </>
-          )}
-          {/* Parka flap pockets & waist drawcord */}
-          {sub === 'parka' && (
+          ) : (
             <>
-              <path d="M54 116 H146" stroke={detail} strokeWidth="1.2" strokeDasharray="3 2" />
-              <rect x="62" y="138" width="24" height="28" fill={softShade} stroke={outline} strokeWidth="1.2" />
-              <rect x="114" y="138" width="24" height="28" fill={softShade} stroke={outline} strokeWidth="1.2" />
+              <path d="M88 18 L74 58 L86 64 L78 78 L100 102 L122 78 L114 64 L126 58 L112 18" fill={softShade} stroke={outline} strokeWidth="1.3" strokeLinejoin="round" />
+              <path d="M100 102 V198" stroke={detail} strokeWidth="1.1" />
+              <path d="M66 138 H86 M114 138 H134" stroke={outline} strokeWidth="1.5" strokeLinecap="round" />
+              {(sub === 'trench' || sub === 'peacoat' ? [108, 134, 160] : [110, 140]).map((cy) => (
+                <g key={cy}>
+                  <circle cx="91" cy={cy} r="2.7" fill={accentFill} stroke={outline} strokeWidth="0.9" />
+                  {(sub === 'trench' || sub === 'peacoat') && (
+                    <circle cx="109" cy={cy} r="2.7" fill={accentFill} stroke={outline} strokeWidth="0.9" />
+                  )}
+                </g>
+              ))}
+              {sub === 'trench' && (
+                <>
+                  <path d="M56 120 H144 V130 H56 Z" fill={accentFill} stroke={outline} strokeWidth="1.2" />
+                  <rect x="94" y="118" width="12" height="14" rx="1" fill="none" stroke={metal} strokeWidth="1.6" />
+                  <path d="M52 38 L70 30 M148 38 L130 30" stroke={outline} strokeWidth="1.6" />
+                </>
+              )}
+              {sub === 'blazer' && (
+                <path d="M114 82 H128 V90 H114 Z" fill={accentFill} stroke={outline} strokeWidth="0.9" />
+              )}
             </>
           )}
         </g>
       )}
 
-      {/* ==================== BOTTOMS (TROUSERS / CHINOS / CARGO / JOGGERS / DENIM / SKIRT) ==================== */}
+      {/* ==================== PUFFER / PARKA / BOMBER / VARSITY / LEATHER / DENIM / VEST ==================== */}
+      {(sub === 'puffer' ||
+        sub === 'parka' ||
+        sub === 'bomber' ||
+        sub === 'varsity' ||
+        sub === 'leather_jacket' ||
+        sub === 'denim_jacket' ||
+        sub === 'vest') && (
+        <g>
+          {/* Collar / Hood */}
+          {sub === 'parka' ? (
+            <path d="M72 40 C72 15 128 15 128 40 Z" fill={softShade} stroke={outline} strokeWidth="1.5" />
+          ) : sub === 'leather_jacket' ? (
+            <path d="M72 28 L100 44 L128 28 L122 52 H78 Z" fill={softShade} stroke={outline} strokeWidth="1.4" />
+          ) : (
+            <path d="M74 28 Q100 36 126 28 L128 44 Q100 50 72 44 Z" fill={softShade} stroke={outline} strokeWidth="1.5" />
+          )}
+
+          {sub === 'vest' ? (
+            /* Sleeveless gilet vest */
+            <g>
+              <path
+                d="M68 40 L52 62 L58 100 L54 188 H146 L142 100 L148 62 L132 40 Z"
+                fill={`url(#grad-${uid})`}
+                stroke={outline}
+                strokeWidth="1.6"
+                strokeLinejoin="round"
+              />
+              <g stroke={outline} strokeWidth="1.1" opacity="0.72">
+                <path d="M56 76 H144 M56 106 H144 M55 136 H145 M54 166 H146" />
+              </g>
+              <path d="M100 42 V188" stroke={metal} strokeWidth="2.2" />
+              <path d="M68 140 L84 164 M132 140 L116 164" stroke={outline} strokeWidth="1.3" />
+            </g>
+          ) : (
+            <g>
+              <path
+                d={
+                  sub === 'parka'
+                    ? 'M68 40 L34 62 L24 148 L46 152 L54 88 L52 208 L148 208 L146 88 L154 152 L176 148 L166 62 L132 40 Z'
+                    : sub === 'bomber' || sub === 'varsity'
+                      ? 'M72 40 L34 60 L26 138 L46 144 L54 86 L56 176 L144 176 L146 86 L154 144 L174 138 L166 60 L128 40 Z'
+                      : 'M68 40 L30 62 L22 142 L46 148 L54 88 L52 192 L148 192 L146 88 L154 148 L178 142 L170 62 L132 40 Z'
+                }
+                fill={`url(#grad-${uid})`}
+                stroke={outline}
+                strokeWidth="1.6"
+                strokeLinejoin="round"
+              />
+
+              {/* Contrast Varsity Sleeves & Striped Rib Trim */}
+              {sub === 'varsity' && (
+                <>
+                  <path d="M72 40 L34 60 L26 138 L46 144 L54 86 Z" fill={accentFill} stroke={outline} strokeWidth="1.4" />
+                  <path d="M128 40 L166 60 L174 138 L154 144 L146 86 Z" fill={accentFill} stroke={outline} strokeWidth="1.4" />
+                  <path d="M56 164 H144 V176 H56 Z" fill={accentFill} stroke={outline} strokeWidth="1.1" />
+                  <path d="M56 170 H144" stroke={outline} strokeWidth="1.2" />
+                  {[62, 86, 110, 134, 158].map((cy) => (
+                    <circle key={cy} cx="100" cy={cy} r="2.3" fill={metal} stroke={outline} strokeWidth="0.9" />
+                  ))}
+                  <path d="M70 76 H84 V92 H70 Z" fill={accentFill} stroke={outline} strokeWidth="1.1" />
+                </>
+              )}
+
+              {/* Leather Moto Jacket diagonal zip, lapels & waist belt */}
+              {sub === 'leather_jacket' && (
+                <>
+                  <path d="M74 42 L92 84 L74 88 Z M126 42 L108 84 L126 88 Z" fill={softShade} stroke={outline} strokeWidth="1.3" />
+                  <path d="M108 48 L92 178" stroke={metal} strokeWidth="2.6" />
+                  <path d="M62 114 L84 128 M116 114 L138 128" stroke={metal} strokeWidth="2" />
+                  <path d="M52 178 H148 V190 H52 Z" fill={softShade} stroke={outline} strokeWidth="1.2" />
+                  <rect x="92" y="177" width="14" height="14" rx="1" fill="none" stroke={metal} strokeWidth="1.8" />
+                </>
+              )}
+
+              {/* Denim Trucker Jacket */}
+              {sub === 'denim_jacket' && (
+                <>
+                  <path d="M74 34 L94 52 L106 52 L126 34" fill={softShade} stroke={outline} strokeWidth="1.3" />
+                  <rect x="64" y="76" width="24" height="28" fill={softShade} stroke={outline} strokeWidth="1.2" />
+                  <rect x="112" y="76" width="24" height="28" fill={softShade} stroke={outline} strokeWidth="1.2" />
+                  <path d="M64 84 H88 M112 84 H136" stroke={outline} strokeWidth="1.2" />
+                  <path d="M72 44 V186 M128 44 V186" stroke={accentFill} strokeWidth="1.2" strokeDasharray="3 2" />
+                  {[62, 92, 122, 152, 178].map((cy) => (
+                    <circle key={cy} cx="100" cy={cy} r="2.4" fill={metal} stroke={outline} strokeWidth="0.9" />
+                  ))}
+                </>
+              )}
+
+              {sub === 'puffer' && (
+                <g stroke={outline} strokeWidth="1.2" opacity="0.78">
+                  <path d="M54 76 H146 M53 106 H147 M53 136 H147 M52 166 H148" />
+                  <path d="M29 90 L50 96 M25 116 L48 122 M171 90 L150 96 M175 116 L152 122" />
+                  <path d="M100 42 V190" stroke={metal} strokeWidth="2.4" />
+                </g>
+              )}
+
+              {(sub === 'parka' || sub === 'bomber') && (
+                <>
+                  <path d="M100 42 V176" stroke={metal} strokeWidth="2.4" />
+                  <path d="M100 42 V176" stroke={outline} strokeWidth="1" />
+                </>
+              )}
+
+              {sub === 'bomber' && (
+                <>
+                  <path d="M56 164 H144 V176 H56 Z" fill={softShade} stroke={outline} strokeWidth="1.1" />
+                  <path d="M27 128 L47 134 M173 128 L153 134" stroke={outline} strokeWidth="1.4" />
+                  <path d="M64 128 L82 146 M136 128 L118 146" stroke={outline} strokeWidth="1.4" />
+                </>
+              )}
+
+              {sub === 'parka' && (
+                <>
+                  <path d="M54 116 H146" stroke={detail} strokeWidth="1.2" strokeDasharray="3 2" />
+                  <rect x="62" y="138" width="24" height="28" fill={softShade} stroke={outline} strokeWidth="1.2" />
+                  <rect x="114" y="138" width="24" height="28" fill={softShade} stroke={outline} strokeWidth="1.2" />
+                </>
+              )}
+            </g>
+          )}
+        </g>
+      )}
+
+      {/* ==================== BOTTOMS (9 SUBTYPES) ==================== */}
       {category === 'bottom' && sub === 'skirt' && (
         <g>
           <path
@@ -442,19 +633,35 @@ export function GarmentSilhouette({
             strokeLinejoin="round"
           />
           <path d="M66 44 H134" stroke={outline} strokeWidth="1.4" />
-          <g stroke={detail} strokeWidth="1">
+          <g stroke={detail} strokeWidth="1.1">
             <path d="M80 44 L64 204 M94 44 L88 208 M106 44 L112 208 M120 44 L136 204" />
           </g>
         </g>
       )}
 
-      {category === 'bottom' && sub !== 'skirt' && (
+      {category === 'bottom' && sub === 'shorts' && (
+        <g>
+          <path
+            d="M54 44 H146 L156 142 H108 L100 100 L92 142 H44 Z"
+            fill={`url(#grad-${uid})`}
+            stroke={outline}
+            strokeWidth="1.6"
+            strokeLinejoin="round"
+          />
+          <path d="M54 58 H146" stroke={outline} strokeWidth="1.3" />
+          <path d="M100 58 V94" stroke={detail} strokeWidth="1.1" />
+          <circle cx="100" cy="51" r="2.2" fill={accentFill} stroke={outline} strokeWidth="0.9" />
+          <path d="M54 78 Q68 88 54 96 M146 78 Q132 88 146 96" stroke={detail} strokeWidth="1" />
+        </g>
+      )}
+
+      {category === 'bottom' && sub !== 'skirt' && sub !== 'shorts' && (
         <g>
           <path
             d={
-              sub === 'wide_trousers'
+              sub === 'wide_trousers' || sub === 'pleated_trousers'
                 ? 'M56 24 H144 L158 214 H108 L100 100 L92 214 H42 Z'
-                : sub === 'joggers'
+                : sub === 'joggers' || sub === 'track_pants'
                   ? 'M58 24 H142 L148 198 L120 202 L100 104 L80 202 L52 198 Z'
                   : 'M58 24 H142 L148 212 H108 L100 102 L92 212 H52 Z'
             }
@@ -463,19 +670,20 @@ export function GarmentSilhouette({
             strokeWidth="1.6"
             strokeLinejoin="round"
           />
-          {/* Waistband & belt loops */}
           <path d="M58 38 H142" stroke={outline} strokeWidth="1.3" />
           {[68, 86, 114, 132].map((lx) => (
             <path key={lx} d={`M${lx} 24 V39`} stroke={outline} strokeWidth="1.6" />
           ))}
           <path d="M100 38 V78" stroke={detail} strokeWidth="1.1" />
           <circle cx="100" cy="31" r="2.2" fill={accentFill} stroke={outline} strokeWidth="0.9" />
-          {/* Subtype details */}
-          {sub === 'wide_trousers' && (
-            <path d="M76 42 L70 210 M124 42 L130 210" stroke={detail} strokeWidth="1" opacity="0.65" />
+          {(sub === 'wide_trousers' || sub === 'pleated_trousers') && (
+            <path d="M76 42 L70 210 M124 42 L130 210" stroke={detail} strokeWidth="1.1" opacity="0.7" />
+          )}
+          {sub === 'pleated_trousers' && (
+            <path d="M68 40 L66 76 M84 40 L84 76 M116 40 L116 76 M132 40 L134 76" stroke={outline} strokeWidth="1.1" />
           )}
           {sub === 'denim' && (
-            <g stroke={accentFill} strokeWidth="1.1" strokeDasharray="3 2">
+            <g stroke={accentFill} strokeWidth="1.2" strokeDasharray="3 2">
               <path d="M60 44 Q74 62 58 76 M140 44 Q126 62 142 76" />
               <path d="M56 44 V208 M144 44 V208" />
             </g>
@@ -489,14 +697,17 @@ export function GarmentSilhouette({
           )}
           {sub === 'joggers' && (
             <>
-              <path d="M95 36 L92 58 M105 36 L108 58" stroke={accentFill} strokeWidth="1.6" strokeLinecap="round" />
+              <path d="M95 36 L92 58 M105 36 L108 58" stroke={accentFill} strokeWidth="1.8" strokeLinecap="round" />
               <path d="M52 190 H82 M118 190 H148" stroke={outline} strokeWidth="1.4" />
             </>
+          )}
+          {sub === 'track_pants' && (
+            <path d="M59 38 L53 196 M64 38 L58 196 M141 38 L147 196 M136 38 L142 196" stroke={accentFill} strokeWidth="2" />
           )}
         </g>
       )}
 
-      {/* ==================== DRESSES ==================== */}
+      {/* ==================== DRESSES (4 SUBTYPES) ==================== */}
       {category === 'dress' && (
         <g>
           {sub === 'hoodie_dress' && (
@@ -515,37 +726,53 @@ export function GarmentSilhouette({
             strokeWidth="1.6"
             strokeLinejoin="round"
           />
-          {/* Waist seam / belt */}
           <path d="M75 90 H125" stroke={accentFill} strokeWidth="3.5" />
           <path d="M75 90 H125" stroke={outline} strokeWidth="1" />
           {sub === 'shirt_dress' && (
             <path d="M100 42 V214" stroke={detail} strokeWidth="1.1" strokeDasharray="3 3" />
           )}
           {sub === 'knit_dress' && (
-            <path d="M84 48 L72 210 M100 48 V214 M116 48 L128 210" stroke={detail} strokeWidth="0.9" opacity="0.55" />
+            <>
+              <path d="M56 54 H144 V210 H56 Z" fill={`url(#rib-${uid})`} opacity="0.4" />
+              <path d="M84 48 L72 210 M100 48 V214 M116 48 L128 210" stroke={detail} strokeWidth="0.9" opacity="0.55" />
+            </>
           )}
           {sub === 'midi_silk' && (
-            <path d="M88 94 Q80 156 68 212 M112 94 Q120 156 132 212" stroke={highlight} strokeWidth="1.2" />
+            <path d="M88 94 Q80 156 68 212 M112 94 Q120 156 132 212" stroke={highlight} strokeWidth="1.3" />
           )}
         </g>
       )}
 
-      {/* ==================== SHOES ==================== */}
-      {sub === 'sneakers' && (
+      {/* ==================== SHOES (7 SUBTYPES) ==================== */}
+      {(sub === 'sneakers' || sub === 'running_shoes') && (
         <g>
           <path
-            d="M42 96 L64 96 L82 118 L156 136 C168 140 172 152 168 164 L36 164 L36 134 Z"
+            d={
+              sub === 'running_shoes'
+                ? 'M40 94 L66 94 L86 116 L162 134 C172 138 176 150 170 162 L34 162 L34 130 Z'
+                : 'M42 96 L64 96 L82 118 L156 136 C168 140 172 152 168 164 L36 164 L36 134 Z'
+            }
             fill={`url(#grad-${uid})`}
             stroke={outline}
             strokeWidth="1.6"
             strokeLinejoin="round"
           />
-          {/* Sculpted rubber midsole */}
-          <path d="M35 162 H169 V176 H35 Z" fill="#F4EFE6" stroke={outline} strokeWidth="1.4" />
+          <path
+            d={
+              sub === 'running_shoes'
+                ? 'M33 160 H171 L168 179 Q100 185 33 176 Z'
+                : 'M35 162 H169 V176 H35 Z'
+            }
+            fill="#F4EFE6"
+            stroke={outline}
+            strokeWidth="1.4"
+          />
           <path d="M35 176 H169 V181 H35 Z" fill={accentFill} stroke={outline} strokeWidth="1" />
-          {/* Laces & side panel */}
-          <path d="M88 120 L98 114 M98 124 L108 118 M108 128 L118 122" stroke={accentFill} strokeWidth="2.2" strokeLinecap="round" />
-          <path d="M52 138 Q84 150 118 134" stroke={detail} strokeWidth="1.2" />
+          <path d="M88 120 L98 114 M98 124 L108 118 M108 128 L118 122" stroke={accentFill} strokeWidth="2.3" strokeLinecap="round" />
+          <path d="M52 138 Q84 150 118 134" stroke={detail} strokeWidth="1.4" />
+          {sub === 'running_shoes' && (
+            <path d="M68 132 L114 148 M76 126 L122 142" stroke={accentFill} strokeWidth="2.2" />
+          )}
         </g>
       )}
 
@@ -558,17 +785,14 @@ export function GarmentSilhouette({
             strokeWidth="1.6"
             strokeLinejoin="round"
           />
-          {/* Pull tab */}
           <path d="M54 54 V42 H64 V54" stroke={outline} strokeWidth="1.5" fill={accentFill} />
-          {/* Elastic gusset for Chelsea, lace eyelets for Lug boots */}
           {sub === 'chelsea_boots' ? (
             <path d="M68 68 H86 V126 Q77 132 68 126 Z" fill={softShade} stroke={outline} strokeWidth="1.1" />
           ) : (
-            <g stroke={accentFill} strokeWidth="2">
+            <g stroke={accentFill} strokeWidth="2.1">
               <path d="M98 70 L108 70 M100 86 L110 86 M102 102 L112 102" />
             </g>
           )}
-          {/* Welt & lugged sole */}
           <path
             d={
               sub === 'lug_boots'
@@ -582,7 +806,7 @@ export function GarmentSilhouette({
         </g>
       )}
 
-      {sub === 'loafers' && (
+      {(sub === 'loafers' || sub === 'derbies') && (
         <g>
           <path
             d="M44 116 C60 124 80 120 96 108 L122 126 L160 138 C170 142 172 156 166 164 L36 164 L38 136 Z"
@@ -591,32 +815,35 @@ export function GarmentSilhouette({
             strokeWidth="1.6"
             strokeLinejoin="round"
           />
-          {/* Penny strap */}
-          <path d="M84 114 L106 130 L96 138 L74 122 Z" fill={softShade} stroke={outline} strokeWidth="1.2" />
-          {/* Heel & sole */}
+          {sub === 'loafers' ? (
+            <path d="M84 114 L106 130 L96 138 L74 122 Z" fill={softShade} stroke={outline} strokeWidth="1.2" />
+          ) : (
+            <>
+              <path d="M90 116 L100 111 M98 122 L108 117 M106 128 L116 123" stroke={accentFill} strokeWidth="2" strokeLinecap="round" />
+              <path d="M126 138 Q136 150 156 154" stroke={detail} strokeWidth="1" strokeDasharray="2 2" />
+            </>
+          )}
           <path d="M36 164 H166 V171 H98 V168 H78 V176 H36 Z" fill="#1D1A17" stroke={outline} strokeWidth="1.1" />
         </g>
       )}
 
       {sub === 'sandals' && (
         <g>
-          {/* Footbed */}
           <path d="M36 154 Q102 162 170 154 L166 168 Q102 174 38 168 Z" fill={accentFill} stroke={outline} strokeWidth="1.5" />
-          {/* Straps */}
           <path d="M52 156 L58 118 H78 L72 156" fill={color} stroke={outline} strokeWidth="1.4" />
           <path d="M114 156 L128 132 H148 L138 156" fill={color} stroke={outline} strokeWidth="1.4" />
-          <rect x="60" y="122" width="8" height="6" fill="#C4A27A" stroke={outline} strokeWidth="1" />
+          <rect x="60" y="122" width="8" height="6" fill={metal} stroke={outline} strokeWidth="1" />
         </g>
       )}
 
-      {/* ==================== BAGS ==================== */}
+      {/* ==================== BAGS (4 SUBTYPES) ==================== */}
       {sub === 'tote' && (
         <g>
           <path d="M72 78 C72 34 128 34 128 78" stroke={outline} strokeWidth="3" fill="none" />
           <path d="M44 78 H156 L164 202 H36 Z" fill={`url(#grad-${uid})`} stroke={outline} strokeWidth="1.6" strokeLinejoin="round" />
           <path d="M44 102 H156" stroke={detail} strokeWidth="1.2" />
           <path d="M72 78 V126 M128 78 V126" stroke={outline} strokeWidth="1.4" />
-          <rect x="93" y="96" width="14" height="10" rx="1" fill={accentFill} stroke={outline} strokeWidth="1.1" />
+          <rect x="93" y="96" width="14" height="10" rx="1" fill={metal} stroke={outline} strokeWidth="1.1" />
         </g>
       )}
 
@@ -625,7 +852,7 @@ export function GarmentSilhouette({
           <path d="M62 84 C62 24 138 24 138 84" stroke={outline} strokeWidth="2.4" fill="none" />
           <rect x="44" y="84" width="112" height="96" rx="4" fill={`url(#grad-${uid})`} stroke={outline} strokeWidth="1.6" />
           <path d="M44 120 L100 134 L156 120" fill={softShade} stroke={outline} strokeWidth="1.3" />
-          <circle cx="100" cy="134" r="4" fill={accentFill} stroke={outline} strokeWidth="1.1" />
+          <circle cx="100" cy="134" r="4" fill={metal} stroke={outline} strokeWidth="1.1" />
         </g>
       )}
 
@@ -634,7 +861,7 @@ export function GarmentSilhouette({
           <path d="M84 44 C84 26 116 26 116 44" stroke={outline} strokeWidth="2.5" fill="none" />
           <path d="M52 72 C52 46 148 46 148 72 L154 198 H46 Z" fill={`url(#grad-${uid})`} stroke={outline} strokeWidth="1.6" strokeLinejoin="round" />
           <rect x="64" y="128" width="72" height="54" rx="2" fill={softShade} stroke={outline} strokeWidth="1.2" />
-          <path d="M68 142 H132" stroke={accentFill} strokeWidth="2" />
+          <path d="M68 142 H132" stroke={metal} strokeWidth="2" />
         </g>
       )}
 
@@ -642,11 +869,11 @@ export function GarmentSilhouette({
         <g>
           <path d="M36 94 H164 L156 164 H44 Z" fill={`url(#grad-${uid})`} stroke={outline} strokeWidth="1.6" strokeLinejoin="round" />
           <path d="M38 112 L100 128 L162 112" stroke={outline} strokeWidth="1.3" />
-          <rect x="90" y="122" width="20" height="8" rx="1" fill={accentFill} stroke={outline} strokeWidth="1.1" />
+          <rect x="90" y="122" width="20" height="8" rx="1" fill={metal} stroke={outline} strokeWidth="1.1" />
         </g>
       )}
 
-      {/* ==================== ACCESSORIES ==================== */}
+      {/* ==================== ACCESSORIES (10 SUBTYPES) ==================== */}
       {(sub === 'scarf' || sub === 'silk_scarf') && (
         <g>
           <path
@@ -673,8 +900,7 @@ export function GarmentSilhouette({
         <g>
           <path d="M46 132 C46 76 154 76 154 132 Z" fill={`url(#grad-${uid})`} stroke={outline} strokeWidth="1.6" />
           <path d="M100 84 V132 M74 90 Q86 112 84 132 M126 90 Q114 112 116 132" stroke={detail} strokeWidth="1" />
-          <circle cx="100" cy="82" r="3" fill={accentFill} stroke={outline} strokeWidth="1" />
-          {/* Curved visor */}
+          <circle cx="100" cy="82" r="3" fill={metal} stroke={outline} strokeWidth="1" />
           <path d="M44 132 Q112 122 178 142 Q128 154 44 138 Z" fill={softShade} stroke={outline} strokeWidth="1.5" />
         </g>
       )}
@@ -682,8 +908,9 @@ export function GarmentSilhouette({
       {sub === 'beanie' && (
         <g>
           <path d="M50 132 C50 68 150 68 150 132 Z" fill={`url(#grad-${uid})`} stroke={outline} strokeWidth="1.6" />
+          <path d="M50 96 C64 78 136 78 150 96 V132 H50 Z" fill={`url(#rib-${uid})`} opacity="0.4" />
           <rect x="46" y="128" width="108" height="34" rx="3" fill={color} stroke={outline} strokeWidth="1.6" />
-          <g stroke={detail} strokeWidth="1">
+          <g stroke={detail} strokeWidth="1.1">
             {[64, 82, 100, 118, 136].map((x) => (
               <path key={x} d={`M${x} 128 V162`} />
             ))}
@@ -695,15 +922,15 @@ export function GarmentSilhouette({
         <g>
           <path d="M26 106 H88 L82 144 Q56 154 32 142 Z" fill={color} stroke={outline} strokeWidth="2.5" strokeLinejoin="round" />
           <path d="M112 106 H174 L168 142 Q144 154 118 144 Z" fill={color} stroke={outline} strokeWidth="2.5" strokeLinejoin="round" />
-          <path d="M88 112 Q100 104 112 112" stroke={outline} strokeWidth="2.5" />
-          <path d="M36 114 L76 138 M122 114 L162 138" stroke={highlight} strokeWidth="2" opacity="0.7" />
+          <path d="M88 112 Q100 104 112 112" stroke={metal} strokeWidth="2.5" />
+          <path d="M36 114 L76 138 M122 114 L162 138" stroke={highlight} strokeWidth="2.2" opacity="0.7" />
         </g>
       )}
 
       {sub === 'belt' && (
         <g>
           <path d="M22 108 H152 V132 H22 Z" fill={`url(#grad-${uid})`} stroke={outline} strokeWidth="1.6" />
-          <rect x="148" y="102" width="28" height="36" rx="2" fill="none" stroke={accentFill} strokeWidth="3.5" />
+          <rect x="148" y="102" width="28" height="36" rx="2" fill="none" stroke={metal} strokeWidth="3.5" />
           <rect x="148" y="102" width="28" height="36" rx="2" fill="none" stroke={outline} strokeWidth="1.2" />
           <path d="M148 120 H164" stroke={outline} strokeWidth="2" />
           {[50, 68, 86, 104].map((x) => (
@@ -714,12 +941,46 @@ export function GarmentSilhouette({
 
       {sub === 'watch' && (
         <g>
-          <rect x="84" y="34" width="32" height="50" fill={color} stroke={outline} strokeWidth="1.5" />
-          <rect x="84" y="156" width="32" height="50" fill={color} stroke={outline} strokeWidth="1.5" />
-          <circle cx="100" cy="120" r="36" fill={accentFill} stroke={outline} strokeWidth="2" />
+          <rect x="83" y="32" width="34" height="52" rx="2" fill={color} stroke={outline} strokeWidth="1.5" />
+          <rect x="83" y="156" width="34" height="52" rx="2" fill={color} stroke={outline} strokeWidth="1.5" />
+          <path d="M90 32 V84 M110 32 V84 M90 156 V208 M110 156 V208" stroke={detail} strokeWidth="0.9" strokeDasharray="2 2" />
+          <rect x="135" y="114" width="6" height="12" rx="1" fill={metal} stroke={outline} strokeWidth="1" />
+          <circle cx="100" cy="120" r="36" fill={metal} stroke={outline} strokeWidth="2" />
           <circle cx="100" cy="120" r="29" fill="#FAF7F0" stroke={outline} strokeWidth="1" />
-          <path d="M100 120 V102 M100 120 L114 128" stroke="#151412" strokeWidth="2" strokeLinecap="round" />
+          <path d="M100 94 V98 M100 142 V146 M74 120 H78 M122 120 H126" stroke="#151412" strokeWidth="1.5" />
+          <path d="M100 120 V101 M100 120 L115 129" stroke="#151412" strokeWidth="2.1" strokeLinecap="round" />
           <circle cx="100" cy="120" r="2.2" fill="#8F1D2C" />
+        </g>
+      )}
+
+      {sub === 'tie' && (
+        <g>
+          <path d="M88 32 H112 L106 54 H94 Z" fill={color} stroke={outline} strokeWidth="1.5" strokeLinejoin="round" />
+          <path d="M94 54 H106 L116 176 L100 202 L84 176 Z" fill={`url(#grad-${uid})`} stroke={outline} strokeWidth="1.6" strokeLinejoin="round" />
+          <path d="M91 82 L109 98 M89 116 L111 134 M87 150 L113 168" stroke={accentFill} strokeWidth="2.4" opacity="0.78" />
+        </g>
+      )}
+
+      {sub === 'gloves' && (
+        <g>
+          <path
+            d="M66 94 L66 192 H124 V142 L144 122 C150 116 144 106 136 112 L120 128 V74 C120 66 110 66 110 74 V110 H104 V62 C104 54 94 54 94 62 V108 H88 V66 C88 58 78 58 78 66 V112 H74 V82 C74 74 66 74 66 94 Z"
+            fill={`url(#grad-${uid})`}
+            stroke={outline}
+            strokeWidth="1.6"
+            strokeLinejoin="round"
+          />
+          <path d="M66 176 H124" stroke={accentFill} strokeWidth="2.2" />
+          <path d="M84 134 V162 M96 132 V162 M108 134 V162" stroke={detail} strokeWidth="1" />
+        </g>
+      )}
+
+      {sub === 'bracelet' && (
+        <g>
+          <ellipse cx="100" cy="122" rx="44" ry="30" fill="none" stroke={outline} strokeWidth="10" />
+          <ellipse cx="100" cy="122" rx="44" ry="30" fill="none" stroke={color} strokeWidth="7" />
+          <ellipse cx="100" cy="122" rx="44" ry="30" fill="none" stroke={highlight} strokeWidth="2" strokeDasharray="16 28" />
+          <rect x="92" y="146" width="16" height="10" rx="2" fill={metal} stroke={outline} strokeWidth="1.2" />
         </g>
       )}
     </svg>

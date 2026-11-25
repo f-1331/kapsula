@@ -230,7 +230,15 @@ function scoreSingleCandidate(
   // Bag specialization by occasion
   if (g.category === 'bag') {
     const lower = `${g.name_en} ${g.name_uz}`.toLowerCase();
-    if (query.occasion === 'party' && (lower.includes('clutch') || lower.includes('klatch') || g.formality === 3)) {
+    if (
+      (query.occasion === 'party' || query.occasion === 'date') &&
+      (lower.includes('clutch') || lower.includes('klatch') || lower.includes('crossbody') || g.formality >= 2)
+    ) {
+      score += 2.5;
+    } else if (
+      (query.occasion === 'school' || query.occasion === 'university' || query.occasion === 'sport' || query.occasion === 'travel') &&
+      (lower.includes('backpack') || lower.includes('ryukzak') || lower.includes('tote') || lower.includes('crossbody'))
+    ) {
       score += 2.5;
     } else if (query.occasion === 'office' && (lower.includes('tote') || lower.includes('crossbody') || g.formality >= 2)) {
       score += 2;
@@ -522,7 +530,7 @@ function generateCandidatesForLevel(
         : outerPool.slice(0, 3);
 
   const bagChoices: Array<Garment | null> =
-    query.occasion === 'walk'
+    query.occasion === 'walk' || query.occasion === 'sport'
       ? [null, ...(bagPool[0] ? [bagPool[0]] : [])]
       : bagPool.length > 0
         ? bagPool.slice(0, 2)
@@ -817,4 +825,100 @@ export function findNearestGarmentsByColor(
     })
     .sort((a, b) => a.distance - b.distance)
     .slice(0, limit);
+}
+
+export interface SmartPairingAdvice {
+  summaryUz: string;
+  recommendedAdd: Garment | null;
+  recommendedCategoryLabel: string;
+  projectedScore: number;
+  scoreGain: number;
+}
+
+/**
+ * Inspects current board/photo items and tells the user clearly what missing piece
+ * (e.g., a watch, sneakers, jacket, or bag) would elevate the outfit.
+ */
+export function getSmartPairingAdvice(
+  currentGarments: Garment[],
+  manifest: Manifest,
+  query: StylistQuery,
+): SmartPairingAdvice | null {
+  if (currentGarments.length === 0) return null;
+
+  const palette =
+    query.palette === 'any'
+      ? null
+      : manifest.palettes.find((p) => p.id === query.palette) ?? null;
+
+  const currentScore = analyzeGarmentsHarmony(currentGarments, palette).score;
+  const cats = new Set(currentGarments.map((g) => g.category));
+  const ids = new Set(currentGarments.map((g) => g.id));
+
+  // Determine the highest-value missing piece
+  let targetCat: Category = 'accessory';
+  let reasonLead = 'Qoʻshimcha detal bilan obrazni yakunlang:';
+
+  if (!cats.has('shoes')) {
+    targetCat = 'shoes';
+    reasonLead = 'Poyabzal tanlanmagan —';
+  } else if (!cats.has('bottom') && !cats.has('dress') && cats.has('top')) {
+    targetCat = 'bottom';
+    reasonLead = 'Yuqori qismga mos pastki qism qoʻshing:';
+  } else if (!cats.has('top') && !cats.has('dress') && cats.has('bottom')) {
+    targetCat = 'top';
+    reasonLead = 'Shimga mos yuqori qism tanlang:';
+  } else if ((query.weather === 'cool' || query.weather === 'cold' || query.rain) && !cats.has('outerwear')) {
+    targetCat = 'outerwear';
+    reasonLead = 'Ob-havo salqin/nam — ustki qatlam qoʻshsangiz:';
+  } else if (!cats.has('bag') && query.occasion !== 'sport') {
+    targetCat = 'bag';
+    reasonLead = 'Kundalik qulaylik uchun sumka qoʻshilsa:';
+  } else {
+    targetCat = 'accessory';
+    reasonLead = 'Obrazni boyitish uchun:';
+  }
+
+  const pool = getGarmentsByCategory(manifest.garments, targetCat)
+    .filter((g) => !ids.has(g.id) && isGarmentGenderEligible(g, query.gender));
+
+  // Sample diverse candidates across colors/subtypes
+  const seen = new Set<string>();
+  const shortlist = pool
+    .filter((g) => {
+      const k = `${g.color}:${g.id.split('-')[1] ?? ''}`;
+      if (seen.has(k)) return false;
+      seen.add(k);
+      return true;
+    })
+    .slice(0, 28);
+
+  let bestItem: Garment | null = null;
+  let bestScore = currentScore;
+
+  for (const cand of shortlist) {
+    const score = analyzeGarmentsHarmony([...currentGarments, cand], palette).score;
+    const bonus =
+      cand.occasions.includes(query.occasion) && cand.weather.includes(query.weather) ? 2 : 0;
+    if (score + bonus > bestScore || !bestItem) {
+      bestScore = score;
+      bestItem = cand;
+    }
+  }
+
+  if (!bestItem) return null;
+
+  const gain = Math.max(0, bestScore - currentScore);
+  const hasWatchOrAcc = bestItem.category === 'accessory';
+  const summaryUz = hasWatchOrAcc
+    ? `${reasonLead} «${bestItem.name_uz}» (${bestItem.brand ?? 'Kapsula'}) qoʻshilsa, koʻrinish juda tartibli chiqadi${gain > 0 ? ` (+${gain} ball)` : ''}.`
+    : `${reasonLead} «${bestItem.name_uz}» (${bestItem.brand ?? 'Kapsula'}) bilan birlashtiring — uygʻunlik ${bestScore}/100 ga chiqadi.`;
+
+  return {
+    summaryUz,
+    recommendedAdd: bestItem,
+    recommendedCategoryLabel: UZ.categories[targetCat],
+    projectedScore: bestScore,
+    scoreGain: gain,
+  };
 }

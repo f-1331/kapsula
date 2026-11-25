@@ -12,11 +12,21 @@ export const CategorySchema = z.enum([
 ]);
 export const WeatherBandSchema = z.enum(['hot', 'warm', 'cool', 'cold']);
 export const WeatherTagSchema = z.enum(['hot', 'warm', 'cool', 'cold', 'rain']);
-export const OccasionSchema = z.enum(['office', 'walk', 'party']);
+export const OccasionSchema = z.enum([
+  'office',
+  'university',
+  'school',
+  'walk',
+  'party',
+  'date',
+  'sport',
+  'travel',
+]);
 export const GarmentGenderSchema = z.enum(['u', 'w', 'm']);
 export const LookModelSchema = z.enum(['w', 'm']);
 export const WarmthSchema = z.union([z.literal(0), z.literal(1), z.literal(2), z.literal(3)]);
 export const FormalitySchema = z.union([z.literal(0), z.literal(1), z.literal(2), z.literal(3)]);
+export const PriceTierSchema = z.enum(['budget', 'mid', 'premium']);
 export const HexColorSchema = z.string().regex(/^#[0-9a-fA-F]{6}$/);
 
 export const PaletteSchema = z.object({
@@ -44,6 +54,9 @@ export const GarmentSchema = z.object({
   warmth: WarmthSchema,
   formality: FormalitySchema,
   gender: GarmentGenderSchema,
+  brand: z.string().optional(),
+  priceTier: PriceTierSchema.optional(),
+  isUserUploaded: z.boolean().optional(),
 });
 
 export const LookSchema = z.object({
@@ -76,6 +89,15 @@ export const ManifestSchema = z.object({
 
 export type PaletteId = z.infer<typeof PaletteIdSchema>;
 export type Category = z.infer<typeof CategorySchema>;
+export const CATEGORY_ORDER: readonly Category[] = [
+  'outerwear',
+  'top',
+  'bottom',
+  'dress',
+  'shoes',
+  'bag',
+  'accessory',
+] as const;
 export type WeatherBand = z.infer<typeof WeatherBandSchema>;
 export type WeatherTag = z.infer<typeof WeatherTagSchema>;
 export type Occasion = z.infer<typeof OccasionSchema>;
@@ -84,6 +106,7 @@ export type LookModel = z.infer<typeof LookModelSchema>;
 export type UserGenderFilter = 'w' | 'm' | 'all';
 export type WarmthLevel = z.infer<typeof WarmthSchema>;
 export type FormalityLevel = z.infer<typeof FormalitySchema>;
+export type PriceTier = z.infer<typeof PriceTierSchema>;
 export type Palette = z.infer<typeof PaletteSchema>;
 export type Garment = z.infer<typeof GarmentSchema>;
 export type Look = z.infer<typeof LookSchema>;

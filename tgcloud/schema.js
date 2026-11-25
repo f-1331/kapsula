@@ -16,6 +16,7 @@ export const users = table(
     longitude: real('longitude').notNull().default(69.2401),
     lastTempC: integer('last_temp_c'),
     genderPref: text('gender_pref').notNull().default('all'),
+    lastView: text('last_view').default('cover'),
     stateStep: text('state_step'),
     statePayload: json('state_payload'),
     createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`(unixepoch())`),

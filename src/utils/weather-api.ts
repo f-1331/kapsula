@@ -240,3 +240,63 @@ export async function searchCities(query: string): Promise<GeoLocationInfo[]> {
     }))
     .filter((r) => r.city.length > 0 && r.country.length > 0);
 }
+
+export interface DailyForecastItem {
+  date: string;
+  dayNameUz: string;
+  tempMaxC: number;
+  tempMinC: number;
+  rain: boolean;
+  conditionUz: string;
+  weatherBand: WeatherBand;
+}
+
+const WEEKDAY_NAMES_UZ = ['Yak', 'Dush', 'Sesh', 'Chor', 'Pay', 'Jum', 'Shan'];
+
+/**
+ * Fetches 7-day daily weather forecast via Open-Meteo (no key) for the Weekly Outfit Planner.
+ */
+export async function fetchWeeklyForecast(
+  location: GeoLocationInfo,
+): Promise<DailyForecastItem[]> {
+  const url =
+    `https://api.open-meteo.com/v1/forecast?latitude=${location.latitude}&longitude=${location.longitude}` +
+    '&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,weather_code&forecast_days=7&timezone=auto';
+
+  const data = (await fetchJsonWithTimeout(url, 4000)) as {
+    daily?: {
+      time?: string[];
+      temperature_2m_max?: number[];
+      temperature_2m_min?: number[];
+      precipitation_sum?: number[];
+      weather_code?: number[];
+    };
+  } | null;
+
+  const times = data?.daily?.time;
+  if (!times || !Array.isArray(times) || times.length === 0) {
+    return [];
+  }
+
+  return times.slice(0, 7).map((dateStr, idx) => {
+    const tMax = Math.round(data.daily?.temperature_2m_max?.[idx] ?? 18);
+    const tMin = Math.round(data.daily?.temperature_2m_min?.[idx] ?? 10);
+    const precip = data.daily?.precipitation_sum?.[idx] ?? 0;
+    const code = data.daily?.weather_code?.[idx] ?? 1;
+    const info = describeWeatherCodeUz(code);
+    const parsed = new Date(`${dateStr}T12:00:00`);
+    const dayNameUz = Number.isNaN(parsed.getTime())
+      ? `${idx + 1}-kun`
+      : WEEKDAY_NAMES_UZ[parsed.getDay()] ?? `${idx + 1}-kun`;
+    const avgDayTemp = Math.round((tMax * 0.7 + tMin * 0.3));
+    return {
+      date: dateStr,
+      dayNameUz,
+      tempMaxC: tMax,
+      tempMinC: tMin,
+      rain: info.isRain || precip > 0.8,
+      conditionUz: info.label,
+      weatherBand: tempToWeatherBand(avgDayTemp),
+    };
+  });
+}

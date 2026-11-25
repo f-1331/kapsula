@@ -28,6 +28,23 @@ export function GarmentImage({ garment, className = '', eager = false }: Garment
     }
   }, [garment.image]);
 
+  const isDataUrl = garment.image.startsWith('data:image/');
+
+  if (isDataUrl && !failed) {
+    return (
+      <img
+        ref={imgRef}
+        src={garment.image}
+        alt={garment.name_uz}
+        width={garment.w}
+        height={garment.h}
+        draggable={false}
+        onError={() => setFailed(true)}
+        className={`object-cover rounded-sm border border-[var(--hairline)] select-none ${className}`}
+      />
+    );
+  }
+
   if (!hasWebpAssets || failed) {
     return (
       <div

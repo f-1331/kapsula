@@ -24,6 +24,7 @@ import {
   boardSlotsToGarments,
   findBestHarmonizeSwap,
   generateSeededOutfit,
+  getSmartPairingAdvice,
   isGarmentGenderEligible,
   type AutoHarmonizeSuggestion,
   type BoardSlots,
@@ -114,6 +115,8 @@ export function AtelierSection() {
   const past = useKapsulaStore((s) => s.past);
   const future = useKapsulaStore((s) => s.future);
   const savedOutfits = useKapsulaStore((s) => s.savedOutfits);
+  const atelierBrandFilter = useKapsulaStore((s) => s.atelierBrandFilter);
+  const customGarments = useKapsulaStore((s) => s.customGarments);
   const missingIdsNotice = useKapsulaStore((s) => s.missingIdsNotice);
   const lastScoreAnnouncement = useKapsulaStore((s) => s.lastScoreAnnouncement);
 
@@ -126,18 +129,20 @@ export function AtelierSection() {
   const saveOutfit = useKapsulaStore((s) => s.saveOutfit);
   const deleteSavedOutfit = useKapsulaStore((s) => s.deleteSavedOutfit);
   const loadItemsToBoard = useKapsulaStore((s) => s.loadItemsToBoard);
+  const setAtelierBrandFilter = useKapsulaStore((s) => s.setAtelierBrandFilter);
   const incrementRandomSeed = useKapsulaStore((s) => s.incrementRandomSeed);
   const setScoreAnnouncement = useKapsulaStore((s) => s.setScoreAnnouncement);
   const dismissMissingNotice = useKapsulaStore((s) => s.dismissMissingNotice);
   const buildShareUrl = useKapsulaStore((s) => s.buildShareUrl);
 
-  // Tray filters & pagination for 2,134+ garments
+  // Tray filters & pagination for 3,894+ garments
   const [activeCategory, setActiveCategory] = useState<Category | 'all'>('all');
   const [activeSubtype, setActiveSubtype] = useState<string>('all');
   const [searchText, setSearchText] = useState('');
   const [visibleLimit, setVisibleLimit] = useState(TRAY_PAGE_SIZE);
   const [filterWeather, setFilterWeather] = useState(false);
   const [filterPalette, setFilterPalette] = useState(false);
+  const [onlyCustomFilter, setOnlyCustomFilter] = useState(false);
 
   // Mobile workspace mode + bottom sheet
   const [mobilePanel, setMobilePanel] = useState<'board' | 'tray' | 'lab'>('board');
@@ -196,6 +201,11 @@ export function AtelierSection() {
     return tips;
   }, [query.weather, query.occasion, placedGarments, slots.shoes, byId]);
 
+  const smartAdvice = useMemo(
+    () => getSmartPairingAdvice(placedGarments, manifest, query),
+    [placedGarments, manifest, query],
+  );
+
   const prevScoreRef = useRef<number>(harmony.score);
   useEffect(() => {
     if (prevScoreRef.current !== harmony.score && placedGarments.length > 0) {
@@ -241,33 +251,52 @@ export function AtelierSection() {
   // Reset pagination when filters change
   useEffect(() => {
     setVisibleLimit(TRAY_PAGE_SIZE);
-  }, [activeCategory, activeSubtype, searchText, filterWeather, filterPalette, query.gender]);
+  }, [
+    activeCategory,
+    activeSubtype,
+    searchText,
+    filterWeather,
+    filterPalette,
+    query.gender,
+    atelierBrandFilter,
+    onlyCustomFilter,
+  ]);
 
-  // Filtered tray garments across 2,134+ items
+  // Filtered tray garments across 3,894+ branded items + user photos
   const filteredTrayGarments = useMemo(() => {
     const q = searchText.trim().toLowerCase();
     const subtypeKw = SUBTYPE_CHIPS.find((c) => c.id === activeSubtype)?.keyword ?? '';
 
     return manifest.garments.filter((g) => {
+      if (onlyCustomFilter && !g.isUserUploaded) return false;
       if (!isGarmentGenderEligible(g, query.gender)) return false;
+      if (atelierBrandFilter !== 'all' && g.brand !== atelierBrandFilter) return false;
       if (activeCategory !== 'all' && g.category !== activeCategory) return false;
       if (filterWeather && !g.weather.includes(query.weather)) return false;
       if (filterPalette && query.palette !== 'any' && !g.palettes.includes(query.palette)) {
         return false;
       }
-      if (subtypeKw && !`${g.name_uz} ${g.name_en} ${g.id}`.toLowerCase().includes(subtypeKw)) {
+      if (
+        subtypeKw &&
+        !`${g.name_uz} ${g.name_en} ${g.id} ${g.brand ?? ''}`.toLowerCase().includes(subtypeKw)
+      ) {
         return false;
       }
-      if (q && !`${g.name_uz} ${g.name_en} ${g.id}`.toLowerCase().includes(q)) {
+      if (
+        q &&
+        !`${g.name_uz} ${g.name_en} ${g.id} ${g.brand ?? ''}`.toLowerCase().includes(q)
+      ) {
         return false;
       }
       return true;
     });
   }, [
     manifest.garments,
+    onlyCustomFilter,
     query.gender,
     query.weather,
     query.palette,
+    atelierBrandFilter,
     activeCategory,
     activeSubtype,
     searchText,
@@ -595,8 +624,31 @@ export function AtelierSection() {
         })}
       </div>
 
-      {/* Weather & Palette toggles */}
+      {/* Weather, Palette, Brand & Custom Photo toggles */}
       <div className="flex flex-wrap gap-1.5 mb-2.5">
+        {atelierBrandFilter !== 'all' && (
+          <button
+            type="button"
+            onClick={() => setAtelierBrandFilter('all')}
+            className="min-h-[34px] px-2.5 py-1 text-[11px] border border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)] font-medium cursor-pointer flex items-center gap-1.5"
+          >
+            <span>Brend: {atelierBrandFilter}</span>
+            <span aria-hidden="true">×</span>
+          </button>
+        )}
+        {customGarments.length > 0 && (
+          <button
+            type="button"
+            onClick={() => setOnlyCustomFilter((v) => !v)}
+            className={`min-h-[34px] px-2.5 py-1 text-[11px] border transition-colors cursor-pointer ${
+              onlyCustomFilter
+                ? 'border-[var(--ink)] bg-[var(--ink)] text-[var(--paper)]'
+                : 'border-[var(--hairline-strong)] bg-[var(--paper)] text-[var(--ink-2)] hover:border-[var(--ink)]'
+            }`}
+          >
+            Shaxsiy ({customGarments.length})
+          </button>
+        )}
         <button
           type="button"
           onClick={() => setFilterWeather((v) => !v)}
@@ -685,7 +737,7 @@ export function AtelierSection() {
     <section
       id="atelye"
       aria-labelledby="atelye-heading"
-      className="border-b border-[var(--hairline)] bg-[var(--paper)]"
+      className="min-h-[calc(100dvh-7rem)] border-b border-[var(--hairline)] bg-[var(--paper)]"
     >
       <div className="sr-only" aria-live="polite" aria-atomic="true">
         {lastScoreAnnouncement}
@@ -920,8 +972,8 @@ export function AtelierSection() {
                   </div>
                 )}
 
-                <div className="grid grid-cols-12 gap-2 sm:gap-3 h-[490px] sm:h-[560px]">
-                  <div className="col-span-4 flex flex-col gap-2 sm:gap-2.5 h-full">
+                <div className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 sm:gap-3 sm:h-[560px]">
+                  <div className="sm:col-span-4 grid grid-cols-2 sm:flex sm:flex-col gap-2 sm:gap-2.5 sm:h-full">
                     <AtelierSlot
                       slotKey="outerwear"
                       label={UZ.slots.outerwear}
@@ -929,11 +981,11 @@ export function AtelierSection() {
                       isHighlighted={dragTargetSlot === 'outerwear'}
                       isPulsing={harmonizeSuggestion?.slot === 'outerwear'}
                       previewDelta={dragTargetSlot === 'outerwear' ? dragPreviewDelta : null}
-                      className="flex-1 min-h-0"
+                      className="col-span-2 h-[170px] sm:h-auto sm:flex-1 sm:min-h-0"
                       onRemove={removeSlot}
                       onOpenPicker={handleSlotPickerOpen}
                     />
-                    <div className="grid grid-cols-2 gap-1.5 sm:gap-2 h-[126px] sm:h-[142px] shrink-0">
+                    <div className="col-span-2 grid grid-cols-2 gap-2 h-[130px] sm:h-[142px] shrink-0">
                       <AtelierSlot
                         slotKey="accessory1"
                         label={UZ.slots.accessory}
@@ -959,7 +1011,7 @@ export function AtelierSection() {
                     </div>
                   </div>
 
-                  <div className="col-span-4 flex flex-col h-full">
+                  <div className="sm:col-span-4 flex flex-col sm:h-full">
                     {dress && dragTargetSlot !== 'top' && dragTargetSlot !== 'bottom' ? (
                       <AtelierSlot
                         slotKey="dress"
@@ -968,12 +1020,12 @@ export function AtelierSection() {
                         isHighlighted={dragTargetSlot === 'dress'}
                         isPulsing={harmonizeSuggestion?.slot === 'dress'}
                         previewDelta={dragTargetSlot === 'dress' ? dragPreviewDelta : null}
-                        className="h-full"
+                        className="h-[220px] sm:h-full"
                         onRemove={removeSlot}
                         onOpenPicker={handleSlotPickerOpen}
                       />
                     ) : (
-                      <div className="flex flex-col h-full gap-2 sm:gap-2.5">
+                      <div className="grid grid-cols-2 sm:flex sm:flex-col h-[176px] sm:h-full gap-2 sm:gap-2.5">
                         <AtelierSlot
                           slotKey="top"
                           label={UZ.slots.top}
@@ -981,7 +1033,7 @@ export function AtelierSection() {
                           isHighlighted={dragTargetSlot === 'top'}
                           isPulsing={harmonizeSuggestion?.slot === 'top'}
                           previewDelta={dragTargetSlot === 'top' ? dragPreviewDelta : null}
-                          className="flex-1 min-h-0"
+                          className="h-full sm:h-auto sm:flex-1 sm:min-h-0"
                           onRemove={removeSlot}
                           onOpenPicker={handleSlotPickerOpen}
                         />
@@ -992,7 +1044,7 @@ export function AtelierSection() {
                           isHighlighted={dragTargetSlot === 'bottom'}
                           isPulsing={harmonizeSuggestion?.slot === 'bottom'}
                           previewDelta={dragTargetSlot === 'bottom' ? dragPreviewDelta : null}
-                          className="flex-1 min-h-0"
+                          className="h-full sm:h-auto sm:flex-1 sm:min-h-0"
                           onRemove={removeSlot}
                           onOpenPicker={handleSlotPickerOpen}
                         />
@@ -1000,7 +1052,7 @@ export function AtelierSection() {
                     )}
                   </div>
 
-                  <div className="col-span-4 flex flex-col gap-2 sm:gap-2.5 h-full">
+                  <div className="sm:col-span-4 grid grid-cols-2 sm:flex sm:flex-col gap-2 sm:gap-2.5 sm:h-full">
                     <AtelierSlot
                       slotKey="bag"
                       label={UZ.slots.bag}
@@ -1008,7 +1060,7 @@ export function AtelierSection() {
                       isHighlighted={dragTargetSlot === 'bag'}
                       isPulsing={harmonizeSuggestion?.slot === 'bag'}
                       previewDelta={dragTargetSlot === 'bag' ? dragPreviewDelta : null}
-                      className="flex-1 min-h-0"
+                      className="h-[164px] sm:h-auto sm:flex-1 sm:min-h-0"
                       onRemove={removeSlot}
                       onOpenPicker={handleSlotPickerOpen}
                     />
@@ -1019,13 +1071,40 @@ export function AtelierSection() {
                       isHighlighted={dragTargetSlot === 'shoes'}
                       isPulsing={harmonizeSuggestion?.slot === 'shoes'}
                       previewDelta={dragTargetSlot === 'shoes' ? dragPreviewDelta : null}
-                      className="flex-1 min-h-0"
+                      className="h-[164px] sm:h-auto sm:flex-1 sm:min-h-0"
                       onRemove={removeSlot}
                       onOpenPicker={handleSlotPickerOpen}
                     />
                   </div>
                 </div>
               </div>
+
+              {/* Smart Pairing Advisor Card */}
+              {smartAdvice && (
+                <div className="border border-[var(--hairline-strong)] bg-[var(--paper-elevated)] p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="micro-label text-[var(--accent)] mb-1">
+                      {UZ.atelier.smartAdvisorTitle}
+                    </p>
+                    <p className="text-xs sm:text-sm text-[var(--ink)] leading-relaxed">
+                      {smartAdvice.summaryUz}
+                    </p>
+                  </div>
+                  {smartAdvice.recommendedAdd && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (smartAdvice.recommendedAdd) {
+                          placeGarmentOnBoard(smartAdvice.recommendedAdd);
+                        }
+                      }}
+                      className="min-h-[40px] shrink-0 bg-[var(--accent)] text-[#FAF7F0] px-3.5 py-2 text-[11px] uppercase tracking-[0.12em] font-medium hover:opacity-90 cursor-pointer"
+                    >
+                      {UZ.atelier.smartAdvisorAdd}
+                    </button>
+                  )}
+                </div>
+              )}
 
               {savedOpen && (
                 <div className="border border-[var(--hairline-strong)] bg-[var(--paper-elevated)] p-4">
@@ -1161,8 +1240,8 @@ export function AtelierSection() {
           )}
         </DndContext>
 
-        {/* Sticky Mobile Bottom Bar */}
-        <div className="md:hidden sticky bottom-0 z-30 mt-6 -mx-4 border-t border-[var(--hairline-strong)] bg-[var(--paper)]/95 backdrop-blur-sm px-4 py-2.5 flex items-center justify-between gap-2">
+        {/* Sticky Mobile Action Bar (docked neatly above fixed bottom app nav) */}
+        <div className="md:hidden sticky bottom-14 z-30 mt-6 -mx-4 border-t border-[var(--hairline-strong)] bg-[var(--paper)]/96 backdrop-blur-sm px-4 py-2.5 flex items-center justify-between gap-2">
           <div className="flex items-baseline gap-2 min-w-0">
             <span className="font-numeral text-3xl leading-none text-[var(--accent)]">
               {harmony.score}
