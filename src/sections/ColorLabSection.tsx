@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { analyzeHarmony, normalizeHex } from '../engine/color';
 import { findNearestGarmentsByColor } from '../engine/stylist';
-import { UZ } from '../i18n/uz';
+import { useTranslation } from '../i18n/useTranslation';
 import { useKapsulaStore } from '../store/useKapsulaStore';
 import { GarmentImage } from '../components/GarmentImage';
 import { RangLaboratoriyasi } from '../components/RangLaboratoriyasi';
@@ -21,6 +21,7 @@ const COLOR_PRESETS: Array<{ label: string; colors: string[] }> = [
 ];
 
 export function ColorLabSection() {
+  const { t, localize } = useTranslation();
   const manifest = useKapsulaStore((s) => s.manifest);
   const placeGarmentOnBoard = useKapsulaStore((s) => s.placeGarmentOnBoard);
   const setActiveView = useKapsulaStore((s) => s.setActiveView);
@@ -108,17 +109,17 @@ export function ColorLabSection() {
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-[var(--hairline)] pb-6 mb-8">
           <div>
             <span className="micro-label text-[var(--muted)] block mb-2">
-              {UZ.sections.ranglar}
+              {t.sections.ranglar}
             </span>
             <h2
               id="ranglar-heading"
               className="font-editorial text-3xl sm:text-5xl leading-none text-[var(--ink)]"
             >
-              {UZ.colorLab.standalone.title}
+              {t.colorLab.standalone.title}
             </h2>
           </div>
           <p className="text-sm sm:text-base text-[var(--ink-2)] max-w-md">
-            {UZ.colorLab.standalone.subtitle}
+            {t.colorLab.standalone.subtitle}
           </p>
         </div>
 
@@ -128,7 +129,7 @@ export function ColorLabSection() {
             {/* Presets */}
             <div className="flex flex-wrap items-center gap-2">
               <span className="micro-label text-[var(--muted)] mr-1">
-                {UZ.colorLab.standalone.presetsLabel}:
+                {t.colorLab.standalone.presetsLabel}:
               </span>
               {COLOR_PRESETS.map((preset) => (
                 <button
@@ -146,7 +147,7 @@ export function ColorLabSection() {
                       />
                     ))}
                   </span>
-                  <span>{preset.label}</span>
+                  <span>{localize(preset.label)}</span>
                 </button>
               ))}
             </div>
@@ -159,7 +160,9 @@ export function ColorLabSection() {
                   className="border border-[var(--hairline-strong)] bg-[var(--paper-elevated)] p-3.5 sm:p-4 flex flex-wrap sm:flex-nowrap items-center gap-3"
                 >
                   <label className="relative h-12 w-12 shrink-0 border border-[var(--ink)]/25 cursor-pointer overflow-hidden">
-                    <span className="sr-only">Rang {idx + 1}</span>
+                    <span className="sr-only">
+                      {localize('Rang')} {idx + 1}
+                    </span>
                     <input
                       type="color"
                       value={entry.hex}
@@ -190,7 +193,7 @@ export function ColorLabSection() {
                     />
                     {entry.invalid && (
                       <span className="text-[11px] text-[var(--accent)] mt-0.5 block">
-                        {UZ.colorLab.standalone.hexInvalid}
+                        {t.colorLab.standalone.hexInvalid}
                       </span>
                     )}
                   </div>
@@ -200,14 +203,14 @@ export function ColorLabSection() {
                     onClick={() => setWardrobePickerSlotId(entry.id)}
                     className="min-h-[44px] border border-[var(--hairline-strong)] bg-[var(--paper)] px-3.5 py-2 text-xs text-[var(--ink)] hover:border-[var(--ink)] cursor-pointer whitespace-nowrap"
                   >
-                    {UZ.colorLab.standalone.pickFromWardrobe}
+                    {t.colorLab.standalone.pickFromWardrobe}
                   </button>
 
                   {entries.length > 2 && (
                     <button
                       type="button"
                       onClick={() => removeColorSlot(entry.id)}
-                      aria-label={UZ.colorLab.standalone.removeColor}
+                      aria-label={t.colorLab.standalone.removeColor}
                       className="min-h-[44px] min-w-[44px] border border-[var(--hairline)] text-sm text-[var(--muted)] hover:border-[var(--accent)] hover:text-[var(--accent)] cursor-pointer"
                     >
                       ×
@@ -223,7 +226,7 @@ export function ColorLabSection() {
                 onClick={addColorSlot}
                 className="min-h-[46px] w-full border border-dashed border-[var(--hairline-strong)] bg-[var(--paper)]/70 py-3 text-xs uppercase tracking-[0.14em] text-[var(--ink)] hover:border-[var(--ink)] hover:bg-[var(--paper-elevated)] transition-colors cursor-pointer"
               >
-                + {UZ.colorLab.standalone.addColor}
+                + {t.colorLab.standalone.addColor}
               </button>
             )}
 
@@ -231,10 +234,10 @@ export function ColorLabSection() {
             <div className="border-t border-[var(--hairline)] pt-6">
               <div className="flex flex-wrap items-baseline justify-between gap-2 mb-4">
                 <h3 className="micro-label text-[var(--ink)]">
-                  {UZ.colorLab.standalone.matchingTitle}
+                  {t.colorLab.standalone.matchingTitle}
                 </h3>
                 <span className="text-xs text-[var(--muted)]">
-                  {UZ.colorLab.standalone.matchingSub}
+                  {t.colorLab.standalone.matchingSub}
                 </span>
               </div>
 
@@ -250,7 +253,7 @@ export function ColorLabSection() {
                       </div>
                       <div className="flex items-center justify-between gap-1.5 mb-1">
                         <span className="text-xs font-medium text-[var(--ink)] line-clamp-1">
-                          {garment.name_uz}
+                          {localize(garment.name_uz)}
                         </span>
                         <span
                           className="h-3 w-3 rounded-full border border-[var(--ink)]/20 shrink-0"
@@ -270,7 +273,7 @@ export function ColorLabSection() {
                       }}
                       className="min-h-[40px] w-full border border-[var(--hairline-strong)] px-2 py-1.5 text-[10px] uppercase tracking-[0.12em] text-[var(--ink)] hover:border-[var(--ink)] hover:bg-[var(--paper-2)] cursor-pointer"
                     >
-                      {UZ.colorLab.standalone.applyToAtelier}
+                      {t.colorLab.standalone.applyToAtelier}
                     </button>
                   </div>
                 ))}
@@ -290,21 +293,24 @@ export function ColorLabSection() {
         <div
           role="dialog"
           aria-modal="true"
-          aria-label={UZ.colorLab.standalone.pickFromWardrobe}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--ink)]/50 p-4"
+          aria-label={t.colorLab.standalone.pickFromWardrobe}
+          className="fixed inset-0 z-50 flex items-start sm:items-center justify-center overflow-y-auto bg-black/75 backdrop-blur-sm p-3 sm:p-6"
           onClick={(e) => {
             if (e.target === e.currentTarget) setWardrobePickerSlotId(null);
           }}
         >
-          <div className="w-full max-w-xl max-h-[80dvh] border border-[var(--ink)] bg-[var(--paper-elevated)] p-5 flex flex-col">
+          <div
+            className="relative my-auto w-full max-w-xl max-h-[84dvh] border border-[var(--ink)] bg-[var(--paper-elevated)] p-5 flex flex-col shadow-2xl"
+            style={{ backgroundColor: 'var(--paper-elevated)' }}
+          >
             <div className="flex items-center justify-between border-b border-[var(--hairline)] pb-3 mb-4">
               <h3 className="font-editorial text-2xl text-[var(--ink)]">
-                {UZ.colorLab.standalone.pickFromWardrobe}
+                {t.colorLab.standalone.pickFromWardrobe}
               </h3>
               <button
                 type="button"
                 onClick={() => setWardrobePickerSlotId(null)}
-                aria-label={UZ.atelier.closePicker}
+                aria-label={t.atelier.closePicker}
                 className="min-h-[44px] min-w-[44px] border border-[var(--hairline)] text-sm cursor-pointer"
               >
                 ×
@@ -326,7 +332,9 @@ export function ColorLabSection() {
                     style={{ backgroundColor: g.color }}
                   />
                   <div className="min-w-0">
-                    <div className="text-xs text-[var(--ink)] truncate">{g.name_uz}</div>
+                    <div className="text-xs text-[var(--ink)] truncate">
+                      {localize(g.name_uz)}
+                    </div>
                     <div className="text-[10px] font-mono text-[var(--muted)]">{g.color}</div>
                   </div>
                 </button>

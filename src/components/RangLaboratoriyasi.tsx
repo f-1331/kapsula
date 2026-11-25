@@ -1,7 +1,7 @@
 import * as m from 'motion/react-m';
 import type { HarmonyAnalysis } from '../engine/color';
 import { COLOR_CONFIG } from '../engine/config';
-import { UZ } from '../i18n/uz';
+import { useTranslation } from '../i18n/useTranslation';
 import { ScoreCounter } from './ScoreCounter';
 
 interface RangLaboratoriyasiProps {
@@ -32,6 +32,7 @@ export function RangLaboratoriyasi({
   extraTips = [],
   compact = false,
 }: RangLaboratoriyasiProps) {
+  const { t, localize } = useTranslation();
   const isEmpty = analysis.proportions.length === 0;
   const allTips = Array.from(new Set([...analysis.tips, ...extraTips])).slice(0, 3);
 
@@ -45,31 +46,31 @@ export function RangLaboratoriyasi({
   }> = [
     {
       key: 'hue',
-      label: UZ.colorLab.breakdown.hueHarmony,
+      label: t.colorLab.breakdown.hueHarmony,
       value: analysis.breakdown.hueHarmony,
       max: COLOR_CONFIG.weights.hueHarmonyMax,
     },
     {
       key: 'lightness',
-      label: UZ.colorLab.breakdown.lightness,
+      label: t.colorLab.breakdown.lightness,
       value: analysis.breakdown.lightnessStructure,
       max: COLOR_CONFIG.weights.lightnessStructureMax,
     },
     {
       key: 'balance',
-      label: UZ.colorLab.breakdown.balance,
+      label: t.colorLab.breakdown.balance,
       value: analysis.breakdown.statementBalance,
       max: COLOR_CONFIG.weights.statementBalanceMax,
     },
     {
       key: 'temp',
-      label: UZ.colorLab.breakdown.temperature,
+      label: t.colorLab.breakdown.temperature,
       value: analysis.breakdown.warmCoolCoherence,
       max: COLOR_CONFIG.weights.warmCoolCoherenceMax,
     },
     {
       key: 'palette',
-      label: UZ.colorLab.breakdown.paletteFit,
+      label: t.colorLab.breakdown.paletteFit,
       value: analysis.breakdown.paletteFit,
       max: COLOR_CONFIG.weights.paletteFitMax,
     },
@@ -85,12 +86,12 @@ export function RangLaboratoriyasi({
   return (
     <div className="border border-[var(--hairline-strong)] bg-[var(--paper-elevated)] p-4 sm:p-6">
       <div className="flex items-center justify-between border-b border-[var(--hairline)] pb-3 mb-4">
-        <h3 className="micro-label text-[var(--ink)]">{UZ.colorLab.heading}</h3>
-        <span className="micro-label text-[var(--muted)]">{analysis.schemeName}</span>
+        <h3 className="micro-label text-[var(--ink)]">{t.colorLab.heading}</h3>
+        <span className="micro-label text-[var(--muted)]">{localize(analysis.schemeName)}</span>
       </div>
 
       {isEmpty ? (
-        <p className="py-10 text-center text-sm text-[var(--muted)]">{UZ.colorLab.emptyLab}</p>
+        <p className="py-10 text-center text-sm text-[var(--muted)]">{t.colorLab.emptyLab}</p>
       ) : (
         <div className="space-y-5">
           {/* Score Header */}
@@ -100,23 +101,23 @@ export function RangLaboratoriyasi({
                 value={analysis.score}
                 className="text-5xl sm:text-6xl leading-none text-[var(--accent)]"
               />
-              <span className="text-xs text-[var(--muted)]">/ 100 {UZ.colorLab.scoreUnit}</span>
+              <span className="text-xs text-[var(--muted)]">/ 100 {t.colorLab.scoreUnit}</span>
             </div>
             <span className="border border-[var(--hairline-strong)] bg-[var(--paper)] px-2.5 py-1 micro-label text-[var(--ink)]">
-              {analysis.label}
+              {localize(analysis.label)}
             </span>
           </div>
 
           {/* SVG OKLCH Hue Wheel */}
           <div className="flex flex-col items-center border border-[var(--hairline)] bg-[var(--paper)]/70 p-3">
             <span className="micro-label text-[var(--muted)] self-start mb-1">
-              {UZ.colorLab.wheelTitle}
+              {t.colorLab.wheelTitle}
             </span>
             <svg
               viewBox="0 0 220 220"
               className={compact ? 'w-40 h-40' : 'w-48 h-48 sm:w-52 sm:h-52'}
               role="img"
-              aria-label={`${UZ.colorLab.wheelTitle}: ${analysis.schemeName}`}
+              aria-label={`${t.colorLab.wheelTitle}: ${localize(analysis.schemeName)}`}
             >
               {/* Concentric rings */}
               <circle
@@ -225,7 +226,7 @@ export function RangLaboratoriyasi({
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <span className="micro-label text-[var(--muted)]">
-                {UZ.colorLab.proportionsTitle}
+                {t.colorLab.proportionsTitle}
               </span>
             </div>
             <div className="flex h-3 w-full overflow-hidden border border-[var(--hairline-strong)] mb-2.5">
@@ -268,7 +269,7 @@ export function RangLaboratoriyasi({
                     <span className="font-tabular text-[var(--ink)]">
                       {row.value === null ? (
                         <span className="text-[11px] text-[var(--muted)]">
-                          {UZ.colorLab.breakdown.paletteNotSelected}
+                          {t.colorLab.breakdown.paletteNotSelected}
                         </span>
                       ) : (
                         `${row.value} / ${row.max}`
@@ -291,14 +292,14 @@ export function RangLaboratoriyasi({
           {/* Tips */}
           {allTips.length > 0 && (
             <div className="border-t border-[var(--hairline)] pt-4">
-              <h4 className="micro-label text-[var(--muted)] mb-2">{UZ.colorLab.tipsTitle}</h4>
+              <h4 className="micro-label text-[var(--muted)] mb-2">{t.colorLab.tipsTitle}</h4>
               <ul className="space-y-1.5">
                 {allTips.map((tip) => (
                   <li key={tip} className="text-xs leading-relaxed text-[var(--ink-2)] flex gap-2">
                     <span className="text-[var(--accent)]" aria-hidden="true">
                       —
                     </span>
-                    <span>{tip}</span>
+                    <span>{localize(tip)}</span>
                   </li>
                 ))}
               </ul>

@@ -1,6 +1,23 @@
 import { z } from 'zod';
 
-export const PaletteIdSchema = z.enum(['sand', 'earth', 'marine', 'bloom', 'noir']);
+export const PaletteIdSchema = z.enum([
+  'sand',
+  'earth',
+  'marine',
+  'bloom',
+  'noir',
+  'emerald',
+  'cobalt',
+  'espresso',
+  'lavender',
+  'sunset',
+  'forest',
+  'monochrome',
+  'amber',
+  'denim',
+  'pearl',
+  'ruby',
+]);
 export const CategorySchema = z.enum([
   'outerwear',
   'top',

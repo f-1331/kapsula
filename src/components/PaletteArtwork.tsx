@@ -9,8 +9,7 @@ interface PaletteArtworkProps {
 }
 
 /**
- * Renders palette.image when WebP assets exist, or an editorial fabric-swatch
- * composition in the palette's signature 5 tones.
+ * Renders 3D layered textile swatch stack with perspective shadows across all 16 palettes.
  */
 export function PaletteArtwork({ palette, className = '' }: PaletteArtworkProps) {
   const hasWebpAssets = useKapsulaStore((s) => s.hasWebpAssets);
@@ -31,20 +30,31 @@ export function PaletteArtwork({ palette, className = '' }: PaletteArtworkProps)
     return (
       <div
         className={`relative w-full h-full overflow-hidden ${className}`}
-        style={{ backgroundColor: c0 }}
+        style={{ backgroundColor: c0, perspective: '500px' }}
         aria-hidden="true"
       >
-        <div className="absolute inset-x-0 top-0 h-[56%]" style={{ backgroundColor: c1 }} />
         <div
-          className="absolute left-[14%] right-[14%] top-[18%] bottom-[16%] border border-[#151412]/15"
-          style={{ backgroundColor: c2 }}
+          className="absolute inset-x-0 top-0 h-[56%]"
+          style={{
+            background: `linear-gradient(155deg, ${c1} 0%, ${c0} 100%)`,
+          }}
         />
         <div
-          className="absolute left-[28%] right-[10%] top-[36%] bottom-[10%] border border-[#151412]/20"
-          style={{ backgroundColor: c3 }}
+          className="absolute left-[14%] right-[14%] top-[16%] bottom-[16%] border border-[#151412]/15 shadow-[0_12px_20px_rgba(0,0,0,0.22)]"
+          style={{
+            background: `linear-gradient(135deg, ${c2} 0%, ${c2}dd 100%)`,
+            transform: 'rotateY(-6deg) rotateX(3deg)',
+          }}
         />
         <div
-          className="absolute right-[12%] top-[12%] h-7 w-7 border border-white/40"
+          className="absolute left-[28%] right-[10%] top-[36%] bottom-[10%] border border-[#151412]/22 shadow-[0_14px_24px_rgba(0,0,0,0.3)]"
+          style={{
+            background: `linear-gradient(135deg, ${c3} 0%, ${c4}cc 100%)`,
+            transform: 'rotateY(5deg) rotateX(-2deg)',
+          }}
+        />
+        <div
+          className="absolute right-[12%] top-[12%] h-7 w-7 border border-white/50 shadow-md"
           style={{ backgroundColor: c4 }}
         />
       </div>

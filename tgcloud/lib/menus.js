@@ -10,7 +10,7 @@ export async function getMiniAppUrl() {
 export async function buildMainMenu(access) {
   const webAppUrl = await getMiniAppUrl();
   const rows = [
-    [{ text: '✨ Kapsula Mini App (3,894+ kiyim)', web_app: { url: webAppUrl } }],
+    [{ text: '✨ Kapsula Mini App (6,240+ kiyim · 3D)', web_app: { url: webAppUrl } }],
     [
       { text: '🎯 Stilist', web_app: { url: `${webAppUrl}/?tab=stilist` } },
       { text: '📐 Atelye', web_app: { url: `${webAppUrl}/?tab=atelye` } },

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { Occasion, PaletteId, UserGenderFilter, WeatherBand } from '../data/schema';
 import { recommendOutfits, type OutfitRecommendation } from '../engine/stylist';
-import { UZ } from '../i18n/uz';
+import { useTranslation } from '../i18n/useTranslation';
 import { useKapsulaStore } from '../store/useKapsulaStore';
 import {
   PRESET_CITIES,
@@ -36,13 +36,13 @@ const OCCASION_CARDS: Array<{ id: Occasion }> = [
   { id: 'travel' },
 ];
 
-const GENDER_OPTIONS: Array<{ id: UserGenderFilter; label: string }> = [
-  { id: 'w', label: UZ.gender.w },
-  { id: 'm', label: UZ.gender.m },
-  { id: 'all', label: UZ.gender.all },
-];
-
 export function StylistSection() {
+  const { t, localize } = useTranslation();
+  const genderOptions: Array<{ id: UserGenderFilter; label: string }> = [
+    { id: 'w', label: t.gender.w },
+    { id: 'm', label: t.gender.m },
+    { id: 'all', label: t.gender.all },
+  ];
   const manifest = useKapsulaStore((s) => s.manifest);
   const query = useKapsulaStore((s) => s.query);
   const temperatureC = useKapsulaStore((s) => s.temperatureC);
@@ -147,7 +147,7 @@ export function StylistSection() {
   const handleSaveTopPick = (outfit: OutfitRecommendation) => {
     const ok = saveOutfit(
       outfit.garments.map((g) => g.id),
-      `${UZ.occasions[query.occasion].label} · ${UZ.weather[query.weather].label}`,
+      `${t.occasions[query.occasion].label} · ${t.weather[query.weather].label}`,
     );
     if (ok) {
       setSavedNoticeId(outfit.id);
@@ -166,17 +166,17 @@ export function StylistSection() {
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-[var(--hairline)] pb-6 mb-8">
           <div>
             <span className="micro-label text-[var(--muted)] block mb-2">
-              {UZ.sections.stilist}
+              {t.sections.stilist}
             </span>
             <h2
               id="stilist-heading"
               className="font-editorial text-3xl sm:text-5xl leading-none text-[var(--ink)]"
             >
-              {UZ.stylist.heading}
+              {t.stylist.heading}
             </h2>
           </div>
           <p className="text-sm sm:text-base text-[var(--ink-2)] max-w-md">
-            {UZ.stylist.subheading}
+            {t.stylist.subheading}
           </p>
         </div>
 
@@ -185,14 +185,14 @@ export function StylistSection() {
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2 mb-2">
-                <span className="micro-label text-[var(--accent)]">{UZ.weather.autoBadge}</span>
+                <span className="micro-label text-[var(--accent)]">{t.weather.autoBadge}</span>
                 <span className="text-xs text-[var(--muted)]">·</span>
                 <span className="text-xs font-medium text-[var(--ink)]">
                   {location.city}, {location.country}
                 </span>
                 {liveWeather && (
                   <span className="border border-[var(--hairline)] bg-[var(--paper)] px-2 py-0.5 text-[11px] font-tabular text-[var(--ink-2)]">
-                    {liveWeather.conditionUz}
+                    {localize(liveWeather.conditionUz)}
                   </span>
                 )}
               </div>
@@ -207,7 +207,7 @@ export function StylistSection() {
                       °C
                     </span>
                     <span className="text-xs text-[var(--ink-2)] font-tabular">
-                      {UZ.weather.feelsLike}:{' '}
+                      {t.weather.feelsLike}:{' '}
                       <strong>
                         {liveWeather.apparentTempC > 0
                           ? `+${liveWeather.apparentTempC}`
@@ -216,26 +216,26 @@ export function StylistSection() {
                       </strong>
                     </span>
                     <span className="text-xs text-[var(--ink-2)] font-tabular">
-                      {UZ.weather.wind}: <strong>{liveWeather.windKmh} km/s</strong>
+                      {t.weather.wind}: <strong>{liveWeather.windKmh} km/s</strong>
                     </span>
                     <span className="text-xs text-[var(--ink-2)] font-tabular">
-                      {UZ.weather.humidity}: <strong>{liveWeather.humidityPct}%</strong>
+                      {t.weather.humidity}: <strong>{liveWeather.humidityPct}%</strong>
                     </span>
                     <span
                       className={`text-xs font-medium ${
                         liveWeather.rain ? 'text-[var(--accent)]' : 'text-[var(--positive)]'
                       }`}
                     >
-                      {liveWeather.rain ? UZ.weather.rainYes : UZ.weather.rainNo}
+                      {liveWeather.rain ? t.weather.rainYes : t.weather.rainNo}
                     </span>
                   </div>
                   <p className="text-xs sm:text-sm text-[var(--ink-2)] leading-relaxed">
-                    {liveWeather.adviceUz}
+                    {localize(liveWeather.adviceUz)}
                   </p>
                 </>
               ) : (
                 <p className="text-xs sm:text-sm text-[var(--muted)]">
-                  {weatherLoading ? UZ.weather.tashkentLoading : UZ.weather.rainHint}
+                  {weatherLoading ? t.weather.tashkentLoading : t.weather.rainHint}
                 </p>
               )}
             </div>
@@ -246,7 +246,7 @@ export function StylistSection() {
                 onClick={() => setCityModalOpen(true)}
                 className="min-h-[44px] border border-[var(--hairline-strong)] bg-[var(--paper)] px-4 py-2 text-xs uppercase tracking-[0.1em] text-[var(--ink)] hover:border-[var(--ink)] transition-colors cursor-pointer"
               >
-                {UZ.weather.changeCity}
+                {t.weather.changeCity}
               </button>
 
               <button
@@ -264,7 +264,7 @@ export function StylistSection() {
                     : 'border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)]'
                 }`}
               >
-                {autoWeatherEnabled ? UZ.weather.autoOn : UZ.weather.detectCity}
+                {autoWeatherEnabled ? t.weather.autoOn : t.weather.detectCity}
               </button>
             </div>
           </div>
@@ -273,7 +273,7 @@ export function StylistSection() {
         {/* Step 01: Weather */}
         <div className="mb-10">
           <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-            <h3 className="micro-label text-[var(--ink)]">{UZ.stylist.step1Title}</h3>
+            <h3 className="micro-label text-[var(--ink)]">{t.stylist.step1Title}</h3>
             <button
               type="button"
               role="switch"
@@ -286,7 +286,7 @@ export function StylistSection() {
               }`}
             >
               <WeatherIcon kind="rain" className="h-4 w-4" />
-              <span>{UZ.weather.rain}</span>
+              <span>{t.weather.rain}</span>
               <span
                 aria-hidden="true"
                 className={`inline-block h-2 w-2 rounded-full ${
@@ -298,11 +298,11 @@ export function StylistSection() {
 
           <div
             role="radiogroup"
-            aria-label={UZ.stylist.step1Title}
+            aria-label={t.stylist.step1Title}
             className="grid grid-cols-2 lg:grid-cols-4 gap-3"
           >
             {WEATHER_CARDS.map(({ id }) => {
-              const info = UZ.weather[id];
+              const info = t.weather[id];
               const active = query.weather === id;
               return (
                 <button
@@ -340,7 +340,7 @@ export function StylistSection() {
               htmlFor="temp-slider"
               className="micro-label text-[var(--ink-2)] whitespace-nowrap"
             >
-              {UZ.weather.tempSliderLabel}:{' '}
+              {t.weather.tempSliderLabel}:{' '}
               <span className="font-tabular text-[var(--ink)] font-semibold">
                 {temperatureC > 0 ? `+${temperatureC}` : temperatureC}°C
               </span>
@@ -361,16 +361,16 @@ export function StylistSection() {
         {/* Step 02: Occasion + Gender */}
         <div className="mb-10">
           <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-            <h3 className="micro-label text-[var(--ink)]">{UZ.stylist.step2Title}</h3>
+            <h3 className="micro-label text-[var(--ink)]">{t.stylist.step2Title}</h3>
 
             <div className="flex items-center gap-2">
-              <span className="micro-label text-[var(--muted)] mr-1">{UZ.gender.label}:</span>
+              <span className="micro-label text-[var(--muted)] mr-1">{t.gender.label}:</span>
               <div
                 role="radiogroup"
-                aria-label={UZ.gender.label}
+                aria-label={t.gender.label}
                 className="inline-flex border border-[var(--hairline-strong)] bg-[var(--paper-elevated)]"
               >
-                {GENDER_OPTIONS.map((opt) => {
+                {genderOptions.map((opt) => {
                   const selected = query.gender === opt.id;
                   return (
                     <button
@@ -395,11 +395,11 @@ export function StylistSection() {
 
           <div
             role="radiogroup"
-            aria-label={UZ.stylist.step2Title}
+            aria-label={t.stylist.step2Title}
             className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3"
           >
             {OCCASION_CARDS.map(({ id }, index) => {
-              const info = UZ.occasions[id];
+              const info = t.occasions[id];
               const active = query.occasion === id;
               return (
                 <button
@@ -441,12 +441,12 @@ export function StylistSection() {
 
         {/* Step 03: Palette */}
         <div className="mb-12">
-          <h3 className="micro-label text-[var(--ink)] mb-4">{UZ.stylist.step3Title}</h3>
+          <h3 className="micro-label text-[var(--ink)] mb-4">{t.stylist.step3Title}</h3>
 
           <div
             role="radiogroup"
-            aria-label={UZ.stylist.step3Title}
-            className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3"
+            aria-label={t.stylist.step3Title}
+            className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5"
           >
             {manifest.palettes.map((palette) => {
               const active = query.palette === palette.id;
@@ -463,7 +463,7 @@ export function StylistSection() {
                       : 'border-[var(--hairline)] bg-[var(--paper)] hover:border-[var(--hairline-strong)]'
                   }`}
                 >
-                  <div className="relative h-28 sm:h-32 w-full border-b border-[var(--hairline)] overflow-hidden">
+                  <div className="relative h-20 sm:h-24 w-full border-b border-[var(--hairline)] overflow-hidden">
                     <PaletteArtwork
                       palette={palette}
                       className="group-hover:scale-[1.02] transition-transform duration-300"
@@ -471,22 +471,22 @@ export function StylistSection() {
                     {active && (
                       <span
                         aria-hidden="true"
-                        className="absolute top-2 right-2 flex h-6 w-6 items-center justify-center bg-[var(--ink)] text-[var(--paper)] text-xs"
+                        className="absolute top-1.5 right-1.5 flex h-5 w-5 items-center justify-center bg-[var(--ink)] text-[var(--paper)] text-[11px]"
                       >
                         ✓
                       </span>
                     )}
                   </div>
-                  <div className="p-3 flex-1 flex flex-col justify-between">
+                  <div className="p-2.5 flex-1 flex flex-col justify-between">
                     <div>
-                      <div className="font-editorial text-xl leading-tight text-[var(--ink)]">
-                        {palette.name_uz}
+                      <div className="font-editorial text-lg leading-tight text-[var(--ink)]">
+                        {localize(palette.name_uz)}
                       </div>
-                      <div className="text-[11px] text-[var(--muted)] mt-0.5 leading-snug">
-                        {palette.tagline_uz}
+                      <div className="text-[11px] text-[var(--muted)] mt-0.5 leading-snug line-clamp-2">
+                        {localize(palette.tagline_uz)}
                       </div>
                     </div>
-                    <div className="flex items-center gap-1.5 mt-3">
+                    <div className="flex items-center gap-1.5 mt-2">
                       {palette.colors.slice(0, 5).map((hex) => (
                         <span
                           key={hex}
@@ -505,7 +505,7 @@ export function StylistSection() {
               role="radio"
               aria-checked={query.palette === 'any'}
               onClick={() => updateQuery({ palette: 'any' })}
-              className={`text-left border p-4 transition-colors cursor-pointer flex flex-col justify-between min-h-[168px] ${
+              className={`text-left border p-3.5 transition-colors cursor-pointer flex flex-col justify-between min-h-[144px] ${
                 query.palette === 'any'
                   ? 'border-[var(--ink)] bg-[var(--paper-elevated)] shadow-[inset_0_0_0_1px_var(--ink)]'
                   : 'border-[var(--hairline)] bg-[var(--paper-2)]/50 hover:border-[var(--hairline-strong)]'
@@ -516,18 +516,18 @@ export function StylistSection() {
                 {query.palette === 'any' && (
                   <span
                     aria-hidden="true"
-                    className="flex h-6 w-6 items-center justify-center bg-[var(--ink)] text-[var(--paper)] text-xs"
+                    className="flex h-5 w-5 items-center justify-center bg-[var(--ink)] text-[var(--paper)] text-[11px]"
                   >
                     ✓
                   </span>
                 )}
               </div>
               <div>
-                <div className="font-editorial italic text-2xl leading-tight text-[var(--ink)]">
-                  {UZ.palette.any}
+                <div className="font-editorial italic text-xl leading-tight text-[var(--ink)]">
+                  {t.palette.any}
                 </div>
                 <p className="text-[11px] text-[var(--muted)] mt-1 leading-snug">
-                  {UZ.palette.anyTagline}
+                  {t.palette.anyTagline}
                 </p>
               </div>
             </button>
@@ -540,7 +540,7 @@ export function StylistSection() {
             role="status"
             className="mb-6 border-l-2 border-[var(--accent)] bg-[var(--paper-2)] px-4 py-2.5 text-xs sm:text-sm text-[var(--ink-2)]"
           >
-            {stylistResult.relaxationNotice}
+            {localize(stylistResult.relaxationNotice)}
           </div>
         )}
 
@@ -568,10 +568,10 @@ export function StylistSection() {
                     />
                     <div className="mt-2.5 flex items-center justify-between gap-2">
                       <span className="font-editorial italic text-lg text-[var(--ink)]">
-                        {topOutfit.matchedLook.title_uz}
+                        {localize(topOutfit.matchedLook.title_uz)}
                       </span>
                       <span className="micro-label text-[var(--accent)]">
-                        {UZ.stylist.overlapBadge}
+                        {t.stylist.overlapBadge}
                       </span>
                     </div>
                   </div>
@@ -586,10 +586,10 @@ export function StylistSection() {
                 <div>
                   <div className="flex items-center justify-between border-b border-[var(--hairline)] pb-3 mb-4">
                     <span className="micro-label text-[var(--accent)]">
-                      {UZ.stylist.topPickTitle}
+                      {t.stylist.topPickTitle}
                     </span>
                     <span className="micro-label text-[var(--muted)]">
-                      {topOutfit.harmony.schemeName}
+                      {localize(topOutfit.harmony.schemeName)}
                     </span>
                   </div>
 
@@ -600,14 +600,16 @@ export function StylistSection() {
                     />
                     <div>
                       <div className="text-sm font-medium text-[var(--ink)]">
-                        / 100 {UZ.colorLab.scoreUnit}
+                        / 100 {t.colorLab.scoreUnit}
                       </div>
-                      <div className="text-xs text-[var(--muted)]">{topOutfit.harmony.label}</div>
+                      <div className="text-xs text-[var(--muted)]">
+                        {localize(topOutfit.harmony.label)}
+                      </div>
                     </div>
                   </div>
 
                   <p className="font-editorial italic text-xl sm:text-2xl leading-snug text-[var(--ink)] mb-5">
-                    “{topOutfit.note}”
+                    “{localize(topOutfit.note)}”
                   </p>
 
                   <div className="mb-6">
@@ -632,14 +634,14 @@ export function StylistSection() {
                     onClick={() => handleOpenInAtelier(topOutfit)}
                     className="min-h-[46px] flex-1 bg-[var(--ink)] px-5 py-3 text-xs uppercase tracking-[0.14em] text-[var(--paper)] hover:bg-[var(--accent)] transition-colors cursor-pointer"
                   >
-                    {UZ.stylist.openInAtelier}
+                    {t.stylist.openInAtelier}
                   </button>
                   <button
                     type="button"
                     onClick={() => handleSaveTopPick(topOutfit)}
                     className="min-h-[46px] border border-[var(--ink)] px-5 py-3 text-xs uppercase tracking-[0.14em] text-[var(--ink)] hover:bg-[var(--paper-2)] transition-colors cursor-pointer"
                   >
-                    {savedNoticeId === topOutfit.id ? UZ.stylist.savedSuccess : UZ.stylist.saveOutfit}
+                    {savedNoticeId === topOutfit.id ? t.stylist.savedSuccess : t.stylist.saveOutfit}
                   </button>
                 </div>
               </div>
@@ -651,7 +653,7 @@ export function StylistSection() {
         {alternatives.length > 0 && (
           <div className="mb-12">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="micro-label text-[var(--ink)]">{UZ.stylist.alternativesTitle}</h3>
+              <h3 className="micro-label text-[var(--ink)]">{t.stylist.alternativesTitle}</h3>
               <span className="micro-label text-[var(--muted)] font-tabular">
                 {alternatives.length}
               </span>
@@ -683,11 +685,13 @@ export function StylistSection() {
                         {alt.harmony.score}
                       </span>
                       <span className="text-[11px] uppercase tracking-[0.1em] text-[var(--muted)] truncate">
-                        {alt.harmony.schemeName}
+                        {localize(alt.harmony.schemeName)}
                       </span>
                     </div>
 
-                    <p className="text-xs text-[var(--ink-2)] line-clamp-2 mb-3">{alt.note}</p>
+                    <p className="text-xs text-[var(--ink-2)] line-clamp-2 mb-3">
+                      {localize(alt.note)}
+                    </p>
                   </div>
 
                   <button
@@ -695,7 +699,7 @@ export function StylistSection() {
                     onClick={() => handleOpenInAtelier(alt)}
                     className="min-h-[44px] w-full border border-[var(--hairline-strong)] px-3 py-2 text-[11px] uppercase tracking-[0.14em] text-[var(--ink)] hover:border-[var(--ink)] hover:bg-[var(--paper-2)] transition-colors cursor-pointer"
                   >
-                    {UZ.stylist.openInAtelier}
+                    {t.stylist.openInAtelier}
                   </button>
                 </article>
               ))}
@@ -707,8 +711,8 @@ export function StylistSection() {
         {stylistResult.inspirationLooks.length > 0 && (
           <div className="border-t border-[var(--hairline)] pt-8">
             <div className="flex flex-wrap items-baseline justify-between gap-2 mb-4">
-              <h3 className="micro-label text-[var(--ink)]">{UZ.stylist.inspirationTitle}</h3>
-              <span className="text-xs text-[var(--muted)]">{UZ.stylist.inspirationSub}</span>
+              <h3 className="micro-label text-[var(--ink)]">{t.stylist.inspirationTitle}</h3>
+              <span className="text-xs text-[var(--muted)]">{t.stylist.inspirationSub}</span>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -728,13 +732,13 @@ export function StylistSection() {
                   </div>
                   <div className="min-w-0">
                     <div className="font-editorial italic text-xl text-[var(--ink)] group-hover:text-[var(--accent)] transition-colors truncate">
-                      {look.title_uz}
+                      {localize(look.title_uz)}
                     </div>
                     <div className="micro-label text-[var(--muted)] mt-1">
-                      {UZ.occasions[look.occasion].label} · {UZ.weather[look.weather].label}
+                      {t.occasions[look.occasion].label} · {t.weather[look.weather].label}
                     </div>
                     <div className="text-xs text-[var(--ink-2)] mt-1.5">
-                      {UZ.lookbook.itemsCount(look.items.length)}
+                      {t.lookbook.itemsCount(look.items.length)}
                     </div>
                   </div>
                 </button>
@@ -749,19 +753,22 @@ export function StylistSection() {
         <div
           role="dialog"
           aria-modal="true"
-          aria-label={UZ.weather.changeCity}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/55 p-4"
+          aria-label={t.weather.changeCity}
+          className="fixed inset-0 z-50 flex items-start sm:items-center justify-center overflow-y-auto bg-black/75 backdrop-blur-sm p-3 sm:p-6"
           onClick={(e) => {
             if (e.target === e.currentTarget) setCityModalOpen(false);
           }}
         >
-          <div className="w-full max-w-lg border border-[var(--ink)] bg-[var(--paper-elevated)] p-5 flex flex-col max-h-[82dvh]">
+          <div
+            className="relative my-auto w-full max-w-lg border border-[var(--ink)] bg-[var(--paper-elevated)] p-5 flex flex-col max-h-[85dvh] shadow-2xl"
+            style={{ backgroundColor: 'var(--paper-elevated)' }}
+          >
             <div className="flex items-center justify-between border-b border-[var(--hairline)] pb-3 mb-4">
-              <h3 className="font-editorial text-2xl text-[var(--ink)]">{UZ.weather.changeCity}</h3>
+              <h3 className="font-editorial text-2xl text-[var(--ink)]">{t.weather.changeCity}</h3>
               <button
                 type="button"
                 onClick={() => setCityModalOpen(false)}
-                aria-label={UZ.atelier.closePicker}
+                aria-label={t.atelier.closePicker}
                 className="min-h-[44px] min-w-[44px] border border-[var(--hairline)] text-sm cursor-pointer"
               >
                 ×
@@ -773,7 +780,7 @@ export function StylistSection() {
                 type="search"
                 value={citySearch}
                 onChange={(e) => setCitySearch(e.target.value)}
-                placeholder={UZ.weather.searchCityPlaceholder}
+                placeholder={t.weather.searchCityPlaceholder}
                 className="flex-1 min-h-[44px] border border-[var(--hairline-strong)] bg-[var(--paper)] px-3 text-sm text-[var(--ink)]"
               />
               <button
@@ -781,12 +788,12 @@ export function StylistSection() {
                 onClick={handleAutoDetectLocation}
                 className="min-h-[44px] border border-[var(--ink)] bg-[var(--ink)] text-[var(--paper)] px-3 text-xs uppercase tracking-[0.1em] cursor-pointer shrink-0"
               >
-                {UZ.weather.detectCity}
+                {t.weather.detectCity}
               </button>
             </div>
 
             {citySearching && (
-              <p className="text-xs text-[var(--muted)] mb-2">{UZ.weather.tashkentLoading}</p>
+              <p className="text-xs text-[var(--muted)] mb-2">{t.weather.tashkentLoading}</p>
             )}
 
             <div className="grid grid-cols-2 gap-2 overflow-y-auto editorial-scroll pr-1">

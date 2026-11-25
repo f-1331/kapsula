@@ -1,6 +1,7 @@
 import { useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import type { Garment } from '../data/schema';
+import { useTranslation } from '../i18n/useTranslation';
 import { GarmentImage } from './GarmentImage';
 
 interface AtelierTrayItemProps {
@@ -16,6 +17,7 @@ export function AtelierTrayItem({
   scoreDelta,
   onQuickPlace,
 }: AtelierTrayItemProps) {
+  const { localize } = useTranslation();
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `tray:${garment.id}`,
     data: { type: 'tray-garment', garment },
@@ -63,7 +65,7 @@ export function AtelierTrayItem({
       <div
         {...listeners}
         {...attributes}
-        aria-label={garment.name_uz}
+        aria-label={localize(garment.name_uz)}
         className="h-24 w-full overflow-hidden p-2 flex items-center justify-center cursor-grab active:cursor-grabbing touch-none focus-visible:outline-2 focus-visible:outline-[var(--accent)]"
       >
         <GarmentImage garment={garment} className="h-full w-full" />
@@ -81,7 +83,7 @@ export function AtelierTrayItem({
               {garment.brand}
             </span>
           )}
-          <span className="line-clamp-2 block">{garment.name_uz}</span>
+          <span className="line-clamp-2 block">{localize(garment.name_uz)}</span>
         </div>
         <span className="text-[var(--muted)] group-hover:text-[var(--accent)] shrink-0" aria-hidden="true">
           +

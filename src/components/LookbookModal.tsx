@@ -1,12 +1,14 @@
 import { AnimatePresence, useReducedMotion } from 'motion/react';
 import * as m from 'motion/react-m';
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Garment, Look } from '../data/schema';
 import { analyzeGarmentsHarmony } from '../engine/color';
-import { UZ } from '../i18n/uz';
+import { garmentsToBoardSlots } from '../engine/stylist';
+import { useTranslation } from '../i18n/useTranslation';
 import { useKapsulaStore } from '../store/useKapsulaStore';
 import { GarmentImage } from './GarmentImage';
 import { LookImage } from './LookImage';
+import { Studio3DStage } from './Studio3DStage';
 
 interface LookbookModalProps {
   look: Look | null;
@@ -21,12 +23,14 @@ export function LookbookModal({
   onClose,
   onNavigateLook,
 }: LookbookModalProps) {
+  const { t, localize } = useTranslation();
   const manifest = useKapsulaStore((s) => s.manifest);
   const loadItemsToBoard = useKapsulaStore((s) => s.loadItemsToBoard);
   const setActiveView = useKapsulaStore((s) => s.setActiveView);
   const reducedMotion = useReducedMotion();
   const modalRef = useRef<HTMLDivElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
+  const [previewMode, setPreviewMode] = useState<'poster' | '3d'>('poster');
 
   const byId = useMemo(
     () => new Map(manifest.garments.map((g) => [g.id, g])),
@@ -37,14 +41,17 @@ export function LookbookModal({
     [manifest.palettes],
   );
 
-  // Store previously focused element, lock body scroll, trap focus & handle Esc/Arrows
+  useEffect(() => {
+    setPreviewMode('poster');
+  }, [look?.id]);
+
+  // Store previously focused element, lock body scroll, trap focus & handle Esc
   useEffect(() => {
     if (!look) return;
     previousFocusRef.current = document.activeElement as HTMLElement | null;
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
 
-    // Focus first focusable button inside modal
     window.setTimeout(() => {
       const focusable = modalRef.current?.querySelectorAll<HTMLElement>(
         'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
@@ -93,6 +100,8 @@ export function LookbookModal({
       .filter((g): g is Garment => Boolean(g));
   }, [look, byId]);
 
+  const lookSlots = useMemo(() => garmentsToBoardSlots(lookItems), [lookItems]);
+
   const palette = look ? paletteById.get(look.palette) : undefined;
   const harmony = useMemo(
     () => analyzeGarmentsHarmony(lookItems, palette),
@@ -127,7 +136,7 @@ export function LookbookModal({
           onClick={(e) => {
             if (e.target === e.currentTarget) onClose();
           }}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--ink)]/65 p-3 sm:p-6 overflow-y-auto"
+          className="fixed inset-0 z-50 flex items-start md:items-center justify-center bg-black/75 backdrop-blur-sm p-3 sm:p-6 overflow-y-auto"
         >
           <m.div
             ref={modalRef}
@@ -135,62 +144,130 @@ export function LookbookModal({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={reducedMotion ? undefined : { opacity: 0, y: 10 }}
             transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
-            className="relative w-full max-w-5xl border border-[var(--ink)] bg-[var(--paper)] grid grid-cols-1 md:grid-cols-12 overflow-hidden max-h-[92dvh]"
+            style={{ backgroundColor: 'var(--paper)' }}
+            className="relative my-auto w-full max-w-5xl border border-[var(--ink)] bg-[var(--paper)] text-[var(--ink)] flex flex-col md:grid md:grid-cols-12 md:max-h-[90dvh] md:overflow-hidden shadow-2xl"
           >
-            {/* Left: Big 2:3 Editorial Spread Photo */}
-            <div className="md:col-span-6 bg-[var(--paper-2)] border-b md:border-b-0 md:border-r border-[var(--hairline)] p-4 sm:p-6 flex items-center justify-center">
-              <div className="w-full max-w-[380px]">
-                <LookImage
-                  look={look}
-                  garments={manifest.garments}
-                  palette={palette}
-                  variant="full"
-                  eager
-                />
+            {/* Mobile Close Bar (prevents cut-off close button on stacked viewports) */}
+            <div
+              style={{ backgroundColor: 'var(--paper-elevated)' }}
+              className="flex md:hidden items-center justify-between border-b border-[var(--hairline)] px-4 py-2.5"
+            >
+              <span className="micro-label text-[var(--accent)]">{t.lookbook.buildLookTitle}</span>
+              <button
+                type="button"
+                onClick={onClose}
+                aria-label={t.lookbook.closeModal}
+                className="min-h-[38px] min-w-[38px] border border-[var(--hairline-strong)] bg-[var(--paper)] text-base text-[var(--ink)] cursor-pointer"
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Left: Big Editorial Poster OR Interactive 3D Stage */}
+            <div
+              style={{ backgroundColor: 'var(--paper-2)' }}
+              className="md:col-span-6 bg-[var(--paper-2)] border-b md:border-b-0 md:border-r border-[var(--hairline)] p-4 sm:p-6 flex flex-col items-center justify-center gap-3 min-w-0"
+            >
+              <div className="inline-flex border border-[var(--hairline-strong)] bg-[var(--paper-elevated)] p-0.5 self-end">
+                <button
+                  type="button"
+                  onClick={() => setPreviewMode('poster')}
+                  className={`px-3 py-1 text-[10px] uppercase tracking-[0.12em] cursor-pointer ${
+                    previewMode === 'poster'
+                      ? 'bg-[var(--ink)] text-[var(--paper)] font-semibold'
+                      : 'text-[var(--ink-2)]'
+                  }`}
+                >
+                  {t.nav.lookbook}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPreviewMode('3d')}
+                  className={`px-3 py-1 text-[10px] uppercase tracking-[0.12em] cursor-pointer ${
+                    previewMode === '3d'
+                      ? 'bg-[var(--accent)] text-[var(--accent-ink)] font-semibold'
+                      : 'text-[var(--ink-2)]'
+                  }`}
+                >
+                  {t.studio.mode3d}
+                </button>
               </div>
+
+              {previewMode === '3d' ? (
+                <div className="w-full">
+                  <Studio3DStage
+                    slots={lookSlots}
+                    byId={byId}
+                    compact
+                    labels={{
+                      spin: t.studio.spin360,
+                      layers: t.studio.zLayers,
+                      dragHint: t.studio.dragHint,
+                    }}
+                  />
+                </div>
+              ) : (
+                <div className="w-full max-w-[230px] sm:max-w-[300px] md:max-w-[350px]">
+                  <LookImage
+                    look={look}
+                    garments={manifest.garments}
+                    palette={palette}
+                    variant="full"
+                    eager
+                  />
+                </div>
+              )}
             </div>
 
             {/* Right: "Shu lookni yigʻing" */}
-            <div className="md:col-span-6 p-5 sm:p-8 flex flex-col justify-between overflow-y-auto editorial-scroll">
+            <div
+              style={{ backgroundColor: 'var(--paper)' }}
+              className="md:col-span-6 bg-[var(--paper)] p-4 sm:p-8 flex flex-col justify-between md:overflow-y-auto md:max-h-[90dvh] editorial-scroll min-h-0"
+            >
               <div>
                 <div className="flex items-start justify-between gap-4 border-b border-[var(--hairline)] pb-4 mb-5">
                   <div>
-                    <span className="micro-label text-[var(--accent)] block mb-1">
-                      {UZ.lookbook.buildLookTitle}
+                    <span className="hidden md:block micro-label text-[var(--accent)] mb-1">
+                      {t.lookbook.buildLookTitle}
                     </span>
                     <h3
                       id="lookbook-modal-title"
                       className="font-editorial italic text-3xl sm:text-4xl text-[var(--ink)] leading-none"
                     >
-                      {look.title_uz}
+                      {localize(look.title_uz)}
                     </h3>
                     <p className="micro-label text-[var(--muted)] mt-2">
-                      {UZ.occasions[look.occasion].label} · {UZ.weather[look.weather].label} ·{' '}
-                      {palette?.name_uz}
+                      {t.occasions[look.occasion].label} · {t.weather[look.weather].label} ·{' '}
+                      {localize(palette?.name_uz ?? '')}
                     </p>
                   </div>
 
                   <button
                     type="button"
                     onClick={onClose}
-                    aria-label={UZ.lookbook.closeModal}
-                    className="min-h-[44px] min-w-[44px] border border-[var(--hairline-strong)] bg-[var(--paper-elevated)] text-base text-[var(--ink)] hover:border-[var(--ink)] cursor-pointer shrink-0"
+                    aria-label={t.lookbook.closeModal}
+                    className="hidden md:inline-flex items-center justify-center min-h-[44px] min-w-[44px] border border-[var(--hairline-strong)] bg-[var(--paper-elevated)] text-base text-[var(--ink)] hover:border-[var(--ink)] cursor-pointer shrink-0"
                   >
                     ×
                   </button>
                 </div>
 
                 {/* Score + Scheme */}
-                <div className="flex items-baseline justify-between gap-3 border border-[var(--hairline)] bg-[var(--paper-elevated)] px-4 py-3 mb-5">
+                <div
+                  style={{ backgroundColor: 'var(--paper-elevated)' }}
+                  className="flex items-baseline justify-between gap-3 border border-[var(--hairline)] bg-[var(--paper-elevated)] px-4 py-3 mb-5"
+                >
                   <div className="flex items-baseline gap-2">
                     <span className="font-numeral text-4xl text-[var(--accent)]">
                       {harmony.score}
                     </span>
                     <span className="text-xs text-[var(--muted)]">
-                      / 100 {UZ.colorLab.scoreUnit}
+                      / 100 {t.colorLab.scoreUnit}
                     </span>
                   </div>
-                  <span className="micro-label text-[var(--ink)]">{harmony.schemeName}</span>
+                  <span className="micro-label text-[var(--ink)]">
+                    {localize(harmony.schemeName)}
+                  </span>
                 </div>
 
                 {/* Item cutouts list */}
@@ -198,6 +275,7 @@ export function LookbookModal({
                   {lookItems.map((item) => (
                     <li
                       key={item.id}
+                      style={{ backgroundColor: 'var(--paper-elevated)' }}
                       className="flex items-center gap-3.5 border border-[var(--hairline)] bg-[var(--paper-elevated)] p-2.5"
                     >
                       <div className="h-14 w-14 shrink-0 flex items-center justify-center bg-[var(--paper)] p-1 border border-[var(--hairline)]">
@@ -205,10 +283,11 @@ export function LookbookModal({
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="text-sm font-medium text-[var(--ink)] truncate">
-                          {item.name_uz}
+                          {localize(item.name_uz)}
                         </div>
                         <div className="micro-label text-[10px] text-[var(--muted)] mt-0.5">
-                          {UZ.categories[item.category]}
+                          {t.categories[item.category]}
+                          {item.brand ? ` · ${item.brand}` : ''}
                         </div>
                       </div>
                       <span
@@ -227,7 +306,7 @@ export function LookbookModal({
                   onClick={handleOpenInAtelier}
                   className="min-h-[46px] w-full bg-[var(--ink)] px-5 py-3 text-xs uppercase tracking-[0.14em] text-[var(--paper)] hover:bg-[var(--accent)] transition-colors cursor-pointer"
                 >
-                  {UZ.lookbook.openInAtelier}
+                  {t.lookbook.openInAtelier}
                 </button>
 
                 <div className="flex items-center justify-between gap-2">
@@ -237,7 +316,7 @@ export function LookbookModal({
                     onClick={() => prevLook && onNavigateLook(prevLook.id)}
                     className="min-h-[44px] border border-[var(--hairline-strong)] px-3.5 py-2 text-[11px] uppercase tracking-[0.1em] text-[var(--ink)] hover:border-[var(--ink)] disabled:opacity-35 disabled:cursor-not-allowed cursor-pointer"
                   >
-                    ← {UZ.lookbook.prevLook}
+                    ← {t.lookbook.prevLook}
                   </button>
                   <button
                     type="button"
@@ -245,7 +324,7 @@ export function LookbookModal({
                     onClick={() => nextLook && onNavigateLook(nextLook.id)}
                     className="min-h-[44px] border border-[var(--hairline-strong)] px-3.5 py-2 text-[11px] uppercase tracking-[0.1em] text-[var(--ink)] hover:border-[var(--ink)] disabled:opacity-35 disabled:cursor-not-allowed cursor-pointer"
                   >
-                    {UZ.lookbook.nextLook} →
+                    {t.lookbook.nextLook} →
                   </button>
                 </div>
               </div>

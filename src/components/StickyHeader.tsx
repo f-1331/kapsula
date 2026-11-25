@@ -1,47 +1,59 @@
 import { useState } from 'react';
-import { UZ } from '../i18n/uz';
+import { LANGUAGE_OPTIONS } from '../i18n/languages';
+import { useTranslation } from '../i18n/useTranslation';
 import { useKapsulaStore, type ViewTab } from '../store/useKapsulaStore';
-
-const DESKTOP_TABS: Array<{ id: ViewTab; label: string }> = [
-  { id: 'stilist', label: UZ.nav.stilist },
-  { id: 'atelye', label: UZ.nav.atelye },
-  { id: 'skaner', label: UZ.nav.skaner },
-  { id: 'brendlar', label: UZ.nav.brendlar },
-  { id: 'lookbook', label: UZ.nav.lookbook },
-  { id: 'garderobim', label: UZ.nav.garderobim },
-  { id: 'ranglar', label: UZ.nav.ranglar },
-];
-
-const MOBILE_PRIMARY_TABS: Array<{ id: ViewTab; label: string; shortCode: string }> = [
-  { id: 'cover', label: 'Bosh', shortCode: '01' },
-  { id: 'stilist', label: UZ.nav.stilist, shortCode: '02' },
-  { id: 'atelye', label: UZ.nav.atelye, shortCode: '03' },
-  { id: 'skaner', label: 'Tahlil', shortCode: '04' },
-];
-
-const MOBILE_MORE_TABS: Array<{ id: ViewTab; label: string; desc: string }> = [
-  { id: 'brendlar', label: UZ.nav.brendlar, desc: '16 ta brend kolleksiyasi' },
-  { id: 'lookbook', label: UZ.nav.lookbook, desc: 'Tahririy obrazlar' },
-  { id: 'garderobim', label: UZ.nav.garderobim, desc: '7 kunlik reja va safar' },
-  { id: 'ranglar', label: UZ.nav.ranglar, desc: 'OKLCH rang kalkulyatori' },
-];
+import { DESIGN_THEMES, getDesignThemeById } from '../styles/themes';
 
 export function StickyHeader() {
+  const { t, lang, setLanguage } = useTranslation();
   const activeView = useKapsulaStore((s) => s.activeView);
   const setActiveView = useKapsulaStore((s) => s.setActiveView);
   const isSampleData = useKapsulaStore((s) => s.isSampleData);
   const theme = useKapsulaStore((s) => s.theme);
+  const designTheme = useKapsulaStore((s) => s.designTheme);
+  const setDesignTheme = useKapsulaStore((s) => s.setDesignTheme);
   const toggleTheme = useKapsulaStore((s) => s.toggleTheme);
   const location = useKapsulaStore((s) => s.location);
   const liveWeather = useKapsulaStore((s) => s.liveWeather);
   const temperatureC = useKapsulaStore((s) => s.temperatureC);
+
   const [moreOpen, setMoreOpen] = useState(false);
+  const [designOpen, setDesignOpen] = useState(false);
+  const [langOpen, setLangOpen] = useState(false);
+
+  const desktopTabs: Array<{ id: ViewTab; label: string }> = [
+    { id: 'stilist', label: t.nav.stilist },
+    { id: 'atelye', label: t.nav.atelye },
+    { id: 'skaner', label: t.nav.skaner },
+    { id: 'brendlar', label: t.nav.brendlar },
+    { id: 'lookbook', label: t.nav.lookbook },
+    { id: 'garderobim', label: t.nav.garderobim },
+    { id: 'ranglar', label: t.nav.ranglar },
+  ];
+
+  const mobilePrimaryTabs: Array<{ id: ViewTab; label: string; shortCode: string }> = [
+    { id: 'cover', label: t.nav.cover.split(' ')[0] || t.nav.cover, shortCode: '01' },
+    { id: 'stilist', label: t.nav.stilist, shortCode: '02' },
+    { id: 'atelye', label: t.nav.atelye.split(' ')[0] || t.nav.atelye, shortCode: '03' },
+    { id: 'skaner', label: t.nav.skaner.split(' ')[0] || t.nav.skaner, shortCode: '04' },
+  ];
+
+  const mobileMoreTabs: Array<{ id: ViewTab; label: string; desc: string }> = [
+    { id: 'brendlar', label: t.nav.brendlar, desc: '18 ta brend kolleksiyasi' },
+    { id: 'lookbook', label: t.nav.lookbook, desc: 'Tahririy va 3D obrazlar' },
+    { id: 'garderobim', label: t.nav.garderobim, desc: '7 kunlik reja va safar' },
+    { id: 'ranglar', label: t.nav.ranglar, desc: 'OKLCH rang kalkulyatori' },
+  ];
 
   const displayTemp = liveWeather ? liveWeather.temperatureC : temperatureC;
-  const isMoreActive = MOBILE_MORE_TABS.some((t) => t.id === activeView);
+  const isMoreActive = mobileMoreTabs.some((tab) => tab.id === activeView);
+  const currentDesign = getDesignThemeById(designTheme);
+  const currentLang = LANGUAGE_OPTIONS.find((l) => l.id === lang) ?? LANGUAGE_OPTIONS[0]!;
 
   const handleSelectView = (view: ViewTab) => {
     setMoreOpen(false);
+    setDesignOpen(false);
+    setLangOpen(false);
     setActiveView(view);
   };
 
@@ -53,25 +65,25 @@ export function StickyHeader() {
           onClick={() => handleSelectView('stilist')}
           className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:bg-[var(--ink)] focus:px-4 focus:py-2 focus:text-xs focus:text-[var(--paper)]"
         >
-          {UZ.meta.skipToContent}
+          {t.meta.skipToContent}
         </button>
 
-        <div className="mx-auto max-w-[1360px] px-3 sm:px-8">
+        <div className="mx-auto max-w-[1360px] px-3 sm:px-6">
           <div className="flex items-center justify-between gap-2 h-14">
-            {/* Brand & Live City Weather Chip */}
-            <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+            {/* Left: Brand & Live Weather */}
+            <div className="flex items-center gap-2 min-w-0">
               <button
                 type="button"
                 onClick={() => handleSelectView('cover')}
-                className="font-editorial italic text-2xl sm:text-[1.75rem] tracking-[-0.01em] text-[var(--ink)] hover:text-[var(--accent)] transition-colors py-1 shrink-0 cursor-pointer"
+                className="font-editorial italic text-2xl sm:text-[1.7rem] tracking-[-0.01em] text-[var(--ink)] hover:text-[var(--accent)] transition-colors py-1 shrink-0 cursor-pointer"
               >
-                {UZ.meta.brand}
+                {t.meta.brand}
               </button>
 
               <button
                 type="button"
                 onClick={() => handleSelectView('stilist')}
-                className="inline-flex items-center gap-1.5 border border-[var(--hairline)] bg-[var(--paper-elevated)] px-2.5 py-1 text-[11px] text-[var(--ink-2)] hover:border-[var(--ink)] transition-colors truncate max-w-[155px] sm:max-w-[200px] cursor-pointer"
+                className="inline-flex items-center gap-1.5 border border-[var(--hairline)] bg-[var(--paper-elevated)] px-2 py-1 text-[11px] text-[var(--ink-2)] hover:border-[var(--ink)] transition-colors truncate max-w-[130px] sm:max-w-[180px] cursor-pointer"
                 title={`${location.city}, ${location.country}`}
               >
                 <span
@@ -87,16 +99,16 @@ export function StickyHeader() {
               </button>
             </div>
 
-            {/* Desktop Single-Page Navigation (no overlapping tabs) */}
-            <nav aria-label={UZ.nav.ariaLabel} className="hidden lg:flex items-center gap-4">
-              {DESKTOP_TABS.map((item) => {
+            {/* Desktop Center Nav */}
+            <nav aria-label={t.nav.ariaLabel} className="hidden lg:flex items-center gap-3.5">
+              {desktopTabs.map((item) => {
                 const isActive = activeView === item.id;
                 return (
                   <button
                     key={item.id}
                     type="button"
                     onClick={() => handleSelectView(item.id)}
-                    className={`min-h-[44px] inline-flex items-center px-1.5 text-[11px] uppercase tracking-[0.13em] whitespace-nowrap border-b-2 transition-colors cursor-pointer ${
+                    className={`min-h-[44px] inline-flex items-center px-1 text-[11px] uppercase tracking-[0.12em] whitespace-nowrap border-b-2 transition-colors cursor-pointer ${
                       isActive
                         ? 'border-[var(--accent)] text-[var(--ink)] font-semibold'
                         : 'border-transparent text-[var(--muted)] hover:text-[var(--ink)]'
@@ -108,37 +120,150 @@ export function StickyHeader() {
               })}
             </nav>
 
-            {/* Right controls */}
-            <div className="flex items-center gap-2">
+            {/* Right: 10 Design Themes + 5 Languages + Quick Dark/Light */}
+            <div className="flex items-center gap-1.5 shrink-0">
+              {/* Language Switcher */}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLangOpen((v) => !v);
+                    setDesignOpen(false);
+                  }}
+                  aria-label={t.studio.langTitle}
+                  className="min-h-[38px] px-2 border border-[var(--hairline)] bg-[var(--paper-elevated)] text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--ink)] hover:border-[var(--ink)] cursor-pointer"
+                >
+                  {currentLang.short}
+                </button>
+                {langOpen && (
+                  <div
+                    style={{ backgroundColor: 'var(--paper-elevated)' }}
+                    className="absolute right-0 mt-1.5 w-44 border border-[var(--ink)] bg-[var(--paper-elevated)] p-1.5 shadow-2xl z-50"
+                  >
+                    <p className="px-2 py-1 text-[10px] uppercase tracking-[0.12em] text-[var(--muted)] border-b border-[var(--hairline)] mb-1">
+                      {t.studio.langTitle}
+                    </p>
+                    {LANGUAGE_OPTIONS.map((opt) => (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        onClick={() => {
+                          setLanguage(opt.id);
+                          setLangOpen(false);
+                        }}
+                        className={`w-full px-2.5 py-2 text-left text-xs flex items-center justify-between cursor-pointer ${
+                          lang === opt.id
+                            ? 'bg-[var(--accent-soft)] text-[var(--accent)] font-semibold'
+                            : 'text-[var(--ink)] hover:bg-[var(--paper-2)]'
+                        }`}
+                      >
+                        <span>{opt.label}</span>
+                        <span className="text-[10px] opacity-75">{opt.short}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* 10 Design Themes Picker */}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDesignOpen((v) => !v);
+                    setLangOpen(false);
+                  }}
+                  aria-label={t.studio.themesTitle}
+                  className="min-h-[38px] inline-flex items-center gap-1.5 border border-[var(--hairline)] bg-[var(--paper-elevated)] px-2.5 text-[11px] uppercase tracking-[0.08em] text-[var(--ink)] hover:border-[var(--ink)] cursor-pointer"
+                >
+                  <span
+                    className="h-2.5 w-2.5 rounded-full border border-[var(--ink)]/30 shrink-0"
+                    style={{ backgroundColor: currentDesign.preview[2] }}
+                  />
+                  <span className="hidden sm:inline">{t.studio.themesTitle}</span>
+                </button>
+
+                {designOpen && (
+                  <div
+                    style={{ backgroundColor: 'var(--paper-elevated)' }}
+                    className="fixed sm:absolute right-3 sm:right-0 top-14 sm:top-full sm:mt-1.5 w-[calc(100vw-1.5rem)] max-w-[330px] border border-[var(--ink)] bg-[var(--paper-elevated)] p-3 shadow-2xl z-50"
+                  >
+                    <div className="flex items-center justify-between border-b border-[var(--hairline)] pb-2 mb-2.5">
+                      <span className="text-[10px] uppercase tracking-[0.14em] text-[var(--muted)] font-semibold">
+                        10 {t.studio.themesTitle}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setDesignOpen(false)}
+                        className="text-xs px-2 py-0.5 border border-[var(--hairline)] cursor-pointer"
+                      >
+                        ×
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-1.5 max-h-[65dvh] overflow-y-auto editorial-scroll">
+                      {DESIGN_THEMES.map((preset) => {
+                        const active = designTheme === preset.id;
+                        return (
+                          <button
+                            key={preset.id}
+                            type="button"
+                            onClick={() => {
+                              setDesignTheme(preset.id);
+                              setDesignOpen(false);
+                            }}
+                            className={`p-2 border text-left transition-colors cursor-pointer ${
+                              active
+                                ? 'border-[var(--accent)] bg-[var(--accent-soft)]'
+                                : 'border-[var(--hairline)] bg-[var(--paper)] hover:border-[var(--ink)]'
+                            }`}
+                          >
+                            <div className="flex items-center gap-1 mb-1">
+                              {preset.preview.map((hex, i) => (
+                                <span
+                                  key={i}
+                                  className="h-2.5 w-2.5 rounded-full border border-black/20"
+                                  style={{ backgroundColor: hex }}
+                                />
+                              ))}
+                            </div>
+                            <p className="text-[11px] font-medium text-[var(--ink)] truncate">
+                              {lang === 'en' ? preset.name_en : preset.name_uz}
+                            </p>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Quick Light/Dark Toggle */}
               <button
                 type="button"
                 onClick={toggleTheme}
-                aria-label={theme === 'dark' ? UZ.nav.themeLight : UZ.nav.themeDark}
-                className="min-h-[40px] min-w-[40px] inline-flex items-center gap-1.5 border border-[var(--hairline)] bg-[var(--paper-elevated)] px-2.5 text-[11px] uppercase tracking-[0.1em] text-[var(--ink)] hover:border-[var(--ink)] transition-colors cursor-pointer shrink-0"
+                aria-label={theme === 'dark' ? t.nav.themeLight : t.nav.themeDark}
+                className="min-h-[38px] min-w-[38px] inline-flex items-center justify-center border border-[var(--hairline)] bg-[var(--paper-elevated)] px-2 text-[var(--ink)] hover:border-[var(--ink)] transition-colors cursor-pointer"
               >
                 {theme === 'dark' ? (
-                  <svg viewBox="0 0 20 20" className="h-3.5 w-3.5 stroke-current shrink-0" fill="none" strokeWidth="1.6">
+                  <svg viewBox="0 0 20 20" className="h-3.5 w-3.5 stroke-current" fill="none" strokeWidth="1.6">
                     <circle cx="10" cy="10" r="3.5" />
                     <path d="M10 2.5v2M10 15.5v2M2.5 10h2M15.5 10h2M4.7 4.7l1.4 1.4M13.9 13.9l1.4 1.4M15.3 4.7l-1.4 1.4M6.1 13.9l-1.4 1.4" strokeLinecap="round" />
                   </svg>
                 ) : (
-                  <svg viewBox="0 0 20 20" className="h-3.5 w-3.5 stroke-current shrink-0" fill="none" strokeWidth="1.6">
+                  <svg viewBox="0 0 20 20" className="h-3.5 w-3.5 stroke-current" fill="none" strokeWidth="1.6">
                     <path d="M16.5 11.8A6.8 6.8 0 0 1 8.2 3.5a7 7 0 1 0 8.3 8.3Z" strokeLinejoin="round" />
                   </svg>
                 )}
-                <span className="hidden sm:inline">
-                  {theme === 'dark' ? UZ.nav.themeLight : UZ.nav.themeDark}
-                </span>
               </button>
             </div>
           </div>
 
-          {/* Tablet horizontal strip (md only, between 768px and 1024px) */}
+          {/* Tablet horizontal strip */}
           <nav
-            aria-label={UZ.nav.ariaLabel}
+            aria-label={t.nav.ariaLabel}
             className="hidden md:flex lg:hidden items-center gap-4 overflow-x-auto pb-1.5 pt-0.5 border-t border-[var(--hairline)] no-scrollbar"
           >
-            {DESKTOP_TABS.map((item) => {
+            {desktopTabs.map((item) => {
               const isActive = activeView === item.id;
               return (
                 <button
@@ -160,33 +285,36 @@ export function StickyHeader() {
 
         {import.meta.env.DEV && isSampleData && (
           <div className="border-t border-[var(--hairline)] bg-[var(--paper-2)] px-4 py-1.5 text-center text-[11px] tracking-[0.06em] text-[var(--muted)]">
-            {UZ.meta.sampleBanner}
+            {t.meta.sampleBanner}
           </div>
         )}
       </header>
 
-      {/* Mobile More Drawer (opens above fixed bottom bar) */}
+      {/* Mobile More Drawer */}
       {moreOpen && (
         <div className="fixed inset-0 z-40 md:hidden">
           <div
-            className="absolute inset-0 bg-[var(--ink)]/45 backdrop-blur-xs"
+            className="absolute inset-0 bg-black/65 backdrop-blur-xs"
             onClick={() => setMoreOpen(false)}
           />
-          <div className="absolute bottom-16 inset-x-3 border border-[var(--hairline-strong)] bg-[var(--paper-elevated)] p-4 shadow-2xl">
+          <div
+            style={{ backgroundColor: 'var(--paper-elevated)' }}
+            className="absolute bottom-16 inset-x-3 border border-[var(--ink)] bg-[var(--paper-elevated)] p-4 shadow-2xl"
+          >
             <div className="flex items-center justify-between pb-3 border-b border-[var(--hairline)]">
               <p className="text-[11px] uppercase tracking-[0.16em] text-[var(--muted)]">
-                Barcha boʻlimlar
+                {t.nav.ariaLabel}
               </p>
               <button
                 type="button"
                 onClick={() => setMoreOpen(false)}
                 className="px-2 py-1 text-xs text-[var(--ink)] border border-[var(--hairline)] cursor-pointer"
               >
-                {UZ.atelier.closePicker}
+                {t.atelier.closePicker}
               </button>
             </div>
             <div className="grid grid-cols-2 gap-2.5 pt-3">
-              {MOBILE_MORE_TABS.map((tab) => {
+              {mobileMoreTabs.map((tab) => {
                 const isActive = activeView === tab.id;
                 return (
                   <button
@@ -213,13 +341,13 @@ export function StickyHeader() {
         </div>
       )}
 
-      {/* Mobile Fixed Thumb-Friendly Bottom Navigation Bar (< 768px) */}
+      {/* Mobile Fixed Bottom Nav */}
       <nav
-        aria-label={UZ.nav.ariaLabel}
+        aria-label={t.nav.ariaLabel}
         className="fixed bottom-0 inset-x-0 z-40 border-t border-[var(--hairline)] bg-[var(--paper)]/96 backdrop-blur-md md:hidden pb-[env(safe-area-inset-bottom)]"
       >
         <div className="grid grid-cols-5 h-14">
-          {MOBILE_PRIMARY_TABS.map((item) => {
+          {mobilePrimaryTabs.map((item) => {
             const isActive = activeView === item.id;
             return (
               <button
@@ -252,7 +380,7 @@ export function StickyHeader() {
             }`}
           >
             <span className="text-[9px] font-tabular tracking-[0.12em] opacity-75">•••</span>
-            <span className="text-[11px] leading-none">Yana</span>
+            <span className="text-[11px] leading-none">•••</span>
           </button>
         </div>
       </nav>

@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { GarmentImage } from '../components/GarmentImage';
 import { CATEGORY_ORDER, type Category, type Garment } from '../data/schema';
-import { UZ } from '../i18n/uz';
+import { useTranslation } from '../i18n/useTranslation';
 import { useKapsulaStore } from '../store/useKapsulaStore';
 import { analyzeGarmentPhoto, type PhotoAnalysisResult } from '../utils/photo-analyzer';
 
 export function PhotoAnalyzerSection() {
+  const { t, localize } = useTranslation();
   const manifest = useKapsulaStore((s) => s.manifest);
   const query = useKapsulaStore((s) => s.query);
   const addCustomGarment = useKapsulaStore((s) => s.addCustomGarment);
@@ -164,13 +165,13 @@ export function PhotoAnalyzerSection() {
         <div className="flex flex-wrap items-baseline justify-between gap-4 pb-6 border-b border-[var(--hairline)]">
           <div>
             <p className="text-[11px] uppercase tracking-[0.2em] text-[var(--muted)] mb-2">
-              {UZ.sections.skaner}
+              {t.sections.skaner}
             </p>
             <h2 className="font-editorial text-3xl sm:text-5xl tracking-[-0.02em]">
-              {UZ.photoAnalyzer.heading}
+              {t.photoAnalyzer.heading}
             </h2>
             <p className="mt-2 max-w-2xl text-sm text-[var(--muted)]">
-              {UZ.photoAnalyzer.subheading}
+              {t.photoAnalyzer.subheading}
             </p>
           </div>
         </div>
@@ -178,7 +179,7 @@ export function PhotoAnalyzerSection() {
         {/* Honest Transparency Banner */}
         <div className="mt-5 border border-[var(--hairline-strong)] bg-[var(--paper-2)]/70 px-4 py-3 text-xs text-[var(--ink-2)] flex items-start gap-2.5">
           <span className="h-2 w-2 mt-1.5 rounded-full bg-[var(--positive)] shrink-0" aria-hidden="true" />
-          <p>{UZ.photoAnalyzer.privacyNote}</p>
+          <p>{t.photoAnalyzer.privacyNote}</p>
         </div>
 
         <div className="mt-8 grid gap-8 lg:grid-cols-12 items-start">
@@ -186,7 +187,7 @@ export function PhotoAnalyzerSection() {
           <div className="lg:col-span-5 border border-[var(--hairline)] bg-[var(--paper-elevated)] p-5 sm:p-6 space-y-5">
             <div>
               <label className="block text-xs uppercase tracking-[0.14em] text-[var(--ink)] font-medium mb-2.5">
-                {UZ.photoAnalyzer.itemTypeLabel}
+                {t.photoAnalyzer.itemTypeLabel}
               </label>
               <div className="flex flex-wrap gap-2">
                 {CATEGORY_ORDER.map((cat) => {
@@ -205,7 +206,7 @@ export function PhotoAnalyzerSection() {
                           : 'border-[var(--hairline)] bg-[var(--paper)] text-[var(--ink-2)] hover:border-[var(--ink)]'
                       }`}
                     >
-                      {UZ.categories[cat]}
+                      {t.categories[cat]}
                     </button>
                   );
                 })}
@@ -217,14 +218,14 @@ export function PhotoAnalyzerSection() {
                 htmlFor="custom-garment-name"
                 className="block text-xs uppercase tracking-[0.14em] text-[var(--ink)] font-medium mb-2"
               >
-                {UZ.photoAnalyzer.customNameLabel}
+                {t.photoAnalyzer.customNameLabel}
               </label>
               <input
                 id="custom-garment-name"
                 type="text"
                 value={customName}
                 onChange={(e) => setCustomName(e.target.value)}
-                placeholder={UZ.photoAnalyzer.customNamePlaceholder}
+                placeholder={t.photoAnalyzer.customNamePlaceholder}
                 className="w-full min-h-[44px] border border-[var(--hairline)] bg-[var(--paper)] px-3.5 text-sm text-[var(--ink)] placeholder:text-[var(--muted)] focus:border-[var(--accent)] focus:outline-none"
               />
             </div>
@@ -232,7 +233,7 @@ export function PhotoAnalyzerSection() {
             {/* Action Buttons: Gallery, Native Camera, WebRTC Live Camera */}
             <div className="space-y-2.5">
               <label className="min-h-[46px] w-full flex items-center justify-center gap-2 bg-[var(--ink)] text-[var(--paper)] px-4 py-3 text-xs uppercase tracking-[0.14em] font-medium hover:bg-[var(--accent)] transition-colors cursor-pointer">
-                <span>{UZ.photoAnalyzer.uploadBtn}</span>
+                <span>{t.photoAnalyzer.uploadBtn}</span>
                 <input
                   type="file"
                   accept="image/*"
@@ -243,7 +244,7 @@ export function PhotoAnalyzerSection() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 <label className="min-h-[44px] flex items-center justify-center border border-[var(--hairline-strong)] bg-[var(--paper)] px-3 py-2.5 text-xs uppercase tracking-[0.1em] text-[var(--ink)] hover:border-[var(--ink)] transition-colors cursor-pointer text-center">
-                  <span>{UZ.photoAnalyzer.cameraBtn}</span>
+                  <span>{t.photoAnalyzer.cameraBtn}</span>
                   <input
                     type="file"
                     accept="image/*"
@@ -258,7 +259,7 @@ export function PhotoAnalyzerSection() {
                   onClick={() => (cameraActive ? stopCameraStream() : void startLiveCamera('environment'))}
                   className="min-h-[44px] flex items-center justify-center border border-[var(--hairline-strong)] bg-[var(--paper)] px-3 py-2.5 text-xs uppercase tracking-[0.1em] text-[var(--ink)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors cursor-pointer"
                 >
-                  {cameraActive ? UZ.photoAnalyzer.stopCamera : UZ.photoAnalyzer.selfieBtn}
+                  {cameraActive ? t.photoAnalyzer.stopCamera : t.photoAnalyzer.selfieBtn}
                 </button>
               </div>
             </div>
@@ -276,9 +277,9 @@ export function PhotoAnalyzerSection() {
                   <button
                     type="button"
                     onClick={captureFromCamera}
-                    className="flex-1 min-h-[42px] bg-[var(--accent)] text-[#FAF7F0] text-xs uppercase tracking-[0.14em] font-medium cursor-pointer"
+                    className="flex-1 min-h-[42px] bg-[var(--accent)] text-[var(--accent-ink)] text-xs uppercase tracking-[0.14em] font-medium cursor-pointer"
                   >
-                    {UZ.photoAnalyzer.capturePhoto}
+                    {t.photoAnalyzer.capturePhoto}
                   </button>
                   <button
                     type="button"
@@ -287,7 +288,7 @@ export function PhotoAnalyzerSection() {
                     }
                     className="min-h-[42px] px-3 border border-[var(--hairline)] bg-[var(--paper)] text-[var(--ink)] text-xs cursor-pointer"
                   >
-                    Old / Orqa kamera
+                    {localize('Old / Orqa kamera')}
                   </button>
                 </div>
               </div>
@@ -296,7 +297,7 @@ export function PhotoAnalyzerSection() {
             {/* Quick Presets so anyone can test immediately without hunting for photos */}
             <div className="pt-3 border-t border-[var(--hairline)]">
               <p className="text-[11px] uppercase tracking-[0.12em] text-[var(--muted)] mb-2">
-                Tez sinov (namunaviy matolar)
+                {localize('Tez sinov (namunaviy matolar)')}
               </p>
               <div className="flex flex-wrap gap-2">
                 <button
@@ -305,7 +306,7 @@ export function PhotoAnalyzerSection() {
                   className="px-2.5 py-1.5 text-[11px] border border-[var(--hairline)] bg-[var(--paper)] hover:border-[var(--ink)] cursor-pointer flex items-center gap-1.5"
                 >
                   <span className="h-2.5 w-2.5 rounded-full bg-[#4A4E57]" />
-                  <span>Kulrang hudi</span>
+                  <span>{localize('Kulrang hudi')}</span>
                 </button>
                 <button
                   type="button"
@@ -313,7 +314,7 @@ export function PhotoAnalyzerSection() {
                   className="px-2.5 py-1.5 text-[11px] border border-[var(--hairline)] bg-[var(--paper)] hover:border-[var(--ink)] cursor-pointer flex items-center gap-1.5"
                 >
                   <span className="h-2.5 w-2.5 rounded-full bg-[#5F6642]" />
-                  <span>Zaytun kargo</span>
+                  <span>{localize('Zaytun kargo')}</span>
                 </button>
                 <button
                   type="button"
@@ -321,14 +322,14 @@ export function PhotoAnalyzerSection() {
                   className="px-2.5 py-1.5 text-[11px] border border-[var(--hairline)] bg-[var(--paper)] hover:border-[var(--ink)] cursor-pointer flex items-center gap-1.5"
                 >
                   <span className="h-2.5 w-2.5 rounded-full bg-[#B98E5E]" />
-                  <span>Tuyarang palto</span>
+                  <span>{localize('Tuyarang palto')}</span>
                 </button>
               </div>
             </div>
 
             {errorMsg && (
               <p role="alert" className="text-xs text-[var(--negative)] border border-[var(--negative)]/40 bg-[var(--paper-2)] p-3">
-                {errorMsg}
+                {localize(errorMsg)}
               </p>
             )}
           </div>
@@ -337,17 +338,17 @@ export function PhotoAnalyzerSection() {
           <div className="lg:col-span-7">
             {analyzing && (
               <div className="border border-[var(--hairline)] bg-[var(--paper-elevated)] p-10 text-center text-sm text-[var(--muted)]">
-                Rang va kontrast OKLCH fazosida tahlil qilinmoqda...
+                {localize('Rang va kontrast OKLCH fazosida tahlil qilinmoqda...')}
               </div>
             )}
 
             {!analyzing && !analysis && (
               <div className="border border-dashed border-[var(--hairline-strong)] bg-[var(--paper-elevated)] p-10 sm:p-14 text-center space-y-3">
                 <p className="font-editorial italic text-2xl text-[var(--ink)]">
-                  Foto-tahlil tayyor
+                  {t.nav.skaner}
                 </p>
                 <p className="max-w-md mx-auto text-sm text-[var(--muted)]">
-                  {UZ.photoAnalyzer.emptyState}
+                  {t.photoAnalyzer.emptyState}
                 </p>
               </div>
             )}
@@ -358,24 +359,25 @@ export function PhotoAnalyzerSection() {
                 <div className="border border-[var(--hairline)] bg-[var(--paper-elevated)] p-5 flex flex-col sm:flex-row gap-5">
                   <img
                     src={analysis.thumbnailDataUrl}
-                    alt={analysis.virtualGarment.name_uz}
+                    alt={localize(analysis.virtualGarment.name_uz)}
                     className="w-full sm:w-36 h-48 object-cover border border-[var(--hairline)] shrink-0"
                   />
                   <div className="flex-1 min-w-0 space-y-4">
                     <div className="flex flex-wrap items-start justify-between gap-2">
                       <div>
                         <p className="text-[11px] uppercase tracking-[0.14em] text-[var(--muted)]">
-                          {UZ.categories[analysis.virtualGarment.category]} · {analysis.closestPalette?.name_uz ?? 'Neytral'}
+                          {t.categories[analysis.virtualGarment.category]} ·{' '}
+                          {localize(analysis.closestPalette?.name_uz ?? 'Neytral')}
                         </p>
                         <h3 className="font-editorial text-2xl text-[var(--ink)]">
-                          {analysis.virtualGarment.name_uz}
+                          {localize(analysis.virtualGarment.name_uz)}
                         </h3>
                       </div>
                     </div>
 
                     <div>
                       <p className="text-[11px] uppercase tracking-[0.14em] text-[var(--muted)] mb-2">
-                        {UZ.photoAnalyzer.dominantColorsTitle}
+                        {t.photoAnalyzer.dominantColorsTitle}
                       </p>
                       <div className="flex flex-wrap gap-2">
                         {analysis.swatches.map((sw) => (
@@ -403,14 +405,14 @@ export function PhotoAnalyzerSection() {
                         disabled={savedFlag}
                         className="min-h-[42px] px-4 py-2 border border-[var(--ink)] bg-[var(--paper)] text-xs uppercase tracking-[0.12em] font-medium text-[var(--ink)] hover:bg-[var(--paper-2)] disabled:opacity-60 cursor-pointer"
                       >
-                        {savedFlag ? UZ.photoAnalyzer.savedToWardrobe : UZ.photoAnalyzer.saveToWardrobe}
+                        {savedFlag ? t.photoAnalyzer.savedToWardrobe : t.photoAnalyzer.saveToWardrobe}
                       </button>
                       <button
                         type="button"
                         onClick={handleOpenInAtelier}
-                        className="min-h-[42px] px-4 py-2 bg-[var(--accent)] text-[#FAF7F0] text-xs uppercase tracking-[0.12em] font-medium hover:opacity-90 cursor-pointer"
+                        className="min-h-[42px] px-4 py-2 bg-[var(--accent)] text-[var(--accent-ink)] text-xs uppercase tracking-[0.12em] font-medium hover:opacity-90 cursor-pointer"
                       >
-                        {UZ.photoAnalyzer.addAndOpenAtelier}
+                        {t.photoAnalyzer.addAndOpenAtelier}
                       </button>
                     </div>
                   </div>
@@ -419,14 +421,14 @@ export function PhotoAnalyzerSection() {
                 {/* Stylist & Accessory Advice Box */}
                 <div className="border-2 border-[var(--accent)] bg-[var(--accent-soft)]/50 p-5 space-y-2">
                   <p className="text-[11px] uppercase tracking-[0.16em] text-[var(--accent)] font-semibold">
-                    {UZ.photoAnalyzer.adviceTitle}
+                    {t.photoAnalyzer.adviceTitle}
                   </p>
                   <p className="text-sm sm:text-base text-[var(--ink)] leading-relaxed font-medium">
-                    {analysis.summaryUz}
+                    {localize(analysis.summaryUz)}
                   </p>
                   {analysis.smartAdvice && (
                     <p className="text-sm text-[var(--ink-2)] leading-relaxed border-t border-[var(--hairline)] pt-2 mt-2">
-                      {analysis.smartAdvice.summaryUz}
+                      {localize(analysis.smartAdvice.summaryUz)}
                     </p>
                   )}
                 </div>
@@ -434,13 +436,13 @@ export function PhotoAnalyzerSection() {
                 {/* Suggested Matching Garments */}
                 <div>
                   <h4 className="text-xs uppercase tracking-[0.16em] text-[var(--muted)] mb-3">
-                    {UZ.photoAnalyzer.pairsTitle}
+                    {t.photoAnalyzer.pairsTitle}
                   </h4>
                   <div className="space-y-4">
                     {pairingEntries.slice(0, 4).map(([cat, items]) => (
                       <div key={cat} className="border border-[var(--hairline)] bg-[var(--paper-elevated)] p-4">
                         <p className="text-[11px] uppercase tracking-[0.14em] text-[var(--muted)] mb-3">
-                          {UZ.categories[cat]}
+                          {t.categories[cat]}
                         </p>
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                           {items.map((cand) => (
@@ -464,7 +466,7 @@ export function PhotoAnalyzerSection() {
                                   </span>
                                 )}
                                 <span className="block text-xs text-[var(--ink)] line-clamp-2">
-                                  {cand.name_uz}
+                                  {localize(cand.name_uz)}
                                 </span>
                               </div>
                             </button>

@@ -3,13 +3,14 @@ import { GarmentImage } from '../components/GarmentImage';
 import { ReadOnlyBoard } from '../components/ReadOnlyBoard';
 import type { Garment, Occasion, WeatherBand } from '../data/schema';
 import { garmentsToBoardSlots, recommendOutfits } from '../engine/stylist';
-import { UZ } from '../i18n/uz';
+import { useTranslation } from '../i18n/useTranslation';
 import { useKapsulaStore } from '../store/useKapsulaStore';
 import { fetchWeeklyForecast, type DailyForecastItem } from '../utils/weather-api';
 
 type WardrobeSubTab = 'weekly' | 'packing' | 'custom' | 'saved';
 
 export function MyWardrobeSection() {
+  const { t, localize } = useTranslation();
   const manifest = useKapsulaStore((s) => s.manifest);
   const location = useKapsulaStore((s) => s.location);
   const query = useKapsulaStore((s) => s.query);
@@ -98,21 +99,21 @@ export function MyWardrobeSection() {
         <div className="flex flex-wrap items-baseline justify-between gap-4 pb-6 border-b border-[var(--hairline)]">
           <div>
             <p className="text-[11px] uppercase tracking-[0.2em] text-[var(--muted)] mb-2">
-              {UZ.sections.garderobim}
+              {t.sections.garderobim}
             </p>
             <h2 className="font-editorial text-3xl sm:text-5xl tracking-[-0.02em]">
-              {UZ.myWardrobe.heading}
+              {t.myWardrobe.heading}
             </h2>
             <p className="mt-2 max-w-2xl text-sm text-[var(--muted)]">
-              {UZ.myWardrobe.subheading}
+              {t.myWardrobe.subheading}
             </p>
           </div>
           <button
             type="button"
             onClick={() => setActiveView('skaner')}
-            className="min-h-[42px] px-4 py-2 bg-[var(--accent)] text-[#FAF7F0] text-xs uppercase tracking-[0.14em] font-medium cursor-pointer"
+            className="min-h-[42px] px-4 py-2 bg-[var(--accent)] text-[var(--accent-ink)] text-xs uppercase tracking-[0.14em] font-medium cursor-pointer"
           >
-            + Rasm yuklab kiyim qoʻshish
+            + {t.photoAnalyzer.uploadBtn}
           </button>
         </div>
 
@@ -120,10 +121,10 @@ export function MyWardrobeSection() {
         <div className="mt-6 flex flex-wrap gap-2 border-b border-[var(--hairline)] pb-4">
           {(
             [
-              { id: 'weekly', label: UZ.myWardrobe.tabWeekly },
-              { id: 'packing', label: UZ.myWardrobe.tabPacking },
-              { id: 'custom', label: `${UZ.myWardrobe.tabCustom} (${customGarments.length})` },
-              { id: 'saved', label: `${UZ.myWardrobe.tabSaved} (${savedOutfits.length})` },
+              { id: 'weekly', label: t.myWardrobe.tabWeekly },
+              { id: 'packing', label: t.myWardrobe.tabPacking },
+              { id: 'custom', label: `${t.myWardrobe.tabCustom} (${customGarments.length})` },
+              { id: 'saved', label: `${t.myWardrobe.tabSaved} (${savedOutfits.length})` },
             ] as const
           ).map((tab) => (
             <button
@@ -146,10 +147,10 @@ export function MyWardrobeSection() {
           <div className="mt-6 space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <p className="text-xs text-[var(--muted)]">
-                {location.city}, {location.country} — 7 kunlik ob-havoga mos kunlik kapsula tavsiyalari
+                {location.city}, {location.country} — {localize('7 kunlik ob-havoga mos kunlik kapsula tavsiyalari')}
               </p>
               {forecastLoading && (
-                <span className="text-xs text-[var(--muted)]">Ob-havo yuklanmoqda...</span>
+                <span className="text-xs text-[var(--muted)]">{t.weather.tashkentLoading}</span>
               )}
             </div>
 
@@ -188,7 +189,9 @@ export function MyWardrobeSection() {
                     <div>
                       <div className="flex items-center justify-between border-b border-[var(--hairline)] pb-2">
                         <div>
-                          <p className="text-sm font-semibold text-[var(--ink)]">{day.dayNameUz}</p>
+                          <p className="text-sm font-semibold text-[var(--ink)]">
+                            {localize(day.dayNameUz)}
+                          </p>
                           <p className="text-[11px] text-[var(--muted)] font-tabular">{day.date}</p>
                         </div>
                         <div className="text-right">
@@ -196,13 +199,13 @@ export function MyWardrobeSection() {
                             {day.tempMaxC > 0 ? `+${day.tempMaxC}` : day.tempMaxC}° / {day.tempMinC}°
                           </p>
                           <p className="text-[10px] text-[var(--muted)]">
-                            {day.rain ? 'Yomgʻirli' : day.conditionUz}
+                            {day.rain ? t.weather.rain : localize(day.conditionUz)}
                           </p>
                         </div>
                       </div>
 
                       <p className="mt-2 text-[11px] uppercase tracking-[0.12em] text-[var(--accent)]">
-                        {UZ.occasions[dayOccasion].label}
+                        {t.occasions[dayOccasion].label}
                       </p>
 
                       <div className="mt-2 space-y-1.5">
@@ -212,7 +215,7 @@ export function MyWardrobeSection() {
                               className="h-2.5 w-2.5 rounded-full border border-[var(--ink)]/20 shrink-0"
                               style={{ backgroundColor: g.color }}
                             />
-                            <span className="truncate">{g.name_uz}</span>
+                            <span className="truncate">{localize(g.name_uz)}</span>
                           </div>
                         ))}
                       </div>
@@ -228,7 +231,7 @@ export function MyWardrobeSection() {
                         }}
                         className="flex-1 min-h-[38px] bg-[var(--ink)] text-[var(--paper)] px-2 text-[11px] uppercase tracking-[0.1em] hover:bg-[var(--accent)] transition-colors cursor-pointer"
                       >
-                        Atelyeda ochish
+                        {t.stylist.openInAtelier}
                       </button>
                     </div>
                   </div>
@@ -244,10 +247,10 @@ export function MyWardrobeSection() {
             <div className="border border-[var(--hairline)] bg-[var(--paper-elevated)] p-5 flex flex-wrap items-center justify-between gap-4">
               <div>
                 <h3 className="font-editorial text-2xl text-[var(--ink)]">
-                  {UZ.myWardrobe.packingTitle}
+                  {t.myWardrobe.packingTitle}
                 </h3>
                 <p className="text-xs text-[var(--muted)] mt-1">
-                  Tanlangan safar muddati va iqlimga mos eng ixcham roʻyxat
+                  {localize('Tanlangan safar muddati va iqlimga mos eng ixcham roʻyxat')}
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -262,7 +265,7 @@ export function MyWardrobeSection() {
                         : 'border-[var(--hairline)] bg-[var(--paper)]'
                     }`}
                   >
-                    {UZ.myWardrobe.packingDays(days)}
+                    {t.myWardrobe.packingDays(days)}
                   </button>
                 ))}
                 {(['hot', 'warm', 'cool', 'cold'] as WeatherBand[]).map((band) => (
@@ -276,7 +279,7 @@ export function MyWardrobeSection() {
                         : 'border-[var(--hairline)] bg-[var(--paper)] text-[var(--muted)]'
                     }`}
                   >
-                    {UZ.weather[band].label}
+                    {t.weather[band].label}
                   </button>
                 ))}
                 {(['travel', 'office', 'walk', 'sport'] as Occasion[]).map((occ) => (
@@ -290,7 +293,7 @@ export function MyWardrobeSection() {
                         : 'border-[var(--hairline)] bg-[var(--paper)] text-[var(--muted)]'
                     }`}
                   >
-                    {UZ.occasions[occ].label}
+                    {t.occasions[occ].label}
                   </button>
                 ))}
               </div>
@@ -314,7 +317,7 @@ export function MyWardrobeSection() {
                       className="flex items-center justify-between text-xs cursor-pointer"
                     >
                       <span className="text-[10px] uppercase tracking-[0.1em] text-[var(--muted)]">
-                        {UZ.categories[g.category]}
+                        {t.categories[g.category]}
                       </span>
                       <span
                         className={`h-5 w-5 border flex items-center justify-center text-xs ${
@@ -330,7 +333,7 @@ export function MyWardrobeSection() {
                       <GarmentImage garment={g} className="h-full w-full" />
                     </div>
                     <p className={`text-xs ${checked ? 'line-through text-[var(--muted)]' : 'text-[var(--ink)]'}`}>
-                      {g.name_uz}
+                      {localize(g.name_uz)}
                     </p>
                   </div>
                 );
@@ -345,14 +348,14 @@ export function MyWardrobeSection() {
             {customGarments.length === 0 ? (
               <div className="border border-dashed border-[var(--hairline-strong)] bg-[var(--paper-elevated)] p-10 text-center space-y-4">
                 <p className="text-sm text-[var(--muted)] max-w-md mx-auto">
-                  {UZ.myWardrobe.noCustomItems}
+                  {t.myWardrobe.noCustomItems}
                 </p>
                 <button
                   type="button"
                   onClick={() => setActiveView('skaner')}
                   className="min-h-[44px] px-5 bg-[var(--ink)] text-[var(--paper)] text-xs uppercase tracking-[0.14em] cursor-pointer"
                 >
-                  Foto-tahlil boʻlimiga oʻtish
+                  {t.nav.skaner}
                 </button>
               </div>
             ) : (
@@ -363,19 +366,21 @@ export function MyWardrobeSection() {
                     className="border border-[var(--hairline)] bg-[var(--paper-elevated)] p-3 flex flex-col justify-between gap-2"
                   >
                     <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.1em] text-[var(--muted)]">
-                      <span>{UZ.categories[g.category]}</span>
+                      <span>{t.categories[g.category]}</span>
                       <button
                         type="button"
                         onClick={() => removeCustomGarment(g.id)}
                         className="text-[var(--negative)] hover:underline cursor-pointer"
                       >
-                        Oʻchirish
+                        {t.atelier.deleteSaved}
                       </button>
                     </div>
                     <div className="h-32 w-full flex items-center justify-center">
                       <GarmentImage garment={g} className="h-full w-full" />
                     </div>
-                    <p className="text-xs font-medium text-[var(--ink)] line-clamp-2">{g.name_uz}</p>
+                    <p className="text-xs font-medium text-[var(--ink)] line-clamp-2">
+                      {localize(g.name_uz)}
+                    </p>
                     <button
                       type="button"
                       onClick={() => {
@@ -384,7 +389,7 @@ export function MyWardrobeSection() {
                       }}
                       className="min-h-[38px] w-full bg-[var(--ink)] text-[var(--paper)] text-[11px] uppercase tracking-[0.1em] hover:bg-[var(--accent)] cursor-pointer"
                     >
-                      Atelyeda kiyish
+                      {t.brands.addToAtelier}
                     </button>
                   </div>
                 ))}
@@ -398,7 +403,7 @@ export function MyWardrobeSection() {
           <div className="mt-6">
             {savedOutfits.length === 0 ? (
               <div className="border border-dashed border-[var(--hairline-strong)] bg-[var(--paper-elevated)] p-10 text-center text-sm text-[var(--muted)]">
-                {UZ.atelier.noSaved}
+                {t.atelier.noSaved}
               </div>
             ) : (
               <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -412,13 +417,15 @@ export function MyWardrobeSection() {
                       className="border border-[var(--hairline)] bg-[var(--paper-elevated)] p-4 space-y-3"
                     >
                       <div className="flex items-center justify-between gap-2">
-                        <p className="font-editorial text-xl text-[var(--ink)]">{outfit.title}</p>
+                        <p className="font-editorial text-xl text-[var(--ink)]">
+                          {localize(outfit.title)}
+                        </p>
                         <button
                           type="button"
                           onClick={() => deleteSavedOutfit(outfit.id)}
                           className="text-xs text-[var(--muted)] hover:text-[var(--negative)] cursor-pointer"
                         >
-                          {UZ.atelier.deleteSaved}
+                          {t.atelier.deleteSaved}
                         </button>
                       </div>
                       <ReadOnlyBoard slots={garmentsToBoardSlots(items)} byId={byId} compact />
@@ -430,7 +437,7 @@ export function MyWardrobeSection() {
                         }}
                         className="w-full min-h-[40px] bg-[var(--ink)] text-[var(--paper)] text-xs uppercase tracking-[0.12em] hover:bg-[var(--accent)] cursor-pointer"
                       >
-                        {UZ.atelier.loadSaved}
+                        {t.atelier.loadSaved}
                       </button>
                     </div>
                   );

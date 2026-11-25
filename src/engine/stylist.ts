@@ -297,7 +297,7 @@ function getSlotCandidates(
       g,
       s: scoreSingleCandidate(g, query, relaxPalette, relaxOccasion, relaxWeather),
     }))
-    .sort((a, b) => (b.s !== a.s ? b.s - a.s : a.g.id.localeCompare(b.g.id)))
+    .sort((a, b) => (b.s !== a.s ? b.s - a.s : a.g.id < b.g.id ? -1 : a.g.id > b.g.id ? 1 : 0))
     .slice(0, STYLIST_CONFIG.topKPerSlot)
     .map((entry) => entry.g);
 }
@@ -352,14 +352,13 @@ export function boardSlotsToGarments(slots: BoardSlots, byId: Map<string, Garmen
   return list;
 }
 
-function computeLookOverlap(outfitIds: string[], look: Look): number {
-  if (outfitIds.length === 0 || look.items.length === 0) return 0;
-  const setA = new Set(outfitIds);
+function computeLookOverlap(setA: Set<string>, outfitLen: number, look: Look): number {
+  if (outfitLen === 0 || look.items.length === 0) return 0;
   let matches = 0;
   for (const id of look.items) {
     if (setA.has(id)) matches++;
   }
-  const denom = Math.max(outfitIds.length, look.items.length);
+  const denom = Math.max(outfitLen, look.items.length);
   return matches / denom;
 }
 
@@ -411,11 +410,12 @@ function evaluateCombo(
 
   // Check editorial look overlap & matching bonus
   const itemIds = items.map((g) => g.id);
+  const itemIdSet = new Set(itemIds);
   let bestLook: Look | null = null;
   let bestOverlap = 0;
   for (const look of manifest.looks) {
     if (query.gender !== 'all' && look.model !== query.gender) continue;
-    const overlap = computeLookOverlap(itemIds, look);
+    const overlap = computeLookOverlap(itemIdSet, itemIds.length, look);
     if (overlap > bestOverlap) {
       bestOverlap = overlap;
       bestLook = look;
@@ -582,7 +582,7 @@ function generateCandidatesForLevel(
     .map((items) => evaluateCombo(items, query, paletteObj, manifest))
     .sort((a, b) => {
       const diff = b.totalScore - a.totalScore;
-      return Math.abs(diff) > 1e-6 ? diff : a.id.localeCompare(b.id);
+      return Math.abs(diff) > 1e-6 ? diff : a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
     });
 }
 
@@ -685,9 +685,10 @@ export function recommendOutfits(manifest: Manifest, query: StylistQuery): Styli
 
   // Compute nearest 3 inspiration looks
   const topIds = chosen[0]?.garments.map((g) => g.id) ?? [];
+  const topIdSet = new Set(topIds);
   const inspirationLooks = [...manifest.looks]
     .map((look) => {
-      let score = computeLookOverlap(topIds, look);
+      let score = computeLookOverlap(topIdSet, topIds.length, look);
       if (look.occasion === query.occasion) score += 0.35;
       if (look.weather === query.weather) score += 0.3;
       if (query.palette !== 'any' && look.palette === query.palette) score += 0.25;

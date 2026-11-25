@@ -2,11 +2,12 @@ import { useReducedMotion } from 'motion/react';
 import * as m from 'motion/react-m';
 import { useMemo, useState } from 'react';
 import type { LookModel, Occasion, PaletteId, WeatherBand } from '../data/schema';
-import { UZ } from '../i18n/uz';
+import { useTranslation } from '../i18n/useTranslation';
 import { useKapsulaStore } from '../store/useKapsulaStore';
 import { LookImage } from '../components/LookImage';
 
 export function LookbookSection() {
+  const { t, localize } = useTranslation();
   const manifest = useKapsulaStore((s) => s.manifest);
   const setActiveLookId = useKapsulaStore((s) => s.setActiveLookId);
   const reducedMotion = useReducedMotion();
@@ -40,24 +41,24 @@ export function LookbookSection() {
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-[var(--hairline)] pb-6 mb-7">
           <div>
             <span className="micro-label text-[var(--muted)] block mb-2">
-              {UZ.sections.lookbook}
+              {t.sections.lookbook}
             </span>
             <h2
               id="lookbook-heading"
               className="font-editorial text-3xl sm:text-5xl leading-none text-[var(--ink)]"
             >
-              {UZ.lookbook.heading}
+              {t.lookbook.heading}
             </h2>
           </div>
           <p className="text-sm sm:text-base text-[var(--ink-2)] max-w-md">
-            {UZ.lookbook.subheading}
+            {t.lookbook.subheading}
           </p>
         </div>
 
         {/* Filter Chips */}
         <div className="space-y-2.5 mb-8 border border-[var(--hairline)] bg-[var(--paper-elevated)] p-3 sm:p-4">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="micro-label text-[var(--muted)] mr-1">{UZ.stylist.step2Title.slice(3)}:</span>
+            <span className="micro-label text-[var(--muted)] mr-1">{t.stylist.step2Title.slice(3)}:</span>
             {(
               ['all', 'office', 'university', 'school', 'walk', 'party', 'date', 'sport', 'travel'] as const
             ).map((oc) => (
@@ -71,13 +72,13 @@ export function LookbookSection() {
                     : 'border-[var(--hairline)] bg-[var(--paper)] text-[var(--ink-2)] hover:border-[var(--ink)]'
                 }`}
               >
-                {oc === 'all' ? UZ.lookbook.allFilter : UZ.occasions[oc].label}
+                {oc === 'all' ? t.lookbook.allFilter : t.occasions[oc].label}
               </button>
             ))}
 
             <span className="h-4 w-px bg-[var(--hairline-strong)] mx-1 hidden sm:inline-block" />
 
-            <span className="micro-label text-[var(--muted)] mr-1">{UZ.stylist.step1Title.slice(3)}:</span>
+            <span className="micro-label text-[var(--muted)] mr-1">{t.stylist.step1Title.slice(3)}:</span>
             {(['all', 'hot', 'warm', 'cool', 'cold'] as const).map((wx) => (
               <button
                 key={wx}
@@ -89,13 +90,13 @@ export function LookbookSection() {
                     : 'border-[var(--hairline)] bg-[var(--paper)] text-[var(--ink-2)] hover:border-[var(--ink)]'
                 }`}
               >
-                {wx === 'all' ? UZ.lookbook.allFilter : UZ.weather[wx].label}
+                {wx === 'all' ? t.lookbook.allFilter : t.weather[wx].label}
               </button>
             ))}
           </div>
 
           <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-[var(--hairline)]">
-            <span className="micro-label text-[var(--muted)] mr-1">{UZ.stylist.step3Title.slice(3)}:</span>
+            <span className="micro-label text-[var(--muted)] mr-1">{t.stylist.step3Title.slice(3)}:</span>
             <button
               type="button"
               onClick={() => setPaletteFilter('all')}
@@ -105,7 +106,7 @@ export function LookbookSection() {
                   : 'border-[var(--hairline)] bg-[var(--paper)] text-[var(--ink-2)] hover:border-[var(--ink)]'
               }`}
             >
-              {UZ.lookbook.allFilter}
+              {t.lookbook.allFilter}
             </button>
             {manifest.palettes.map((pal) => (
               <button
@@ -122,7 +123,7 @@ export function LookbookSection() {
                   className="h-2.5 w-2.5 rounded-full border border-current/30"
                   style={{ backgroundColor: pal.colors[2] }}
                 />
-                {pal.name_uz}
+                {localize(pal.name_uz)}
               </button>
             ))}
 
@@ -140,10 +141,10 @@ export function LookbookSection() {
                 }`}
               >
                 {model === 'all'
-                  ? UZ.gender.all
+                  ? t.gender.all
                   : model === 'w'
-                    ? UZ.gender.w
-                    : UZ.gender.m}
+                    ? t.gender.w
+                    : t.gender.m}
               </button>
             ))}
           </div>
@@ -180,18 +181,18 @@ export function LookbookSection() {
                   </div>
                   <div className="flex items-baseline justify-between gap-2">
                     <h3 className="font-editorial italic text-2xl text-[var(--ink)] group-hover:text-[var(--accent)] transition-colors">
-                      {look.title_uz}
+                      {localize(look.title_uz)}
                     </h3>
                     <span className="micro-label text-[10px] text-[var(--muted)]">
-                      {palette?.name_uz}
+                      {palette ? localize(palette.name_uz) : ''}
                     </span>
                   </div>
                   <div className="mt-1 flex items-center justify-between text-xs text-[var(--ink-2)]">
                     <span>
-                      {UZ.occasions[look.occasion].label} · {UZ.weather[look.weather].label}
+                      {t.occasions[look.occasion].label} · {t.weather[look.weather].label}
                     </span>
                     <span className="text-[var(--muted)]">
-                      {UZ.lookbook.itemsCount(look.items.length)}
+                      {t.lookbook.itemsCount(look.items.length)}
                     </span>
                   </div>
                 </button>

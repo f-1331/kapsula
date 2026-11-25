@@ -2,50 +2,50 @@ import { useReducedMotion, useScroll, useTransform } from 'motion/react';
 import * as m from 'motion/react-m';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { resolveAssetUrl } from '../data/manifest-loader';
-import { UZ } from '../i18n/uz';
+import { useTranslation } from '../i18n/useTranslation';
 import { useKapsulaStore, type ViewTab } from '../store/useKapsulaStore';
 import { GarmentSilhouette } from '../components/GarmentSilhouette';
 
-const QUICK_HUB: Array<{ view: ViewTab; num: string; title: string; desc: string }> = [
-  {
-    view: 'stilist',
-    num: '01',
-    title: UZ.nav.stilist,
-    desc: 'Ob-havo, ofis, maktab, universitet va sport uchun tayyor obrazlar.',
-  },
-  {
-    view: 'atelye',
-    num: '02',
-    title: UZ.nav.atelye,
-    desc: 'Sudrab almashtirish, brend filtri va aqlli qoʻshimcha maslahat.',
-  },
-  {
-    view: 'skaner',
-    num: '03',
-    title: UZ.nav.skaner,
-    desc: 'Rasm yoki kamerada kiyimni tahlil qilib, mos juftlik toping.',
-  },
-  {
-    view: 'brendlar',
-    num: '04',
-    title: UZ.nav.brendlar,
-    desc: '16 xalqaro va mahalliy brend kolleksiyalarini koʻring.',
-  },
-  {
-    view: 'garderobim',
-    num: '05',
-    title: UZ.nav.garderobim,
-    desc: '7 kunlik ob-havo rejasi, safar kapsulasi va shaxsiy buyumlar.',
-  },
-  {
-    view: 'ranglar',
-    num: '06',
-    title: UZ.nav.ranglar,
-    desc: 'OKLCH fazosida rang uygʻunligi kalkulyatori.',
-  },
-];
-
 export function CoverSection() {
+  const { t, localize } = useTranslation();
+  const quickHub: Array<{ view: ViewTab; num: string; title: string; desc: string }> = [
+    {
+      view: 'stilist',
+      num: '01',
+      title: t.nav.stilist,
+      desc: localize('Ob-havo, ofis, maktab, universitet va sport uchun tayyor obrazlar.'),
+    },
+    {
+      view: 'atelye',
+      num: '02',
+      title: t.nav.atelye,
+      desc: localize('3D Sahna, sudrab almashtirish, brend filtri va aqlli qoʻshimcha maslahat.'),
+    },
+    {
+      view: 'skaner',
+      num: '03',
+      title: t.nav.skaner,
+      desc: localize('Rasm yoki kamerada kiyimni tahlil qilib, mos juftlik toping.'),
+    },
+    {
+      view: 'brendlar',
+      num: '04',
+      title: t.nav.brendlar,
+      desc: localize('18 xalqaro va mahalliy brend kolleksiyalarini koʻring.'),
+    },
+    {
+      view: 'garderobim',
+      num: '05',
+      title: t.nav.garderobim,
+      desc: localize('7 kunlik ob-havo rejasi, safar kapsulasi va shaxsiy buyumlar.'),
+    },
+    {
+      view: 'ranglar',
+      num: '06',
+      title: t.nav.ranglar,
+      desc: localize('OKLCH fazosida rang uygʻunligi kalkulyatori va 16 palitra.'),
+    },
+  ];
   const manifest = useKapsulaStore((s) => s.manifest);
   const hasWebpAssets = useKapsulaStore((s) => s.hasWebpAssets);
   const location = useKapsulaStore((s) => s.location);
@@ -90,27 +90,27 @@ export function CoverSection() {
           {/* Left editorial masthead & promise */}
           <div className="lg:col-span-7 flex flex-col items-start min-w-0">
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mb-4">
-              <span className="micro-label text-[var(--muted)]">{UZ.sections.cover}</span>
+              <span className="micro-label text-[var(--muted)]">{t.sections.cover}</span>
               <span className="h-3 w-px bg-[var(--hairline-strong)]" aria-hidden="true" />
-              <span className="micro-label text-[var(--accent)]">{UZ.cover.kicker}</span>
+              <span className="micro-label text-[var(--accent)]">{t.cover.kicker}</span>
             </div>
 
             <div
               aria-hidden="true"
               className="font-editorial italic text-[clamp(3.2rem,11vw,7rem)] leading-[0.88] tracking-[-0.025em] text-[var(--ink)] mb-4 select-none"
             >
-              {UZ.meta.brand}
+              {t.meta.brand}
             </div>
 
             <h1
               id="cover-heading"
               className="font-editorial text-[clamp(2rem,5vw,3.5rem)] leading-[1.04] tracking-[-0.015em] text-[var(--ink)] mb-4"
             >
-              {UZ.cover.title}
+              {t.cover.title}
             </h1>
 
             <p className="max-w-xl text-sm sm:text-base leading-relaxed text-[var(--ink-2)] mb-5">
-              {UZ.cover.promise}
+              {t.cover.promise}
             </p>
 
             {/* Live Geo-Weather Auto Insight Strip */}
@@ -132,10 +132,10 @@ export function CoverSection() {
                         : liveWeather.temperatureC}
                       °C
                     </span>
-                    <span className="text-[var(--muted)]">· {liveWeather.conditionUz}</span>
+                    <span className="text-[var(--muted)]">· {localize(liveWeather.conditionUz)}</span>
                   </div>
                   <p className="text-xs text-[var(--ink-2)] mt-1 leading-snug">
-                    {liveWeather.adviceUz}
+                    {localize(liveWeather.adviceUz)}
                   </p>
                 </div>
               </div>
@@ -147,20 +147,20 @@ export function CoverSection() {
                 onClick={() => setActiveView('stilist')}
                 className="min-h-[46px] inline-flex items-center justify-center bg-[var(--ink)] px-6 py-3 text-xs uppercase tracking-[0.14em] text-[var(--paper)] hover:bg-[var(--accent)] transition-colors cursor-pointer"
               >
-                {UZ.cover.ctaPrimary}
+                {t.cover.ctaPrimary}
               </button>
               <button
                 type="button"
                 onClick={() => setActiveView('skaner')}
                 className="min-h-[46px] inline-flex items-center justify-center border border-[var(--ink)] px-6 py-3 text-xs uppercase tracking-[0.14em] text-[var(--ink)] hover:bg-[var(--paper-2)] transition-colors cursor-pointer"
               >
-                {UZ.cover.ctaSecondary}
+                {t.cover.ctaSecondary}
               </button>
             </div>
 
             <div className="w-full border-t border-[var(--hairline)] pt-4 flex flex-wrap items-center justify-between gap-3">
               <p className="micro-label text-[var(--muted)] font-tabular">
-                {UZ.cover.counters(
+                {t.cover.counters(
                   manifest.garments.length,
                   manifest.looks.length,
                   manifest.palettes.length,
@@ -168,7 +168,7 @@ export function CoverSection() {
                 )}
               </p>
               <p className="font-editorial italic text-sm text-[var(--ink-2)]">
-                {UZ.cover.coverCaption}
+                {t.cover.coverCaption}
               </p>
             </div>
           </div>
@@ -189,7 +189,7 @@ export function CoverSection() {
                   <img
                     ref={imgRef}
                     src={heroSrc}
-                    alt={UZ.meta.brandFull}
+                    alt={t.meta.brandFull}
                     width={manifest.hero.w}
                     height={manifest.hero.h}
                     loading="eager"
@@ -201,7 +201,7 @@ export function CoverSection() {
                 ) : (
                   <div
                     role="img"
-                    aria-label={UZ.meta.brandFull}
+                    aria-label={t.meta.brandFull}
                     className="relative flex h-full w-full flex-col justify-between p-5 sm:p-7"
                     style={{
                       background:
@@ -250,10 +250,10 @@ export function CoverSection() {
                     <div className="border-t border-[#151412]/20 pt-3 flex items-end justify-between">
                       <div>
                         <p className="font-editorial italic text-2xl text-[#151412] leading-none">
-                          Qum &amp; Qirmizi
+                          {localize('Qum & Qirmizi')}
                         </p>
                         <p className="text-[11px] uppercase tracking-[0.14em] text-[#3B3731] mt-1">
-                          {location.city} · {manifest.garments.length}+ buyum
+                          {location.city} · {manifest.garments.length}+ {localize('buyum')}
                         </p>
                       </div>
                       <span className="h-3 w-3 rounded-full bg-[#8F1D2C]" />
@@ -267,9 +267,9 @@ export function CoverSection() {
 
         {/* Dedicated Quick-Jump Hub into Separate Pages */}
         <div className="mt-10 pt-8 border-t border-[var(--hairline)]">
-          <p className="micro-label text-[var(--muted)] mb-4">{UZ.cover.hubTitle}</p>
+          <p className="micro-label text-[var(--muted)] mb-4">{t.cover.hubTitle}</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
-            {QUICK_HUB.map((item) => (
+            {quickHub.map((item) => (
               <button
                 key={item.view}
                 type="button"

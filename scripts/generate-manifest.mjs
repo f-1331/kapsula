@@ -2,54 +2,30 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 /**
- * Generates /public/assets/manifest.json with 3,600+ richly detailed garments
- * across 56 distinct garment subtypes, 16 real global & Uzbek brands, 8 occasions
- * (office, university, school, walk, party, date, sport, travel), 28 looks, and 5 palettes.
+ * Generates /public/assets/manifest.json with 6,240 branded garments
+ * across 65 distinct garment subtypes, 18 global & Uzbek brands, 16 rich palettes,
+ * 8 occasions, and 32 editorial looks.
  *
  * Strict Uzbek orthography: uses U+02BB (ʻ) for oʻ/gʻ and U+2019 (’) for apostrophes.
  */
 
 const PALETTES = [
-  {
-    id: 'sand',
-    name_uz: 'Qum',
-    name_en: 'Sand & Ivory',
-    tagline_uz: 'Iliq neytral ohanglar',
-    colors: ['#F4EFE6', '#E2D3BA', '#C4A27A', '#8B6B4F', '#2F2A26'],
-    image: 'palettes/sand.webp',
-  },
-  {
-    id: 'earth',
-    name_uz: 'Tuproq',
-    name_en: 'Terracotta & Olive',
-    tagline_uz: 'Tabiiy terakota va zaytun',
-    colors: ['#EFE7D6', '#D3A17E', '#B2573A', '#6D7048', '#3E3228'],
-    image: 'palettes/earth.webp',
-  },
-  {
-    id: 'marine',
-    name_uz: 'Dengiz',
-    name_en: 'Marine & Slate',
-    tagline_uz: 'Sokin koʻk va kulrang uygʻunligi',
-    colors: ['#F6F6F3', '#B8B3A8', '#9FB4C9', '#25345A', '#34373D'],
-    image: 'palettes/marine.webp',
-  },
-  {
-    id: 'bloom',
-    name_uz: 'Bahor',
-    name_en: 'Blush & Sage',
-    tagline_uz: 'Yumshoq pushti va ohak tuslari',
-    colors: ['#F7ECE8', '#E8C6C0', '#B8C4AB', '#A596A8', '#6B5B57'],
-    image: 'palettes/bloom.webp',
-  },
-  {
-    id: 'noir',
-    name_uz: 'Tun',
-    name_en: 'Noir & Crimson',
-    tagline_uz: 'Qora, fil suyagi va qirmizi urgʻu',
-    colors: ['#121212', '#F4F2EE', '#8F1D2C', '#C7CBD1', '#4B1D26'],
-    image: 'palettes/noir.webp',
-  },
+  { id: 'sand', name_uz: 'Qum', name_en: 'Sand & Ivory', tagline_uz: 'Iliq neytral ohanglar', colors: ['#F4EFE6', '#E2D3BA', '#C4A27A', '#8B6B4F', '#2F2A26'], image: 'palettes/sand.webp' },
+  { id: 'earth', name_uz: 'Tuproq', name_en: 'Terracotta & Olive', tagline_uz: 'Tabiiy terakota va zaytun', colors: ['#EFE7D6', '#D3A17E', '#B2573A', '#6D7048', '#3E3228'], image: 'palettes/earth.webp' },
+  { id: 'marine', name_uz: 'Dengiz', name_en: 'Marine & Slate', tagline_uz: 'Sokin koʻk va kulrang uygʻunligi', colors: ['#F6F6F3', '#B8B3A8', '#9FB4C9', '#25345A', '#34373D'], image: 'palettes/marine.webp' },
+  { id: 'bloom', name_uz: 'Bahor', name_en: 'Blush & Sage', tagline_uz: 'Yumshoq pushti va ohak tuslari', colors: ['#F7ECE8', '#E8C6C0', '#B8C4AB', '#A596A8', '#6B5B57'], image: 'palettes/bloom.webp' },
+  { id: 'noir', name_uz: 'Tun', name_en: 'Noir & Crimson', tagline_uz: 'Qora, fil suyagi va qirmizi urgʻu', colors: ['#121212', '#F4F2EE', '#8F1D2C', '#C7CBD1', '#4B1D26'], image: 'palettes/noir.webp' },
+  { id: 'emerald', name_uz: 'Zumrad', name_en: 'Emerald & Brass', tagline_uz: 'Chuqur zumrad va oltin kontrast', colors: ['#F4F2EE', '#1B5E42', '#8EB69B', '#C99345', '#1C2420'], image: 'palettes/emerald.webp' },
+  { id: 'cobalt', name_uz: 'Kobalt', name_en: 'Cobalt & Ice', tagline_uz: 'Zamonaviy moviy va muz oq tuslar', colors: ['#F6F6F3', '#1E448A', '#D9E4EC', '#525866', '#151821'], image: 'palettes/cobalt.webp' },
+  { id: 'espresso', name_uz: 'Kofe', name_en: 'Espresso & Caramel', tagline_uz: 'Issiq shokolad va karamel qatlamlari', colors: ['#EFE3C8', '#B98E5E', '#7A5434', '#3E3228', '#221A14'], image: 'palettes/espresso.webp' },
+  { id: 'lavender', name_uz: 'Lavanda', name_en: 'Lavender & Pearl', tagline_uz: 'Nafis binafsha va marvarid kulrang', colors: ['#F7ECE8', '#A596A8', '#5B2C49', '#B8B3A8', '#2C2630'], image: 'palettes/lavender.webp' },
+  { id: 'sunset', name_uz: 'Shafaq', name_en: 'Sunset Coral', tagline_uz: 'Kechki shafaq, gʻisht va marjon tus', colors: ['#F4EFE6', '#D6614A', '#9E472D', '#C87B28', '#3E3228'], image: 'palettes/sunset.webp' },
+  { id: 'forest', name_uz: 'Oʻrmon', name_en: 'Forest & Moss', tagline_uz: 'Oʻrmon yashili va xaki uygʻunligi', colors: ['#EFE7D6', '#435847', '#6D7048', '#8EB69B', '#273026'], image: 'palettes/forest.webp' },
+  { id: 'monochrome', name_uz: 'Monoxrom', name_en: 'Architectural Stone', tagline_uz: 'Oppoq, kulrang va grafit muvozanati', colors: ['#F6F6F3', '#C7CBD1', '#888D96', '#525866', '#121212'], image: 'palettes/monochrome.webp' },
+  { id: 'amber', name_uz: 'Qahrabo', name_en: 'Amber & Bronze', tagline_uz: 'Kuzgi xantal, bronza va toʻq jigar', colors: ['#EFE3C8', '#C87B28', '#C99345', '#7A5434', '#2F2A26'], image: 'palettes/amber.webp' },
+  { id: 'denim', name_uz: 'Jinsi', name_en: 'Indigo Denim', tagline_uz: 'Klassik indigo, osmon koʻk va qum', colors: ['#F4EFE6', '#9FB4C9', '#25345A', '#1E448A', '#8B6B4F'], image: 'palettes/denim.webp' },
+  { id: 'pearl', name_uz: 'Marvarid', name_en: 'Champagne & Silk', tagline_uz: 'Yorugʻ ipak, shampan va sutrang tus', colors: ['#F6F6F3', '#EFE3C8', '#E2D3BA', '#D9E4EC', '#6B5B57'], image: 'palettes/pearl.webp' },
+  { id: 'ruby', name_uz: 'Yoqut', name_en: 'Ruby & Charcoal', tagline_uz: 'Bordo, olxoʻri va tutunli grafit', colors: ['#F4F2EE', '#8F1D2C', '#5B2C49', '#34373D', '#121212'], image: 'palettes/ruby.webp' },
 ];
 
 const BRANDS = [
@@ -64,6 +40,8 @@ const BRANDS = [
   { name: 'New Balance', tier: 'mid', affinity: ['sport', 'walk', 'university', 'travel'] },
   { name: 'Loro Piana', tier: 'premium', affinity: ['office', 'party', 'date'] },
   { name: 'Ralph Lauren', tier: 'premium', affinity: ['school', 'university', 'office', 'date'] },
+  { name: 'Lacoste', tier: 'premium', affinity: ['school', 'university', 'sport', 'date'] },
+  { name: 'Brunello Cucinelli', tier: 'premium', affinity: ['office', 'party', 'date', 'travel'] },
   { name: 'The North Face', tier: 'mid', affinity: ['travel', 'walk', 'sport', 'university'] },
   { name: 'Carhartt WIP', tier: 'mid', affinity: ['walk', 'university', 'travel'] },
   { name: '7SABER', tier: 'mid', affinity: ['sport', 'walk', 'university', 'travel'] },
@@ -72,38 +50,51 @@ const BRANDS = [
 ];
 
 const SWATCHES = [
-  { key: 'ivory', name_uz: 'Fil suyagi', name_en: 'Ivory', hex: '#F4EFE6', hex2: null, palettes: ['sand', 'earth', 'bloom', 'marine'] },
-  { key: 'cream', name_uz: 'Qaymoqrang', name_en: 'Cream', hex: '#EFE7D6', hex2: '#C4A27A', palettes: ['sand', 'earth', 'bloom'] },
-  { key: 'beige', name_uz: 'Bej', name_en: 'Beige', hex: '#E2D3BA', hex2: null, palettes: ['sand', 'bloom'] },
-  { key: 'tan', name_uz: 'Qumrang', name_en: 'Sand', hex: '#C4A27A', hex2: '#EFE7D6', palettes: ['sand', 'earth'] },
-  { key: 'camel', name_uz: 'Tuyarang', name_en: 'Camel', hex: '#B98E5E', hex2: '#2F2A26', palettes: ['sand', 'earth'] },
-  { key: 'cognac', name_uz: 'Konyakrang', name_en: 'Cognac', hex: '#8B6B4F', hex2: '#E2D3BA', palettes: ['sand', 'earth'] },
-  { key: 'espresso', name_uz: 'Toʻq qahva', name_en: 'Espresso', hex: '#3E3228', hex2: '#C4A27A', palettes: ['earth', 'sand', 'noir'] },
-  { key: 'terracotta', name_uz: 'Terakota', name_en: 'Terracotta', hex: '#B2573A', hex2: '#EFE7D6', palettes: ['earth', 'sand'] },
-  { key: 'rust', name_uz: 'Gʻishtrang', name_en: 'Rust', hex: '#9E472D', hex2: null, palettes: ['earth'] },
-  { key: 'ochre', name_uz: 'Xantalrang', name_en: 'Ochre', hex: '#C99345', hex2: '#3E3228', palettes: ['earth', 'sand'] },
-  { key: 'olive', name_uz: 'Zaytun', name_en: 'Olive', hex: '#6D7048', hex2: '#3E3228', palettes: ['earth', 'sand'] },
-  { key: 'forest', name_uz: 'Oʻrmon yashili', name_en: 'Forest', hex: '#435847', hex2: '#EFE7D6', palettes: ['earth', 'marine'] },
-  { key: 'sage', name_uz: 'Ohak yashili', name_en: 'Sage', hex: '#B8C4AB', hex2: '#F7ECE8', palettes: ['bloom', 'sand'] },
-  { key: 'blush', name_uz: 'Yumshoq pushti', name_en: 'Blush', hex: '#E8C6C0', hex2: null, palettes: ['bloom', 'noir'] },
-  { key: 'lavender', name_uz: 'Lavanda kulrang', name_en: 'Muted Lavender', hex: '#A596A8', hex2: '#F7ECE8', palettes: ['bloom', 'marine'] },
-  { key: 'sky', name_uz: 'Osmon koʻk', name_en: 'Slate Blue', hex: '#9FB4C9', hex2: '#F6F6F3', palettes: ['marine', 'sand'] },
-  { key: 'navy', name_uz: 'Toʻq koʻk', name_en: 'Navy', hex: '#25345A', hex2: '#F6F6F3', palettes: ['marine', 'noir', 'sand'] },
-  { key: 'charcoal', name_uz: 'Grafit', name_en: 'Charcoal', hex: '#34373D', hex2: '#C7CBD1', palettes: ['marine', 'noir', 'sand'] },
-  { key: 'crimson', name_uz: 'Qirmizi', name_en: 'Crimson', hex: '#8F1D2C', hex2: '#F4F2EE', palettes: ['noir', 'sand'] },
-  { key: 'noir', name_uz: 'Qora', name_en: 'Black', hex: '#121212', hex2: '#C7CBD1', palettes: ['noir', 'marine', 'sand', 'bloom'] },
-  { key: 'white', name_uz: 'Oppoq', name_en: 'Crisp White', hex: '#F6F6F3', hex2: null, palettes: ['marine', 'noir', 'sand', 'bloom'] },
-  { key: 'stone', name_uz: 'Tosh kulrang', name_en: 'Stone Gray', hex: '#B8B3A8', hex2: '#34373D', palettes: ['marine', 'sand', 'noir'] },
+  { key: 'ivory', name_uz: 'Fil suyagi', name_en: 'Ivory', hex: '#F4EFE6', hex2: null, palettes: ['sand', 'earth', 'bloom', 'marine', 'pearl', 'denim'] },
+  { key: 'cream', name_uz: 'Qaymoqrang', name_en: 'Cream', hex: '#EFE7D6', hex2: '#C4A27A', palettes: ['sand', 'earth', 'bloom', 'forest', 'pearl'] },
+  { key: 'champagne', name_uz: 'Shampan', name_en: 'Champagne', hex: '#EFE3C8', hex2: '#8B6B4F', palettes: ['pearl', 'espresso', 'amber', 'sand'] },
+  { key: 'beige', name_uz: 'Bej', name_en: 'Beige', hex: '#E2D3BA', hex2: null, palettes: ['sand', 'bloom', 'pearl'] },
+  { key: 'tan', name_uz: 'Qumrang', name_en: 'Sand', hex: '#C4A27A', hex2: '#EFE7D6', palettes: ['sand', 'earth', 'amber'] },
+  { key: 'camel', name_uz: 'Tuyarang', name_en: 'Camel', hex: '#B98E5E', hex2: '#2F2A26', palettes: ['sand', 'earth', 'espresso'] },
+  { key: 'cognac', name_uz: 'Konyakrang', name_en: 'Cognac', hex: '#8B6B4F', hex2: '#E2D3BA', palettes: ['sand', 'earth', 'denim', 'espresso'] },
+  { key: 'bronze', name_uz: 'Bronza', name_en: 'Bronze', hex: '#7A5434', hex2: '#EFE3C8', palettes: ['amber', 'espresso', 'earth'] },
+  { key: 'espresso', name_uz: 'Toʻq qahva', name_en: 'Espresso', hex: '#3E3228', hex2: '#C4A27A', palettes: ['earth', 'sand', 'noir', 'espresso', 'sunset'] },
+  { key: 'terracotta', name_uz: 'Terakota', name_en: 'Terracotta', hex: '#B2573A', hex2: '#EFE7D6', palettes: ['earth', 'sand', 'sunset'] },
+  { key: 'coral', name_uz: 'Marjon', name_en: 'Coral', hex: '#D6614A', hex2: '#F4EFE6', palettes: ['sunset', 'bloom'] },
+  { key: 'rust', name_uz: 'Gʻishtrang', name_en: 'Rust', hex: '#9E472D', hex2: null, palettes: ['earth', 'sunset', 'amber'] },
+  { key: 'amber', name_uz: 'Qahrabo', name_en: 'Amber', hex: '#C87B28', hex2: '#3E3228', palettes: ['amber', 'sunset', 'earth'] },
+  { key: 'ochre', name_uz: 'Xantalrang', name_en: 'Ochre', hex: '#C99345', hex2: '#3E3228', palettes: ['earth', 'sand', 'emerald', 'amber'] },
+  { key: 'olive', name_uz: 'Zaytun', name_en: 'Olive', hex: '#6D7048', hex2: '#3E3228', palettes: ['earth', 'sand', 'forest'] },
+  { key: 'forest', name_uz: 'Oʻrmon yashili', name_en: 'Forest', hex: '#435847', hex2: '#EFE7D6', palettes: ['earth', 'marine', 'forest'] },
+  { key: 'emerald', name_uz: 'Zumrad', name_en: 'Emerald', hex: '#1B5E42', hex2: '#C99345', palettes: ['emerald', 'forest'] },
+  { key: 'mint', name_uz: 'Yalpiz', name_en: 'Mint', hex: '#8EB69B', hex2: '#F4F2EE', palettes: ['emerald', 'forest', 'bloom'] },
+  { key: 'sage', name_uz: 'Ohak yashili', name_en: 'Sage', hex: '#B8C4AB', hex2: '#F7ECE8', palettes: ['bloom', 'sand', 'forest'] },
+  { key: 'blush', name_uz: 'Yumshoq pushti', name_en: 'Blush', hex: '#E8C6C0', hex2: null, palettes: ['bloom', 'noir', 'pearl'] },
+  { key: 'lavender', name_uz: 'Lavanda kulrang', name_en: 'Muted Lavender', hex: '#A596A8', hex2: '#F7ECE8', palettes: ['bloom', 'marine', 'lavender'] },
+  { key: 'plum', name_uz: 'Olxoʻri', name_en: 'Deep Plum', hex: '#5B2C49', hex2: '#F7ECE8', palettes: ['lavender', 'ruby', 'noir'] },
+  { key: 'ice', name_uz: 'Muz koʻk', name_en: 'Ice Mist', hex: '#D9E4EC', hex2: '#34373D', palettes: ['cobalt', 'pearl', 'marine'] },
+  { key: 'sky', name_uz: 'Osmon koʻk', name_en: 'Slate Blue', hex: '#9FB4C9', hex2: '#F6F6F3', palettes: ['marine', 'sand', 'denim'] },
+  { key: 'cobalt', name_uz: 'Kobalt koʻk', name_en: 'Cobalt', hex: '#1E448A', hex2: '#D9E4EC', palettes: ['cobalt', 'denim', 'marine'] },
+  { key: 'navy', name_uz: 'Toʻq koʻk', name_en: 'Navy', hex: '#25345A', hex2: '#F6F6F3', palettes: ['marine', 'noir', 'sand', 'denim', 'cobalt'] },
+  { key: 'slate', name_uz: 'Poʻlat kulrang', name_en: 'Steel Slate', hex: '#525866', hex2: '#D9E4EC', palettes: ['monochrome', 'cobalt', 'marine'] },
+  { key: 'charcoal', name_uz: 'Grafit', name_en: 'Charcoal', hex: '#34373D', hex2: '#C7CBD1', palettes: ['marine', 'noir', 'sand', 'monochrome', 'ruby'] },
+  { key: 'crimson', name_uz: 'Qirmizi', name_en: 'Crimson', hex: '#8F1D2C', hex2: '#F4F2EE', palettes: ['noir', 'sand', 'ruby'] },
+  { key: 'noir', name_uz: 'Qora', name_en: 'Black', hex: '#121212', hex2: '#C7CBD1', palettes: ['noir', 'marine', 'sand', 'bloom', 'monochrome', 'ruby'] },
+  { key: 'white', name_uz: 'Oppoq', name_en: 'Crisp White', hex: '#F6F6F3', hex2: null, palettes: ['marine', 'noir', 'sand', 'bloom', 'cobalt', 'monochrome', 'pearl'] },
+  { key: 'stone', name_uz: 'Tosh kulrang', name_en: 'Stone Gray', hex: '#B8B3A8', hex2: '#34373D', palettes: ['marine', 'sand', 'noir', 'monochrome', 'lavender'] },
 ];
 
-// 56 distinct garment subtypes across all 7 categories!
+// 65 distinct garment subtypes across all 7 categories
 const SUBTYPES = [
-  // OUTERWEAR (12)
+  // OUTERWEAR (15)
   { key: 'palto', category: 'outerwear', name_uz: 'uzun palto', name_en: 'long wool coat', fabrics: [{ uz: 'jun', en: 'wool' }, { uz: 'kashmir', en: 'cashmere' }, { uz: 'tvid', en: 'tweed' }], weather: ['cool', 'cold'], occasions: ['office', 'party', 'date', 'school', 'walk'], warmth: 3, formality: 3, gender: 'u', w: 880, h: 1120 },
   { key: 'peacoat', category: 'outerwear', name_uz: 'ikki bortli palto', name_en: 'double-breasted peacoat', fabrics: [{ uz: 'zich jun', en: 'melton wool' }, { uz: 'drap', en: 'drape wool' }], weather: ['cool', 'cold'], occasions: ['office', 'school', 'university', 'date'], warmth: 3, formality: 3, gender: 'u', w: 880, h: 1080 },
   { key: 'trench', category: 'outerwear', name_uz: 'yomgʻirplash', name_en: 'waterproof trench coat', fabrics: [{ uz: 'gabardin', en: 'gabardine' }, { uz: 'suv oʻtkazmas', en: 'weatherproof' }, { uz: 'paxta', en: 'cotton twill' }], weather: ['warm', 'cool', 'rain'], occasions: ['office', 'walk', 'party', 'date', 'university'], warmth: 2, formality: 2, gender: 'u', w: 880, h: 1100 },
+  { key: 'cape', category: 'outerwear', name_uz: 'kashmir keyp-nakidka', name_en: 'draped cashmere cape', fabrics: [{ uz: 'kashmir', en: 'cashmere' }, { uz: 'merinos', en: 'double wool' }], weather: ['cool', 'cold'], occasions: ['party', 'date', 'office'], warmth: 2, formality: 3, gender: 'w', w: 900, h: 1080 },
+  { key: 'kimono', category: 'outerwear', name_uz: 'kimono-jaket', name_en: 'minimalist kimono cardigan', fabrics: [{ uz: 'zigʻir', en: 'woven linen' }, { uz: 'ipak-jun', en: 'silk-wool' }], weather: ['hot', 'warm', 'cool'], occasions: ['walk', 'date', 'office', 'university'], warmth: 1, formality: 2, gender: 'u', w: 880, h: 1040 },
   { key: 'blazer', category: 'outerwear', name_uz: 'jaket', name_en: 'tailored blazer', fabrics: [{ uz: 'kostyum jun', en: 'worsted wool' }, { uz: 'zigʻir', en: 'linen' }, { uz: 'tvid', en: 'herringbone' }], weather: ['warm', 'cool'], occasions: ['office', 'party', 'date', 'school', 'university'], warmth: 1, formality: 3, gender: 'u', w: 860, h: 1040 },
   { key: 'puffer', category: 'outerwear', name_uz: 'puffer kurtka', name_en: 'quilted puffer jacket', fabrics: [{ uz: 'suv oʻtkazmas', en: 'water-repellent' }, { uz: 'issiq par', en: 'down-fill' }, { uz: 'mat', en: 'matte shell' }], weather: ['cold', 'cool', 'rain'], occasions: ['walk', 'university', 'school', 'travel', 'sport'], warmth: 3, formality: 1, gender: 'u', w: 880, h: 1060 },
+  { key: 'cropped_puffer', category: 'outerwear', name_uz: 'kalta puffer kurtka', name_en: 'cropped down puffer', fabrics: [{ uz: 'par', en: 'down feather' }, { uz: 'texnik mato', en: 'tech matte' }], weather: ['cold', 'cool', 'rain'], occasions: ['walk', 'university', 'travel', 'sport'], warmth: 3, formality: 1, gender: 'u', w: 860, h: 980 },
   { key: 'parka', category: 'outerwear', name_uz: 'parka kurtka', name_en: 'storm hooded parka', fabrics: [{ uz: 'yomgʻirga chidamli', en: 'storm-shell' }, { uz: 'mumlangan', en: 'waxed cotton' }, { uz: 'qalin', en: 'heavyweight' }], weather: ['cool', 'cold', 'rain'], occasions: ['walk', 'travel', 'university', 'school'], warmth: 3, formality: 1, gender: 'u', w: 880, h: 1080 },
   { key: 'bomber', category: 'outerwear', name_uz: 'bomber kurtka', name_en: 'bomber jacket', fabrics: [{ uz: 'zamsha', en: 'suede' }, { uz: 'neylon', en: 'flight nylon' }, { uz: 'jun', en: 'wool-blend' }], weather: ['warm', 'cool', 'rain'], occasions: ['walk', 'university', 'date', 'travel'], warmth: 2, formality: 1, gender: 'u', w: 860, h: 1000 },
   { key: 'varsity', category: 'outerwear', name_uz: 'kollej kurtka', name_en: 'varsity campus jacket', fabrics: [{ uz: 'jun va charm', en: 'wool & leather' }, { uz: 'qalin flis', en: 'heavy fleece' }], weather: ['warm', 'cool', 'cold'], occasions: ['university', 'school', 'walk', 'sport'], warmth: 2, formality: 1, gender: 'u', w: 860, h: 1020 },
@@ -153,16 +144,19 @@ const SUBTYPES = [
   { key: 'derbies', category: 'shoes', name_uz: 'oksford tufli', name_en: 'lace-up oxford derbies', fabrics: [{ uz: 'sayqallangan charm', en: 'polished calf' }, { uz: 'klassik charm', en: 'full-grain leather' }], weather: ['hot', 'warm', 'cool', 'cold', 'rain'], occasions: ['office', 'school', 'party', 'date'], warmth: 2, formality: 3, gender: 'u', w: 760, h: 580 },
   { key: 'sandals', category: 'shoes', name_uz: 'charm sandal', name_en: 'minimalist sandals', fabrics: [{ uz: 'yumshoq charm', en: 'nappa leather' }, { uz: 'toʻqilgan', en: 'woven leather' }], weather: ['hot', 'warm'], occasions: ['walk', 'date', 'party', 'travel'], warmth: 0, formality: 1, gender: 'u', w: 760, h: 560 },
 
-  // BAGS (4)
+  // BAGS (6)
   { key: 'tote', category: 'bag', name_uz: 'shoper sumka', name_en: 'structured tote bag', fabrics: [{ uz: 'donador charm', en: 'pebbled leather' }, { uz: 'kanvas', en: 'heavy canvas' }], weather: ['hot', 'warm', 'cool', 'cold', 'rain'], occasions: ['office', 'university', 'school', 'walk', 'date'], warmth: 0, formality: 2, gender: 'u', w: 760, h: 820 },
   { key: 'crossbody', category: 'bag', name_uz: 'kross-bodi sumka', name_en: 'crossbody bag', fabrics: [{ uz: 'silliq charm', en: 'calfskin' }, { uz: 'neylon', en: 'tech nylon' }], weather: ['hot', 'warm', 'cool', 'cold', 'rain'], occasions: ['walk', 'date', 'travel', 'university', 'office'], warmth: 0, formality: 2, gender: 'u', w: 760, h: 740 },
+  { key: 'saddle', category: 'bag', name_uz: 'egar charm sumka', name_en: 'sculpted saddle bag', fabrics: [{ uz: 'silliq charm', en: 'box calf' }, { uz: 'zamsha', en: 'suede trim' }], weather: ['hot', 'warm', 'cool', 'cold', 'rain'], occasions: ['date', 'party', 'walk', 'office'], warmth: 0, formality: 2, gender: 'w', w: 760, h: 740 },
   { key: 'backpack', category: 'bag', name_uz: 'shahar ryukzagi', name_en: 'urban minimalist backpack', fabrics: [{ uz: 'suv oʻtkazmas neylon', en: 'waterproof nylon' }, { uz: 'charm', en: 'full-grain leather' }], weather: ['hot', 'warm', 'cool', 'cold', 'rain'], occasions: ['school', 'university', 'travel', 'sport', 'walk'], warmth: 0, formality: 1, gender: 'u', w: 760, h: 840 },
+  { key: 'duffle', category: 'bag', name_uz: 'safar sumkasi', name_en: 'weekender duffle bag', fabrics: [{ uz: 'kanvas va charm', en: 'waxed canvas' }, { uz: 'qalin neylon', en: 'ballistic nylon' }], weather: ['hot', 'warm', 'cool', 'cold', 'rain'], occasions: ['travel', 'sport', 'walk'], warmth: 0, formality: 1, gender: 'u', w: 800, h: 660 },
   { key: 'clutch', category: 'bag', name_uz: 'kechki klatch', name_en: 'architectural clutch', fabrics: [{ uz: 'satin', en: 'silk satin' }, { uz: 'silliq charm', en: 'box leather' }], weather: ['hot', 'warm', 'cool', 'cold', 'rain'], occasions: ['party', 'date', 'office'], warmth: 0, formality: 3, gender: 'w', w: 760, h: 640 },
 
-  // ACCESSORIES (10)
+  // ACCESSORIES (11)
   { key: 'scarf', category: 'accessory', name_uz: 'qishki sharf', name_en: 'cashmere scarf', fabrics: [{ uz: 'kashmir', en: 'pure cashmere' }, { uz: 'merinos', en: 'merino wool' }], weather: ['cool', 'cold'], occasions: ['office', 'school', 'university', 'walk', 'date', 'travel'], warmth: 3, formality: 2, gender: 'u', w: 720, h: 720 },
   { key: 'silk_scarf', category: 'accessory', name_uz: 'ipak roʻmol', name_en: 'silk neck scarf', fabrics: [{ uz: 'tvill ipak', en: 'silk twill' }, { uz: 'shifon', en: 'printed silk' }], weather: ['hot', 'warm', 'cool'], occasions: ['party', 'date', 'office', 'university'], warmth: 0, formality: 3, gender: 'u', w: 680, h: 680 },
   { key: 'cap', category: 'accessory', name_uz: 'beysbol kepka', name_en: 'brushed cotton cap', fabrics: [{ uz: 'tvill paxta', en: 'brushed cotton' }, { uz: 'suv oʻtkazmas', en: 'waterproof nylon' }], weather: ['hot', 'warm', 'cool', 'rain'], occasions: ['walk', 'sport', 'travel', 'university'], warmth: 0, formality: 0, gender: 'u', w: 720, h: 560 },
+  { key: 'bucket_hat', category: 'accessory', name_uz: 'panama shlyapa', name_en: 'structured bucket hat', fabrics: [{ uz: 'paxta kanvas', en: 'cotton canvas' }, { uz: 'neylon', en: 'rain nylon' }], weather: ['hot', 'warm', 'cool', 'rain'], occasions: ['walk', 'travel', 'university', 'sport'], warmth: 0, formality: 0, gender: 'u', w: 720, h: 560 },
   { key: 'beanie', category: 'accessory', name_uz: 'jun shapka', name_en: 'ribbed merino beanie', fabrics: [{ uz: 'merinos', en: 'ribbed merino' }, { uz: 'kashmir', en: 'cashmere' }], weather: ['cool', 'cold', 'rain'], occasions: ['walk', 'travel', 'sport', 'university', 'school'], warmth: 3, formality: 1, gender: 'u', w: 680, h: 640 },
   { key: 'sunglasses', category: 'accessory', name_uz: 'quyosh koʻzoynak', name_en: 'acetate sunglasses', fabrics: [{ uz: 'atsetat', en: 'sculpted acetate' }, { uz: 'titan', en: 'titanium frame' }], weather: ['hot', 'warm', 'cool'], occasions: ['walk', 'date', 'party', 'travel', 'university'], warmth: 0, formality: 2, gender: 'u', w: 720, h: 520 },
   { key: 'belt', category: 'accessory', name_uz: 'charm kamar', name_en: 'brass-buckle belt', fabrics: [{ uz: 'tabiiy charm', en: 'bridle leather' }, { uz: 'zamsha', en: 'suede' }], weather: ['hot', 'warm', 'cool', 'cold', 'rain'], occasions: ['office', 'school', 'university', 'party', 'date'], warmth: 0, formality: 2, gender: 'u', w: 720, h: 520 },
@@ -172,7 +166,6 @@ const SUBTYPES = [
   { key: 'bracelet', category: 'accessory', name_uz: 'minimalist bilaguzuk', name_en: 'sculpted metal bracelet', fabrics: [{ uz: 'kumush rang poʻlat', en: 'brushed steel' }, { uz: 'charm va poʻlat', en: 'woven leather' }], weather: ['hot', 'warm', 'cool', 'cold'], occasions: ['party', 'date', 'university', 'walk', 'office'], warmth: 0, formality: 2, gender: 'u', w: 640, h: 640 },
 ];
 
-// Generate 56 subtypes × 22 swatches × 3 variants = ~3,696 unique branded garments!
 const garments = [];
 let idxCounter = 1;
 
@@ -181,7 +174,6 @@ for (const sub of SUBTYPES) {
     const variantCount = 3;
     for (let vIdx = 0; vIdx < variantCount; vIdx++) {
       const fab = sub.fabrics[vIdx % sub.fabrics.length];
-      // Match brand thoughtfully by occasion affinity
       const matchingBrands = BRANDS.filter((b) =>
         sub.occasions.some((occ) => b.affinity.includes(occ)),
       );
@@ -232,7 +224,18 @@ const LOOK_TEMPLATES = [
   { title: 'Litsey va kampus', occasion: 'school', weather: 'warm', palette: 'sand', model: 'w', items: ['outerwear-blazer-navy-1', 'top-shirt-ivory-1', 'bottom-skirt-charcoal-1', 'shoes-loafers-noir-1', 'bag-backpack-noir-1'] },
   { title: 'Sport va 7SABER ritmi', occasion: 'sport', weather: 'warm', palette: 'noir', model: 'm', items: ['top-track_top-noir-1', 'bottom-track_pants-charcoal-1', 'shoes-running_shoes-white-1', 'bag-backpack-noir-1', 'accessory-cap-noir-1'] },
   { title: 'Kafe uchrashuvi', occasion: 'date', weather: 'cool', palette: 'bloom', model: 'w', items: ['outerwear-palto-stone-1', 'dress-knit_dress-blush-1', 'shoes-chelsea_boots-espresso-1', 'bag-crossbody-espresso-1', 'accessory-watch-espresso-1'] },
-  { title: 'Safar kapsulasi', occasion: 'travel', weather: 'cool', palette: 'earth', model: 'm', items: ['outerwear-vest-olive-1', 'top-ziphoodie-cream-1', 'bottom-cargo-espresso-1', 'shoes-running_shoes-stone-1', 'bag-crossbody-espresso-1'] },
+  { title: 'Safar kapsulasi', occasion: 'travel', weather: 'cool', palette: 'earth', model: 'm', items: ['outerwear-vest-olive-1', 'top-ziphoodie-cream-1', 'bottom-cargo-espresso-1', 'shoes-running_shoes-stone-1', 'bag-duffle-olive-1'] },
+  { title: 'Zumrad va oltin', occasion: 'party', weather: 'cool', palette: 'emerald', model: 'w', items: ['outerwear-cape-emerald-1', 'dress-midi_silk-emerald-1', 'shoes-loafers-espresso-1', 'bag-saddle-champagne-1', 'accessory-watch-espresso-1'] },
+  { title: 'Kobalt studiyasi', occasion: 'office', weather: 'cool', palette: 'cobalt', model: 'm', items: ['outerwear-peacoat-cobalt-1', 'top-turtleneck-ice-1', 'bottom-pleated_trousers-slate-1', 'shoes-derbies-noir-1', 'bag-tote-cobalt-1'] },
+  { title: 'Shokolad espresso', occasion: 'date', weather: 'cold', palette: 'espresso', model: 'm', items: ['outerwear-palto-espresso-1', 'top-sweater-champagne-1', 'bottom-wide_trousers-bronze-1', 'shoes-chelsea_boots-espresso-1', 'accessory-watch-bronze-1'] },
+  { title: 'Lavanda marvaridi', occasion: 'date', weather: 'warm', palette: 'lavender', model: 'w', items: ['outerwear-kimono-lavender-1', 'top-silk_blouse-ivory-1', 'bottom-skirt-plum-1', 'shoes-sandals-stone-1', 'bag-saddle-lavender-1'] },
+  { title: 'Shafaq urgʻusi', occasion: 'walk', weather: 'cool', palette: 'sunset', model: 'm', items: ['outerwear-cropped_puffer-rust-1', 'top-hoodie-cream-1', 'bottom-cargo-espresso-1', 'shoes-sneakers-ivory-1', 'accessory-cap-coral-1'] },
+  { title: 'Oʻrmon va xaki', occasion: 'travel', weather: 'cold', palette: 'forest', model: 'm', items: ['outerwear-parka-forest-1', 'top-sweater-mint-1', 'bottom-cargo-olive-1', 'shoes-lug_boots-espresso-1', 'accessory-beanie-forest-1'] },
+  { title: 'Sof monoxrom', occasion: 'office', weather: 'cool', palette: 'monochrome', model: 'w', items: ['outerwear-blazer-slate-1', 'top-turtleneck-white-1', 'bottom-wide_trousers-charcoal-1', 'shoes-loafers-noir-1', 'bag-tote-stone-1'] },
+  { title: 'Qahrabo va bronza', occasion: 'university', weather: 'cool', palette: 'amber', model: 'm', items: ['outerwear-overshirt-amber-1', 'top-tee-champagne-1', 'bottom-chinos-espresso-1', 'shoes-sneakers-cream-1', 'bag-backpack-bronze-1'] },
+  { title: 'Indigo jinsi klassika', occasion: 'walk', weather: 'warm', palette: 'denim', model: 'm', items: ['outerwear-denim_jacket-cobalt-1', 'top-tee-ivory-1', 'bottom-denim-navy-1', 'shoes-sneakers-white-1', 'accessory-bucket_hat-navy-1'] },
+  { title: 'Shampan va ipak', occasion: 'party', weather: 'warm', palette: 'pearl', model: 'w', items: ['outerwear-kimono-champagne-1', 'dress-midi_silk-ivory-1', 'shoes-sandals-champagne-1', 'bag-clutch-champagne-1', 'accessory-bracelet-champagne-1'] },
+  { title: 'Yoqut va grafit', occasion: 'party', weather: 'cold', palette: 'ruby', model: 'w', items: ['outerwear-palto-plum-1', 'dress-knit_dress-crimson-1', 'shoes-chelsea_boots-noir-1', 'bag-clutch-crimson-1', 'accessory-gloves-noir-1'] },
   { title: 'Shahar hudisi', occasion: 'walk', weather: 'cool', palette: 'sand', model: 'm', items: ['outerwear-bomber-camel-1', 'top-hoodie-ivory-1', 'bottom-cargo-espresso-1', 'shoes-sneakers-ivory-1', 'accessory-watch-camel-1'] },
   { title: 'Qishki koʻcha uslubi', occasion: 'walk', weather: 'cold', palette: 'noir', model: 'm', items: ['outerwear-puffer-noir-1', 'top-hoodie-stone-1', 'bottom-joggers-charcoal-1', 'shoes-lug_boots-noir-1', 'accessory-beanie-noir-1'] },
   { title: 'Zamokli minimalizm', occasion: 'university', weather: 'warm', palette: 'marine', model: 'w', items: ['top-ziphoodie-sky-1', 'bottom-denim-navy-1', 'shoes-sneakers-white-1', 'bag-backpack-navy-1', 'accessory-sunglasses-charcoal-1'] },
@@ -241,10 +244,7 @@ const LOOK_TEMPLATES = [
   { title: 'Buxoro quyoshi', occasion: 'travel', weather: 'hot', palette: 'earth', model: 'w', items: ['dress-shirt_dress-cream-1', 'shoes-sandals-camel-1', 'bag-crossbody-terracotta-1', 'accessory-sunglasses-espresso-1'] },
   { title: 'Yomgʻirli Toshkent', occasion: 'office', weather: 'cool', palette: 'marine', model: 'w', items: ['outerwear-trench-beige-1', 'top-turtleneck-navy-1', 'bottom-chinos-charcoal-1', 'shoes-chelsea_boots-noir-1', 'bag-tote-noir-1'] },
   { title: 'Kechki qora tvid', occasion: 'party', weather: 'cold', palette: 'noir', model: 'm', items: ['outerwear-peacoat-noir-1', 'top-turtleneck-noir-2', 'bottom-pleated_trousers-charcoal-1', 'shoes-derbies-noir-1', 'accessory-watch-noir-1'] },
-  { title: 'Yalpiz va pushti', occasion: 'walk', weather: 'hot', palette: 'bloom', model: 'w', items: ['top-tee-blush-1', 'bottom-skirt-sage-1', 'shoes-sandals-ivory-1', 'bag-crossbody-cream-1', 'accessory-sunglasses-tan-1'] },
   { title: 'Charm va jinsi', occasion: 'date', weather: 'cool', palette: 'noir', model: 'm', items: ['outerwear-leather_jacket-noir-1', 'top-turtleneck-stone-1', 'bottom-denim-noir-1', 'shoes-chelsea_boots-noir-1', 'accessory-watch-noir-1'] },
-  { title: 'Xantal rangli kuz', occasion: 'university', weather: 'cool', palette: 'earth', model: 'w', items: ['outerwear-cardigan-ochre-1', 'top-longsleeve-ivory-1', 'bottom-denim-espresso-1', 'shoes-chelsea_boots-cognac-1', 'bag-backpack-espresso-1'] },
-  { title: 'Tungi hudi-libos', occasion: 'walk', weather: 'cool', palette: 'noir', model: 'w', items: ['outerwear-puffer-charcoal-1', 'dress-hoodie_dress-noir-1', 'shoes-lug_boots-noir-1', 'bag-crossbody-crimson-1', 'accessory-beanie-stone-1'] },
 ];
 
 const garmentIds = new Set(garments.map((g) => g.id));
@@ -288,5 +288,5 @@ fs.mkdirSync(path.dirname(outPath), { recursive: true });
 fs.writeFileSync(outPath, serialized);
 
 console.log(
-  `Generated manifest.json: ${garments.length} garments across ${SUBTYPES.length} subtypes & ${BRANDS.length} brands, ${looks.length} looks (${(fs.statSync(outPath).size / 1024).toFixed(1)} KB)`,
+  `Generated manifest.json: ${garments.length} garments across ${SUBTYPES.length} subtypes, ${BRANDS.length} brands & ${PALETTES.length} palettes, ${looks.length} looks (${(fs.statSync(outPath).size / 1024).toFixed(1)} KB)`,
 );

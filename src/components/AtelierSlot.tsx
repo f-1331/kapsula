@@ -5,7 +5,7 @@ import * as m from 'motion/react-m';
 import { useState, type PointerEvent } from 'react';
 import type { Garment } from '../data/schema';
 import type { SlotKey } from '../engine/stylist';
-import { UZ } from '../i18n/uz';
+import { useTranslation } from '../i18n/useTranslation';
 import { GarmentImage } from './GarmentImage';
 
 interface AtelierSlotProps {
@@ -33,6 +33,7 @@ export function AtelierSlot({
   onRemove,
   onOpenPicker,
 }: AtelierSlotProps) {
+  const { t, localize } = useTranslation();
   const reducedMotion = useReducedMotion();
   const [tilt, setTilt] = useState({ rx: 0, ry: 0 });
 
@@ -119,7 +120,7 @@ export function AtelierSlot({
             }}
             {...listeners}
             {...attributes}
-            aria-label={`${garment.name_uz} (${label})`}
+            aria-label={`${localize(garment.name_uz)} (${label})`}
             className={`flex-1 min-h-0 w-full overflow-hidden p-1.5 sm:p-2 flex items-center justify-center cursor-grab active:cursor-grabbing touch-none ${
               isDragging ? 'opacity-25' : 'opacity-100'
             }`}
@@ -142,14 +143,14 @@ export function AtelierSlot({
               type="button"
               onClick={() => onOpenPicker(slotKey)}
               className="min-h-[30px] flex-1 min-w-0 truncate text-left text-[10px] sm:text-[11px] text-[var(--ink-2)] hover:text-[var(--ink)] cursor-pointer"
-              title={`${garment.name_uz} — ${UZ.atelier.pickForSlot}`}
+              title={`${localize(garment.name_uz)} — ${t.atelier.pickForSlot}`}
             >
-              {garment.name_uz}
+              {localize(garment.name_uz)}
             </button>
             <button
               type="button"
               onClick={() => onRemove(slotKey)}
-              aria-label={`${garment.name_uz} — ${UZ.atelier.removeItem}`}
+              aria-label={`${localize(garment.name_uz)} — ${t.atelier.removeItem}`}
               className="h-7 w-7 shrink-0 inline-flex items-center justify-center border border-[var(--hairline)] bg-[var(--paper)] text-xs text-[var(--ink-2)] hover:border-[var(--accent)] hover:text-[var(--accent)] cursor-pointer"
             >
               ×
@@ -172,7 +173,7 @@ export function AtelierSlot({
             {label}
           </span>
           <span className="mt-1 text-[9px] sm:text-[10px] text-[var(--muted)]/80 leading-tight max-w-full truncate">
-            {UZ.atelier.emptySlotHint}
+            {t.atelier.emptySlotHint}
           </span>
         </button>
       )}

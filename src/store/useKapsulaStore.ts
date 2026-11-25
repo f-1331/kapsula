@@ -25,10 +25,14 @@ import {
   type GeoLocationInfo,
   type LiveWeatherAnalysis,
 } from '../utils/weather-api';
+import type { AppLanguage } from '../i18n/languages';
+import { DESIGN_THEMES, getDesignThemeById, type DesignThemeId } from '../styles/themes';
 
 const STORAGE_FILTERS_KEY = 'kapsula_filters_v1';
 const STORAGE_SAVED_KEY = 'kapsula_saved_v1';
 const STORAGE_THEME_KEY = 'kapsula_theme_v1';
+const STORAGE_DESIGN_THEME_KEY = 'kapsula_design_theme_v1';
+const STORAGE_LANG_KEY = 'kapsula_lang_v1';
 const STORAGE_LOC_KEY = 'kapsula_location_v1';
 const STORAGE_CUSTOM_GARMENTS_KEY = 'kapsula_custom_garments_v1';
 const STORAGE_WEEKLY_PLAN_KEY = 'kapsula_weekly_plan_v1';
@@ -100,30 +104,61 @@ function safeWriteStorage(key: string, value: unknown): void {
   }
 }
 
-export function applyThemeToDocument(theme: ThemeMode): void {
-  if (typeof document === 'undefined') return;
-  const root = document.documentElement;
-  if (theme === 'dark') {
-    root.setAttribute('data-theme', 'dark');
-  } else {
-    root.removeAttribute('data-theme');
+export function applyDesignThemeToDocument(presetId: DesignThemeId): ThemeMode {
+  const preset = getDesignThemeById(presetId);
+  if (typeof document !== 'undefined') {
+    const root = document.documentElement;
+    if (preset.colorScheme === 'dark') {
+      root.setAttribute('data-theme', 'dark');
+    } else {
+      root.removeAttribute('data-theme');
+    }
+    root.setAttribute('data-design', preset.id);
+    for (const [k, v] of Object.entries(preset.vars)) {
+      root.style.setProperty(k, v);
+    }
+    root.style.colorScheme = preset.colorScheme;
+
+    const metaTheme = document.querySelector('meta[name="theme-color"]');
+    if (metaTheme) {
+      metaTheme.setAttribute('content', preset.vars['--paper']);
+    }
   }
-  const metaTheme = document.querySelector('meta[name="theme-color"]');
-  if (metaTheme) {
-    metaTheme.setAttribute('content', theme === 'dark' ? '#11100E' : '#F5F1E8');
-  }
+  return preset.colorScheme;
 }
 
-function readInitialTheme(): ThemeMode {
-  if (typeof window === 'undefined') return 'light';
+export function applyThemeToDocument(theme: ThemeMode): void {
+  applyDesignThemeToDocument(theme === 'dark' ? 'noir-luxury' : 'editorial-sand');
+}
+
+function readInitialDesignTheme(): DesignThemeId {
+  if (typeof window === 'undefined') return 'editorial-sand';
   try {
-    const stored = window.localStorage.getItem(STORAGE_THEME_KEY);
-    if (stored === 'dark' || stored === 'light') return stored;
-    if (window.matchMedia?.('(prefers-color-scheme: dark)').matches) return 'dark';
+    const stored = window.localStorage.getItem(STORAGE_DESIGN_THEME_KEY);
+    if (stored && DESIGN_THEMES.some((t) => t.id === stored)) {
+      return stored as DesignThemeId;
+    }
+    const legacy = window.localStorage.getItem(STORAGE_THEME_KEY);
+    if (legacy === 'dark') return 'noir-luxury';
+    if (legacy === 'light') return 'editorial-sand';
+    if (window.matchMedia?.('(prefers-color-scheme: dark)').matches) return 'noir-luxury';
   } catch {
     // ignore
   }
-  return 'light';
+  return 'editorial-sand';
+}
+
+function readInitialLanguage(): AppLanguage {
+  if (typeof window === 'undefined') return 'uz';
+  try {
+    const stored = window.localStorage.getItem(STORAGE_LANG_KEY);
+    if (stored === 'uz' || stored === 'uz_cyrl' || stored === 'ru' || stored === 'en' || stored === 'tr') {
+      return stored;
+    }
+  } catch {
+    // ignore
+  }
+  return 'uz';
 }
 
 function readInitialLocation(): GeoLocationInfo {
@@ -241,8 +276,9 @@ const initialCustomGarments = parseCustomGarmentsFromStorage();
 const initialMergedManifest = mergeManifestWithCustom(SAMPLE_MANIFEST, initialCustomGarments);
 const initialRecs = recommendOutfits(initialMergedManifest, initialParsed.query);
 const initialById = new Map(initialMergedManifest.garments.map((g) => [g.id, g]));
-const initialTheme = readInitialTheme();
-applyThemeToDocument(initialTheme);
+const initialDesignTheme = readInitialDesignTheme();
+const initialTheme = applyDesignThemeToDocument(initialDesignTheme);
+const initialLang = readInitialLanguage();
 const initialActiveView = parseViewFromLocation();
 
 function resolveItemsToBoard(ids: string[], byId: Map<string, Garment>): { slots: BoardSlots; missingCount: number } {
@@ -275,6 +311,8 @@ export interface KapsulaState {
   hasWebpAssets: boolean;
   manifestLoaded: boolean;
   theme: ThemeMode;
+  designTheme: DesignThemeId;
+  language: AppLanguage;
   location: GeoLocationInfo;
   liveWeather: LiveWeatherAnalysis | null;
   autoWeatherEnabled: boolean;
@@ -297,6 +335,8 @@ export interface KapsulaState {
   setDayPlan: (dateStr: string, itemIds: string[]) => void;
   togglePackingItem: (itemId: string) => void;
   setTheme: (theme: ThemeMode) => void;
+  setDesignTheme: (id: DesignThemeId) => void;
+  setLanguage: (lang: AppLanguage) => void;
   toggleTheme: () => void;
   setLocation: (location: GeoLocationInfo) => void;
   setWeatherLoading: (loading: boolean) => void;
@@ -333,6 +373,8 @@ export const useKapsulaStore = create<KapsulaState>((set, get) => ({
   hasWebpAssets: false,
   manifestLoaded: false,
   theme: initialTheme,
+  designTheme: initialDesignTheme,
+  language: initialLang,
   location: readInitialLocation(),
   liveWeather: null,
   autoWeatherEnabled: !initialParsed.urlItems,
@@ -399,18 +441,33 @@ export const useKapsulaStore = create<KapsulaState>((set, get) => ({
   },
 
   setTheme: (theme) => {
-    applyThemeToDocument(theme);
+    const presetId: DesignThemeId = theme === 'dark' ? 'noir-luxury' : 'editorial-sand';
+    get().setDesignTheme(presetId);
+  },
+
+  setDesignTheme: (id) => {
+    const colorScheme = applyDesignThemeToDocument(id);
     try {
-      window.localStorage.setItem(STORAGE_THEME_KEY, theme);
+      window.localStorage.setItem(STORAGE_DESIGN_THEME_KEY, id);
+      window.localStorage.setItem(STORAGE_THEME_KEY, colorScheme);
     } catch {
       // ignore
     }
-    set({ theme });
+    set({ designTheme: id, theme: colorScheme });
+  },
+
+  setLanguage: (language) => {
+    try {
+      window.localStorage.setItem(STORAGE_LANG_KEY, language);
+    } catch {
+      // ignore
+    }
+    set({ language });
   },
 
   toggleTheme: () => {
-    const next: ThemeMode = get().theme === 'dark' ? 'light' : 'dark';
-    get().setTheme(next);
+    const next: DesignThemeId = get().theme === 'dark' ? 'editorial-sand' : 'noir-luxury';
+    get().setDesignTheme(next);
   },
 
   setLocation: (location) => {

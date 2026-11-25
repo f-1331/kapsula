@@ -4,6 +4,9 @@ import { describe, expect, it } from 'vitest';
 import { ManifestSchema, type Manifest, type Occasion, type PaletteId, type UserGenderFilter, type WeatherBand } from '../data/schema';
 import { SAMPLE_MANIFEST } from '../data/sample-manifest';
 import { UZ } from '../i18n/uz';
+import { LANGUAGE_OPTIONS, getDictionary, latinToCyrillicUz } from '../i18n/languages';
+import { DESIGN_THEMES, getDesignThemeById } from '../styles/themes';
+import { detectGarmentSubtype } from '../components/GarmentSilhouette';
 import { analyzeHarmony, classifyColor } from './color';
 import {
   findBestHarmonizeSwap,
@@ -131,10 +134,13 @@ describe('Stylist Engine — Coverage & Determinism', () => {
     'sport',
     'travel',
   ];
-  const palettes: Array<PaletteId | 'any'> = ['sand', 'earth', 'marine', 'bloom', 'noir', 'any'];
+  const palettes: Array<PaletteId | 'any'> = [
+    'sand', 'earth', 'marine', 'bloom', 'noir', 'emerald', 'cobalt', 'espresso',
+    'lavender', 'sunset', 'forest', 'monochrome', 'amber', 'denim', 'pearl', 'ruby', 'any',
+  ];
   const genders: UserGenderFilter[] = ['w', 'm', 'all'];
 
-  it('returns >= 3 complete outfits across all 8 occasions and filter combinations', { timeout: 25000 }, () => {
+  it('returns >= 3 complete outfits across all 8 occasions, 16 palettes and filter combinations', { timeout: 120000 }, () => {
     for (const weather of weathers) {
       for (const rain of rainStates) {
         for (const occasion of occasions) {
@@ -238,5 +244,30 @@ describe('Stylist Engine — Coverage & Determinism', () => {
     expect(advice).not.toBeNull();
     expect(advice?.recommendedAdd).not.toBeNull();
     expect(advice?.summaryUz.length).toBeGreaterThan(20);
+  });
+
+  it('validates v4 expanded catalog, 10 site design themes, 5 languages, Cyrillic transliterator & 65 3D subtypes', () => {
+    expect(manifest.garments.length).toBeGreaterThanOrEqual(6000);
+    expect(manifest.palettes.length).toBe(16);
+    expect(manifest.looks.length).toBeGreaterThanOrEqual(30);
+
+    expect(DESIGN_THEMES.length).toBe(10);
+    for (const preset of DESIGN_THEMES) {
+      expect(getDesignThemeById(preset.id).id).toBe(preset.id);
+    }
+
+    expect(LANGUAGE_OPTIONS.length).toBe(5);
+    for (const opt of LANGUAGE_OPTIONS) {
+      const dict = getDictionary(opt.id);
+      expect(dict.meta.brand.length).toBeGreaterThan(2);
+      expect(dict.studio.mode3d.length).toBeGreaterThan(1);
+    }
+    expect(latinToCyrillicUz('Oʻzbekiston Gʻazna')).toContain('Ўзбекистон');
+    expect(latinToCyrillicUz('Oʻzbekiston Gʻazna')).toContain('Ғазна');
+
+    expect(detectGarmentSubtype('outerwear', 'outerwear-cape-noir-1', 'Keyp')).toBe('cape');
+    expect(detectGarmentSubtype('outerwear', 'outerwear-kimono-sand-1', 'Kimono')).toBe('kimono');
+    expect(detectGarmentSubtype('bag', 'bag-saddle-espresso-1', 'Egar sumka')).toBe('saddle');
+    expect(detectGarmentSubtype('accessory', 'acc-bucket_hat-denim-1', 'Panama')).toBe('bucket_hat');
   });
 });

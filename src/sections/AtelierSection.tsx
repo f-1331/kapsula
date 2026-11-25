@@ -30,26 +30,16 @@ import {
   type BoardSlots,
   type SlotKey,
 } from '../engine/stylist';
-import { UZ } from '../i18n/uz';
+import { useTranslation } from '../i18n/useTranslation';
 import { useKapsulaStore } from '../store/useKapsulaStore';
 import { exportBoardPng } from '../utils/export-png';
 import { AtelierSlot } from '../components/AtelierSlot';
 import { AtelierTrayItem } from '../components/AtelierTrayItem';
 import { GarmentImage } from '../components/GarmentImage';
 import { RangLaboratoriyasi } from '../components/RangLaboratoriyasi';
+import { Studio3DStage } from '../components/Studio3DStage';
 
-const CATEGORY_TABS: Array<{ id: Category | 'all'; label: string }> = [
-  { id: 'all', label: UZ.categories.all },
-  { id: 'outerwear', label: UZ.categories.outerwear },
-  { id: 'top', label: UZ.categories.top },
-  { id: 'bottom', label: UZ.categories.bottom },
-  { id: 'dress', label: UZ.categories.dress },
-  { id: 'shoes', label: UZ.categories.shoes },
-  { id: 'bag', label: UZ.categories.bag },
-  { id: 'accessory', label: UZ.categories.accessory },
-];
-
-const SUBTYPE_CHIPS: Array<{ id: string; label: string; keyword: string }> = [
+const SUBTYPE_KEYS: Array<{ id: string; label: string; keyword: string }> = [
   { id: 'all', label: 'Barcha turlar', keyword: '' },
   { id: 'hoodie', label: 'Hudi', keyword: 'hudi' },
   { id: 'sweatshirt', label: 'Svitshot', keyword: 'svitshot' },
@@ -144,7 +134,23 @@ export function AtelierSection() {
   const [filterPalette, setFilterPalette] = useState(false);
   const [onlyCustomFilter, setOnlyCustomFilter] = useState(false);
 
-  // Mobile workspace mode + bottom sheet
+  // Mobile workspace mode + 3D Stage mode
+  const { t, localize } = useTranslation();
+  const categoryTabs: Array<{ id: Category | 'all'; label: string }> = [
+    { id: 'all', label: t.categories.all },
+    { id: 'outerwear', label: t.categories.outerwear },
+    { id: 'top', label: t.categories.top },
+    { id: 'bottom', label: t.categories.bottom },
+    { id: 'dress', label: t.categories.dress },
+    { id: 'shoes', label: t.categories.shoes },
+    { id: 'bag', label: t.categories.bag },
+    { id: 'accessory', label: t.categories.accessory },
+  ];
+  const subtypeChips = SUBTYPE_KEYS.map((c) => ({
+    ...c,
+    label: c.id === 'all' ? t.categories.all : localize(c.label),
+  }));
+  const [boardMode, setBoardMode] = useState<'2d' | '3d'>('3d');
   const [mobilePanel, setMobilePanel] = useState<'board' | 'tray' | 'lab'>('board');
   const [mobileTrayOpen, setMobileTrayOpen] = useState(false);
   const [savedOpen, setSavedOpen] = useState(false);
@@ -192,14 +198,14 @@ export function AtelierSection() {
   const contextualTips = useMemo(() => {
     const tips: string[] = [];
     if (query.weather === 'cold' && !placedGarments.some((g) => g.warmth === 3)) {
-      tips.push(UZ.colorLab.tips.needWarmLayer);
+      tips.push(t.colorLab.tips.needWarmLayer);
     }
     const shoe = slots.shoes ? byId.get(slots.shoes) : undefined;
     if (query.occasion === 'party' && shoe && shoe.formality < 2) {
-      tips.push(UZ.colorLab.tips.formalShoes);
+      tips.push(t.colorLab.tips.formalShoes);
     }
     return tips;
-  }, [query.weather, query.occasion, placedGarments, slots.shoes, byId]);
+  }, [query.weather, query.occasion, placedGarments, slots.shoes, byId, t.colorLab.tips]);
 
   const smartAdvice = useMemo(
     () => getSmartPairingAdvice(placedGarments, manifest, query),
@@ -210,11 +216,11 @@ export function AtelierSection() {
   useEffect(() => {
     if (prevScoreRef.current !== harmony.score && placedGarments.length > 0) {
       setScoreAnnouncement(
-        UZ.atelier.scoreLiveAnnouncement(prevScoreRef.current, harmony.score),
+        t.atelier.scoreLiveAnnouncement(prevScoreRef.current, harmony.score),
       );
     }
     prevScoreRef.current = harmony.score;
-  }, [harmony.score, placedGarments.length, setScoreAnnouncement]);
+  }, [harmony.score, placedGarments.length, setScoreAnnouncement, t.atelier]);
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -265,7 +271,7 @@ export function AtelierSection() {
   // Filtered tray garments across 3,894+ branded items + user photos
   const filteredTrayGarments = useMemo(() => {
     const q = searchText.trim().toLowerCase();
-    const subtypeKw = SUBTYPE_CHIPS.find((c) => c.id === activeSubtype)?.keyword ?? '';
+    const subtypeKw = SUBTYPE_KEYS.find((c) => c.id === activeSubtype)?.keyword ?? '';
 
     return manifest.garments.filter((g) => {
       if (onlyCustomFilter && !g.isUserUploaded) return false;
@@ -379,34 +385,40 @@ export function AtelierSection() {
   });
 
   const getSlotDisplayName = (slotKey: SlotKey): string => {
-    if (slotKey === 'accessory1') return UZ.slots.accessory1;
-    if (slotKey === 'accessory2') return UZ.slots.accessory2;
-    return UZ.slots[slotKey];
+    if (slotKey === 'accessory1') return t.slots.accessory1;
+    if (slotKey === 'accessory2') return t.slots.accessory2;
+    return t.slots[slotKey];
   };
 
   const announcements: Announcements = {
     onDragStart({ active }) {
       const garment = (active.data.current as { garment?: Garment } | undefined)?.garment;
-      return garment ? UZ.atelier.dndAnnouncements.onDragStart(garment.name_uz) : '';
+      return garment ? t.atelier.dndAnnouncements.onDragStart(localize(garment.name_uz)) : '';
     },
     onDragOver({ active, over }) {
       const garment = (active.data.current as { garment?: Garment } | undefined)?.garment;
       if (!garment || !over) return '';
       const targetSlot = resolveTargetSlot(garment, slots);
-      return UZ.atelier.dndAnnouncements.onDragOver(garment.name_uz, getSlotDisplayName(targetSlot));
+      return t.atelier.dndAnnouncements.onDragOver(
+        localize(garment.name_uz),
+        getSlotDisplayName(targetSlot),
+      );
     },
     onDragEnd({ active, over }) {
       const garment = (active.data.current as { garment?: Garment } | undefined)?.garment;
       if (!garment) return '';
       if (!over || over.id === 'tray-dropzone') {
-        return UZ.atelier.dndAnnouncements.onDragEnd(garment.name_uz);
+        return t.atelier.dndAnnouncements.onDragEnd(localize(garment.name_uz));
       }
       const targetSlot = resolveTargetSlot(garment, slots);
-      return UZ.atelier.dndAnnouncements.onDragEnd(garment.name_uz, getSlotDisplayName(targetSlot));
+      return t.atelier.dndAnnouncements.onDragEnd(
+        localize(garment.name_uz),
+        getSlotDisplayName(targetSlot),
+      );
     },
     onDragCancel({ active }) {
       const garment = (active.data.current as { garment?: Garment } | undefined)?.garment;
-      return garment ? UZ.atelier.dndAnnouncements.onDragCancel(garment.name_uz) : '';
+      return garment ? t.atelier.dndAnnouncements.onDragCancel(localize(garment.name_uz)) : '';
     },
   };
 
@@ -496,13 +508,13 @@ export function AtelierSection() {
     setHarmonizeNoneMsg(null);
     if (placedGarments.length < 2) {
       setHarmonizeSuggestion(null);
-      setHarmonizeNoneMsg(UZ.atelier.harmonizeEmpty);
+      setHarmonizeNoneMsg(t.atelier.harmonizeEmpty);
       return;
     }
     const suggestion = findBestHarmonizeSwap(slots, manifest, selectedPalette, query.gender);
     if (!suggestion || suggestion.delta < 2) {
       setHarmonizeSuggestion(null);
-      setHarmonizeNoneMsg(UZ.atelier.harmonizeAlready);
+      setHarmonizeNoneMsg(t.atelier.harmonizeAlready);
       return;
     }
     setHarmonizeSuggestion(suggestion);
@@ -518,7 +530,7 @@ export function AtelierSection() {
   const handleSave = () => {
     const ids = placedGarments.map((g) => g.id);
     if (saveOutfit(ids)) {
-      showTempFeedback(UZ.stylist.savedSuccess);
+      showTempFeedback(t.stylist.savedSuccess);
     }
   };
 
@@ -531,7 +543,7 @@ export function AtelierSection() {
     }
     try {
       if (navigator.share) {
-        await navigator.share({ title: UZ.meta.brandFull, url });
+        await navigator.share({ title: t.meta.brandFull, url });
         return;
       }
     } catch {
@@ -539,9 +551,9 @@ export function AtelierSection() {
     }
     try {
       await navigator.clipboard.writeText(url);
-      showTempFeedback(UZ.atelier.shareCopied);
+      showTempFeedback(t.atelier.shareCopied);
     } catch {
-      showTempFeedback(UZ.atelier.shareCopied);
+      showTempFeedback(t.atelier.shareCopied);
     }
   };
 
@@ -588,24 +600,24 @@ export function AtelierSection() {
   const trayContent = (
     <div ref={setTrayDropRef} className="flex flex-col h-full">
       <div className="flex items-center justify-between border-b border-[var(--hairline)] pb-2.5 mb-2.5">
-        <h3 className="micro-label text-[var(--ink)]">{UZ.atelier.trayTitle}</h3>
+        <h3 className="micro-label text-[var(--ink)]">{t.atelier.trayTitle}</h3>
         <span className="micro-label text-[var(--muted)] font-tabular">
           {filteredTrayGarments.length}
         </span>
       </div>
 
-      {/* Search across 2,134+ garments */}
+      {/* Search across 6,240+ garments */}
       <input
         type="search"
         value={searchText}
         onChange={(e) => setSearchText(e.target.value)}
-        placeholder={UZ.atelier.searchPlaceholder}
+        placeholder={t.atelier.searchPlaceholder}
         className="mb-2.5 min-h-[38px] w-full border border-[var(--hairline-strong)] bg-[var(--paper)] px-2.5 text-xs text-[var(--ink)] placeholder:text-[var(--muted)]"
       />
 
       {/* Subtype quick chips (Hudi, Svitshot, Palto, Kargo...) */}
       <div className="flex flex-wrap gap-1 mb-2.5">
-        {SUBTYPE_CHIPS.map((chip) => {
+        {subtypeChips.map((chip) => {
           const active = activeSubtype === chip.id;
           return (
             <button
@@ -632,7 +644,9 @@ export function AtelierSection() {
             onClick={() => setAtelierBrandFilter('all')}
             className="min-h-[34px] px-2.5 py-1 text-[11px] border border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)] font-medium cursor-pointer flex items-center gap-1.5"
           >
-            <span>Brend: {atelierBrandFilter}</span>
+            <span>
+              {localize('Brend')}: {atelierBrandFilter}
+            </span>
             <span aria-hidden="true">×</span>
           </button>
         )}
@@ -646,7 +660,7 @@ export function AtelierSection() {
                 : 'border-[var(--hairline-strong)] bg-[var(--paper)] text-[var(--ink-2)] hover:border-[var(--ink)]'
             }`}
           >
-            Shaxsiy ({customGarments.length})
+            {localize('Shaxsiy')} ({customGarments.length})
           </button>
         )}
         <button
@@ -659,7 +673,7 @@ export function AtelierSection() {
               : 'border-[var(--hairline-strong)] bg-[var(--paper)] text-[var(--ink-2)] hover:border-[var(--ink)]'
           }`}
         >
-          {UZ.atelier.filterWeather}
+          {t.atelier.filterWeather}
         </button>
         <button
           type="button"
@@ -672,13 +686,13 @@ export function AtelierSection() {
               : 'border-[var(--hairline-strong)] bg-[var(--paper)] text-[var(--ink-2)] hover:border-[var(--ink)]'
           }`}
         >
-          {UZ.atelier.filterPalette}
+          {t.atelier.filterPalette}
         </button>
       </div>
 
       {/* Category Tabs */}
       <div className="flex flex-wrap gap-1 mb-2.5 pb-2 border-b border-[var(--hairline)]">
-        {CATEGORY_TABS.map((tab) => {
+        {categoryTabs.map((tab) => {
           const active = activeCategory === tab.id;
           return (
             <button
@@ -700,7 +714,7 @@ export function AtelierSection() {
       {/* 2-Column Paginated Grid */}
       <div className="editorial-scroll flex-1 overflow-y-auto pr-1">
         {visibleTrayGarments.length === 0 ? (
-          <p className="py-8 text-center text-xs text-[var(--muted)]">{UZ.atelier.emptyTray}</p>
+          <p className="py-8 text-center text-xs text-[var(--muted)]">{t.atelier.emptyTray}</p>
         ) : (
           <>
             <div className="grid grid-cols-2 gap-2 pb-3">
@@ -724,7 +738,7 @@ export function AtelierSection() {
                 onClick={() => setVisibleLimit((n) => n + TRAY_PAGE_SIZE)}
                 className="min-h-[42px] w-full mb-3 border border-[var(--hairline-strong)] bg-[var(--paper)] text-xs uppercase tracking-[0.1em] text-[var(--ink)] hover:border-[var(--ink)] cursor-pointer"
               >
-                {UZ.atelier.loadMore(visibleTrayGarments.length, filteredTrayGarments.length)}
+                {t.atelier.loadMore(visibleTrayGarments.length, filteredTrayGarments.length)}
               </button>
             )}
           </>
@@ -747,17 +761,17 @@ export function AtelierSection() {
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-[var(--hairline)] pb-6 mb-6 sm:mb-8">
           <div>
             <span className="micro-label text-[var(--muted)] block mb-2">
-              {UZ.sections.atelye}
+              {t.sections.atelye}
             </span>
             <h2
               id="atelye-heading"
               className="font-editorial text-3xl sm:text-5xl leading-none text-[var(--ink)]"
             >
-              {UZ.atelier.heading}
+              {t.atelier.heading}
             </h2>
           </div>
           <p className="text-sm sm:text-base text-[var(--ink-2)] max-w-md">
-            {UZ.atelier.subheading}
+            {t.atelier.subheading}
           </p>
         </div>
 
@@ -766,13 +780,13 @@ export function AtelierSection() {
             role="status"
             className="mb-5 flex items-center justify-between gap-4 border border-[var(--hairline-strong)] bg-[var(--paper-2)] px-4 py-2.5 text-xs text-[var(--ink-2)]"
           >
-            <span>{UZ.atelier.missingIdsNotice}</span>
+            <span>{t.atelier.missingIdsNotice}</span>
             <button
               type="button"
               onClick={dismissMissingNotice}
               className="min-h-[36px] px-2 text-xs underline cursor-pointer"
             >
-              {UZ.atelier.closePicker}
+              {t.atelier.closePicker}
             </button>
           </div>
         )}
@@ -788,7 +802,7 @@ export function AtelierSection() {
                 : 'border-transparent text-[var(--muted)]'
             }`}
           >
-            {UZ.atelier.mobileTabBoard}
+            {t.atelier.mobileTabBoard}
           </button>
           <button
             type="button"
@@ -799,7 +813,7 @@ export function AtelierSection() {
                 : 'border-transparent text-[var(--muted)]'
             }`}
           >
-            {UZ.atelier.mobileTabTray} ({filteredTrayGarments.length})
+            {t.atelier.mobileTabTray} ({filteredTrayGarments.length})
           </button>
           <button
             type="button"
@@ -810,7 +824,7 @@ export function AtelierSection() {
                 : 'border-transparent text-[var(--muted)]'
             }`}
           >
-            {UZ.atelier.mobileTabLab} ({harmony.score})
+            {t.atelier.mobileTabLab} ({harmony.score})
           </button>
         </div>
 
@@ -852,7 +866,7 @@ export function AtelierSection() {
                   title="Ctrl+Z"
                   className="min-h-[42px] px-2.5 py-2 text-[11px] uppercase tracking-[0.09em] border border-[var(--hairline)] text-[var(--ink)] hover:border-[var(--ink)] disabled:opacity-35 disabled:cursor-not-allowed cursor-pointer"
                 >
-                  {UZ.atelier.toolbar.undo}
+                  {t.atelier.toolbar.undo}
                 </button>
                 <button
                   type="button"
@@ -861,42 +875,42 @@ export function AtelierSection() {
                   title="Ctrl+Shift+Z"
                   className="min-h-[42px] px-2.5 py-2 text-[11px] uppercase tracking-[0.09em] border border-[var(--hairline)] text-[var(--ink)] hover:border-[var(--ink)] disabled:opacity-35 disabled:cursor-not-allowed cursor-pointer"
                 >
-                  {UZ.atelier.toolbar.redo}
+                  {t.atelier.toolbar.redo}
                 </button>
                 <button
                   type="button"
                   onClick={handleRandom}
                   className="min-h-[42px] px-2.5 py-2 text-[11px] uppercase tracking-[0.09em] border border-[var(--hairline)] text-[var(--ink)] hover:border-[var(--ink)] cursor-pointer"
                 >
-                  {UZ.atelier.toolbar.random}
+                  {t.atelier.toolbar.random}
                 </button>
                 <button
                   type="button"
                   onClick={clearBoard}
                   className="min-h-[42px] px-2.5 py-2 text-[11px] uppercase tracking-[0.09em] border border-[var(--hairline)] text-[var(--ink-2)] hover:border-[var(--accent)] hover:text-[var(--accent)] cursor-pointer"
                 >
-                  {UZ.atelier.toolbar.clear}
+                  {t.atelier.toolbar.clear}
                 </button>
                 <button
                   type="button"
                   onClick={handleHarmonize}
                   className="min-h-[42px] px-3 py-2 text-[11px] uppercase tracking-[0.1em] bg-[var(--ink)] text-[var(--paper)] hover:bg-[var(--accent)] transition-colors cursor-pointer"
                 >
-                  {UZ.atelier.toolbar.harmonize}
+                  {t.atelier.toolbar.harmonize}
                 </button>
                 <button
                   type="button"
                   onClick={handleSave}
                   className="min-h-[42px] px-2.5 py-2 text-[11px] uppercase tracking-[0.09em] border border-[var(--hairline)] text-[var(--ink)] hover:border-[var(--ink)] cursor-pointer"
                 >
-                  {UZ.atelier.toolbar.save}
+                  {t.atelier.toolbar.save}
                 </button>
                 <button
                   type="button"
                   onClick={handleShare}
                   className="min-h-[42px] px-2.5 py-2 text-[11px] uppercase tracking-[0.09em] border border-[var(--hairline)] text-[var(--ink)] hover:border-[var(--ink)] cursor-pointer"
                 >
-                  {UZ.atelier.toolbar.share}
+                  {t.atelier.toolbar.share}
                 </button>
                 <button
                   type="button"
@@ -904,15 +918,41 @@ export function AtelierSection() {
                   disabled={isExporting}
                   className="min-h-[42px] px-2.5 py-2 text-[11px] uppercase tracking-[0.09em] border border-[var(--hairline)] text-[var(--ink)] hover:border-[var(--ink)] disabled:opacity-50 cursor-pointer"
                 >
-                  {UZ.atelier.toolbar.exportPng}
+                  {t.atelier.toolbar.exportPng}
                 </button>
                 <button
                   type="button"
                   onClick={() => setSavedOpen((v) => !v)}
                   className="min-h-[42px] px-2.5 py-2 text-[11px] uppercase tracking-[0.09em] border border-[var(--hairline-strong)] bg-[var(--paper-2)] text-[var(--ink)] hover:border-[var(--ink)] cursor-pointer font-tabular"
                 >
-                  {UZ.atelier.toolbar.savedList} ({savedOutfits.length})
+                  {t.atelier.toolbar.savedList} ({savedOutfits.length})
                 </button>
+
+                {/* 2D Taxta / 3D Sahna Switch */}
+                <div className="ml-auto inline-flex border border-[var(--ink)] bg-[var(--paper)] p-0.5">
+                  <button
+                    type="button"
+                    onClick={() => setBoardMode('3d')}
+                    className={`min-h-[34px] px-2.5 text-[10px] uppercase tracking-[0.12em] transition-colors cursor-pointer ${
+                      boardMode === '3d'
+                        ? 'bg-[var(--accent)] text-[var(--accent-ink)] font-semibold'
+                        : 'text-[var(--ink-2)] hover:text-[var(--ink)]'
+                    }`}
+                  >
+                    {t.studio.mode3d}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setBoardMode('2d')}
+                    className={`min-h-[34px] px-2.5 text-[10px] uppercase tracking-[0.12em] transition-colors cursor-pointer ${
+                      boardMode === '2d'
+                        ? 'bg-[var(--ink)] text-[var(--paper)] font-semibold'
+                        : 'text-[var(--ink-2)] hover:text-[var(--ink)]'
+                    }`}
+                  >
+                    {t.studio.modeBoard}
+                  </button>
+                </div>
               </div>
 
               {(harmonizeSuggestion || harmonizeNoneMsg || statusFeedback) && (
@@ -923,9 +963,11 @@ export function AtelierSection() {
                   {harmonizeSuggestion ? (
                     <>
                       <span className="font-medium text-[var(--ink)]">
-                        {UZ.atelier.harmonizeResult(
-                          harmonizeSuggestion.garment.name_uz,
-                          harmonizeSuggestion.delta,
+                        {localize(
+                          t.atelier.harmonizeResult(
+                            localize(harmonizeSuggestion.garment.name_uz),
+                            harmonizeSuggestion.delta,
+                          ),
                         )}
                       </span>
                       <button
@@ -933,18 +975,32 @@ export function AtelierSection() {
                         onClick={applyHarmonizeSuggestion}
                         className="min-h-[36px] bg-[var(--accent)] px-3.5 py-1.5 text-[11px] uppercase tracking-[0.12em] text-[var(--paper)] cursor-pointer"
                       >
-                        {UZ.atelier.harmonizeApply}
+                        {t.atelier.harmonizeApply}
                       </button>
                     </>
                   ) : (
                     <span className="text-[var(--ink-2)]">
-                      {harmonizeNoneMsg ?? statusFeedback}
+                      {localize(harmonizeNoneMsg ?? statusFeedback ?? '')}
                     </span>
                   )}
                 </div>
               )}
 
-              {/* The Editorial Outfit Board (spacious heights + dedicated caption bars) */}
+              {/* Interactive 3D Boutique Stage OR 2D Drag & Drop Editorial Board */}
+              {boardMode === '3d' ? (
+                <div ref={setBoardDropRef}>
+                  <Studio3DStage
+                    slots={slots}
+                    byId={byId}
+                    onSelectSlot={handleSlotPickerOpen}
+                    labels={{
+                      spin: t.studio.spin360,
+                      layers: t.studio.zLayers,
+                      dragHint: t.studio.dragHint,
+                    }}
+                  />
+                </div>
+              ) : (
               <div
                 ref={setBoardDropRef}
                 className={`relative border bg-[var(--paper-elevated)] p-2.5 sm:p-4 transition-colors ${
@@ -956,7 +1012,7 @@ export function AtelierSection() {
                 {activeDragGarment && activeDragSource === 'tray' && dragPreviewDelta !== null && (
                   <div className="mb-3 flex items-center justify-between border border-[var(--accent)] bg-[var(--paper)] px-3 py-1.5 text-xs">
                     <span className="text-[var(--ink)]">
-                      {UZ.atelier.previewScore(harmony.score + dragPreviewDelta)}
+                      {t.atelier.previewScore(harmony.score + dragPreviewDelta)}
                     </span>
                     <span
                       className={`font-semibold font-tabular ${
@@ -976,7 +1032,7 @@ export function AtelierSection() {
                   <div className="sm:col-span-4 grid grid-cols-2 sm:flex sm:flex-col gap-2 sm:gap-2.5 sm:h-full">
                     <AtelierSlot
                       slotKey="outerwear"
-                      label={UZ.slots.outerwear}
+                      label={t.slots.outerwear}
                       garment={outer}
                       isHighlighted={dragTargetSlot === 'outerwear'}
                       isPulsing={harmonizeSuggestion?.slot === 'outerwear'}
@@ -988,7 +1044,7 @@ export function AtelierSection() {
                     <div className="col-span-2 grid grid-cols-2 gap-2 h-[130px] sm:h-[142px] shrink-0">
                       <AtelierSlot
                         slotKey="accessory1"
-                        label={UZ.slots.accessory}
+                        label={t.slots.accessory}
                         garment={acc1}
                         isHighlighted={dragTargetSlot === 'accessory1'}
                         isPulsing={harmonizeSuggestion?.slot === 'accessory1'}
@@ -999,7 +1055,7 @@ export function AtelierSection() {
                       />
                       <AtelierSlot
                         slotKey="accessory2"
-                        label={UZ.slots.accessory}
+                        label={t.slots.accessory}
                         garment={acc2}
                         isHighlighted={dragTargetSlot === 'accessory2'}
                         isPulsing={harmonizeSuggestion?.slot === 'accessory2'}
@@ -1015,7 +1071,7 @@ export function AtelierSection() {
                     {dress && dragTargetSlot !== 'top' && dragTargetSlot !== 'bottom' ? (
                       <AtelierSlot
                         slotKey="dress"
-                        label={UZ.slots.dress}
+                        label={t.slots.dress}
                         garment={dress}
                         isHighlighted={dragTargetSlot === 'dress'}
                         isPulsing={harmonizeSuggestion?.slot === 'dress'}
@@ -1028,7 +1084,7 @@ export function AtelierSection() {
                       <div className="grid grid-cols-2 sm:flex sm:flex-col h-[176px] sm:h-full gap-2 sm:gap-2.5">
                         <AtelierSlot
                           slotKey="top"
-                          label={UZ.slots.top}
+                          label={t.slots.top}
                           garment={top}
                           isHighlighted={dragTargetSlot === 'top'}
                           isPulsing={harmonizeSuggestion?.slot === 'top'}
@@ -1039,7 +1095,7 @@ export function AtelierSection() {
                         />
                         <AtelierSlot
                           slotKey="bottom"
-                          label={UZ.slots.bottom}
+                          label={t.slots.bottom}
                           garment={bottom}
                           isHighlighted={dragTargetSlot === 'bottom'}
                           isPulsing={harmonizeSuggestion?.slot === 'bottom'}
@@ -1055,7 +1111,7 @@ export function AtelierSection() {
                   <div className="sm:col-span-4 grid grid-cols-2 sm:flex sm:flex-col gap-2 sm:gap-2.5 sm:h-full">
                     <AtelierSlot
                       slotKey="bag"
-                      label={UZ.slots.bag}
+                      label={t.slots.bag}
                       garment={bag}
                       isHighlighted={dragTargetSlot === 'bag'}
                       isPulsing={harmonizeSuggestion?.slot === 'bag'}
@@ -1066,7 +1122,7 @@ export function AtelierSection() {
                     />
                     <AtelierSlot
                       slotKey="shoes"
-                      label={UZ.slots.shoes}
+                      label={t.slots.shoes}
                       garment={shoes}
                       isHighlighted={dragTargetSlot === 'shoes'}
                       isPulsing={harmonizeSuggestion?.slot === 'shoes'}
@@ -1078,16 +1134,17 @@ export function AtelierSection() {
                   </div>
                 </div>
               </div>
+              )}
 
               {/* Smart Pairing Advisor Card */}
               {smartAdvice && (
                 <div className="border border-[var(--hairline-strong)] bg-[var(--paper-elevated)] p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="min-w-0">
                     <p className="micro-label text-[var(--accent)] mb-1">
-                      {UZ.atelier.smartAdvisorTitle}
+                      {t.atelier.smartAdvisorTitle}
                     </p>
                     <p className="text-xs sm:text-sm text-[var(--ink)] leading-relaxed">
-                      {smartAdvice.summaryUz}
+                      {localize(smartAdvice.summaryUz)}
                     </p>
                   </div>
                   {smartAdvice.recommendedAdd && (
@@ -1098,9 +1155,9 @@ export function AtelierSection() {
                           placeGarmentOnBoard(smartAdvice.recommendedAdd);
                         }
                       }}
-                      className="min-h-[40px] shrink-0 bg-[var(--accent)] text-[#FAF7F0] px-3.5 py-2 text-[11px] uppercase tracking-[0.12em] font-medium hover:opacity-90 cursor-pointer"
+                      className="min-h-[40px] shrink-0 bg-[var(--accent)] text-[var(--accent-ink)] px-3.5 py-2 text-[11px] uppercase tracking-[0.12em] font-medium hover:opacity-90 cursor-pointer"
                     >
-                      {UZ.atelier.smartAdvisorAdd}
+                      {t.atelier.smartAdvisorAdd}
                     </button>
                   )}
                 </div>
@@ -1110,19 +1167,19 @@ export function AtelierSection() {
                 <div className="border border-[var(--hairline-strong)] bg-[var(--paper-elevated)] p-4">
                   <div className="flex items-center justify-between border-b border-[var(--hairline)] pb-2 mb-3">
                     <h3 className="micro-label text-[var(--ink)]">
-                      {UZ.atelier.saveLimitNote(savedOutfits.length)}
+                      {t.atelier.saveLimitNote(savedOutfits.length)}
                     </h3>
                     <button
                       type="button"
                       onClick={() => setSavedOpen(false)}
                       className="min-h-[36px] px-2 text-xs text-[var(--muted)] hover:text-[var(--ink)] cursor-pointer"
                     >
-                      {UZ.atelier.closePicker}
+                      {t.atelier.closePicker}
                     </button>
                   </div>
 
                   {savedOutfits.length === 0 ? (
-                    <p className="py-4 text-xs text-[var(--muted)]">{UZ.atelier.noSaved}</p>
+                    <p className="py-4 text-xs text-[var(--muted)]">{t.atelier.noSaved}</p>
                   ) : (
                     <ul className="space-y-2 max-h-60 overflow-y-auto editorial-scroll">
                       {savedOutfits.map((saved) => (
@@ -1132,10 +1189,10 @@ export function AtelierSection() {
                         >
                           <div className="min-w-0">
                             <div className="text-xs font-medium text-[var(--ink)] truncate">
-                              {saved.title}
+                              {localize(saved.title)}
                             </div>
                             <div className="text-[11px] text-[var(--muted)]">
-                              {UZ.lookbook.itemsCount(saved.items.length)}
+                              {t.lookbook.itemsCount(saved.items.length)}
                             </div>
                           </div>
                           <div className="flex items-center gap-1.5 shrink-0">
@@ -1147,14 +1204,14 @@ export function AtelierSection() {
                               }}
                               className="min-h-[36px] border border-[var(--ink)] px-2.5 py-1 text-[10px] uppercase tracking-[0.1em] text-[var(--ink)] hover:bg-[var(--paper-2)] cursor-pointer"
                             >
-                              {UZ.atelier.loadSaved}
+                              {t.atelier.loadSaved}
                             </button>
                             <button
                               type="button"
                               onClick={() => deleteSavedOutfit(saved.id)}
                               className="min-h-[36px] border border-[var(--hairline)] px-2.5 py-1 text-[10px] uppercase tracking-[0.1em] text-[var(--muted)] hover:border-[var(--accent)] hover:text-[var(--accent)] cursor-pointer"
                             >
-                              {UZ.atelier.deleteSaved}
+                              {t.atelier.deleteSaved}
                             </button>
                           </div>
                         </li>
@@ -1180,7 +1237,7 @@ export function AtelierSection() {
               <div className="w-28 h-32 border border-[var(--accent)] bg-[var(--paper-elevated)]/95 p-2 shadow-lg flex flex-col items-center justify-center pointer-events-none">
                 <GarmentImage garment={activeDragGarment} className="max-h-20 w-full" eager />
                 <span className="mt-1 text-[10px] text-[var(--ink)] truncate w-full text-center">
-                  {activeDragGarment.name_uz}
+                  {localize(activeDragGarment.name_uz)}
                 </span>
               </div>
             ) : null}
@@ -1188,7 +1245,7 @@ export function AtelierSection() {
 
           {/* Mobile Bottom Sheet Drawer */}
           {mobileTrayOpen && (
-            <div className="md:hidden fixed inset-0 z-50 flex flex-col justify-end bg-black/40 pointer-events-auto">
+            <div className="md:hidden fixed inset-0 z-50 flex flex-col justify-end bg-black/70 backdrop-blur-xs pointer-events-auto">
               <div
                 ref={setMobileDropStripRef}
                 onClick={() => {
@@ -1210,28 +1267,33 @@ export function AtelierSection() {
                         : 'border-[var(--paper)] bg-[var(--paper-elevated)] text-[var(--ink)]'
                     }`}
                   >
-                    {UZ.atelier.dropZoneHint}
+                    {t.atelier.dropZoneHint}
                     {dragPreviewDelta !== null
-                      ? ` · ${UZ.atelier.previewScore(harmony.score + dragPreviewDelta)}`
+                      ? ` · ${t.atelier.previewScore(harmony.score + dragPreviewDelta)}`
                       : ''}
                   </div>
                 )}
               </div>
-              <div className="h-[64dvh] border-t border-[var(--ink)] bg-[var(--paper-elevated)] p-4 flex flex-col">
+              <div
+                className="h-[64dvh] border-t border-[var(--ink)] bg-[var(--paper-elevated)] p-4 flex flex-col shadow-2xl"
+                style={{ backgroundColor: 'var(--paper-elevated)' }}
+              >
                 <div className="flex items-center justify-between border-b border-[var(--hairline)] pb-2.5 mb-3">
                   <div className="flex items-baseline gap-2">
                     <span className="font-numeral text-2xl text-[var(--accent)]">
                       {harmony.score}
                     </span>
-                    <span className="text-xs text-[var(--ink-2)]">{harmony.schemeName}</span>
+                    <span className="text-xs text-[var(--ink-2)]">
+                      {localize(harmony.schemeName)}
+                    </span>
                   </div>
                   <button
                     type="button"
                     onClick={() => setMobileTrayOpen(false)}
-                    aria-label={UZ.atelier.closePicker}
+                    aria-label={t.atelier.closePicker}
                     className="min-h-[44px] border border-[var(--hairline-strong)] px-3 text-xs uppercase tracking-[0.1em] text-[var(--ink)] cursor-pointer"
                   >
-                    {UZ.atelier.closePicker}
+                    {t.atelier.closePicker}
                   </button>
                 </div>
                 <div className="flex-1 min-h-0">{trayContent}</div>
@@ -1241,12 +1303,17 @@ export function AtelierSection() {
         </DndContext>
 
         {/* Sticky Mobile Action Bar (docked neatly above fixed bottom app nav) */}
-        <div className="md:hidden sticky bottom-14 z-30 mt-6 -mx-4 border-t border-[var(--hairline-strong)] bg-[var(--paper)]/96 backdrop-blur-sm px-4 py-2.5 flex items-center justify-between gap-2">
+        <div
+          className="md:hidden sticky bottom-14 z-30 mt-6 -mx-4 border-t border-[var(--hairline-strong)] bg-[var(--paper)] px-4 py-2.5 flex items-center justify-between gap-2"
+          style={{ backgroundColor: 'var(--paper)' }}
+        >
           <div className="flex items-baseline gap-2 min-w-0">
             <span className="font-numeral text-3xl leading-none text-[var(--accent)]">
               {harmony.score}
             </span>
-            <span className="text-[11px] text-[var(--ink-2)] truncate">{harmony.schemeName}</span>
+            <span className="text-[11px] text-[var(--ink-2)] truncate">
+              {localize(harmony.schemeName)}
+            </span>
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
             <button
@@ -1254,14 +1321,14 @@ export function AtelierSection() {
               onClick={() => setMobileTrayOpen(true)}
               className="min-h-[44px] border border-[var(--ink)] bg-[var(--paper-elevated)] px-3 text-[11px] uppercase tracking-[0.1em] text-[var(--ink)] cursor-pointer"
             >
-              {UZ.atelier.mobileTrayOpen}
+              {t.atelier.mobileTrayOpen}
             </button>
             <button
               type="button"
               onClick={handleHarmonize}
               className="min-h-[44px] bg-[var(--ink)] px-3 text-[11px] uppercase tracking-[0.1em] text-[var(--paper)] cursor-pointer"
             >
-              {UZ.atelier.toolbar.harmonize}
+              {t.atelier.toolbar.harmonize}
             </button>
           </div>
         </div>
@@ -1272,27 +1339,30 @@ export function AtelierSection() {
         <div
           role="dialog"
           aria-modal="true"
-          aria-label={`${getSlotDisplayName(pickerSlot)} — ${UZ.atelier.pickForSlot}`}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/55 p-4"
+          aria-label={`${getSlotDisplayName(pickerSlot)} — ${t.atelier.pickForSlot}`}
+          className="fixed inset-0 z-50 flex items-start sm:items-center justify-center overflow-y-auto bg-black/75 backdrop-blur-sm p-3 sm:p-6"
           onClick={(e) => {
             if (e.target === e.currentTarget) setPickerSlot(null);
           }}
         >
-          <div className="w-full max-w-xl max-h-[82dvh] border border-[var(--ink)] bg-[var(--paper-elevated)] p-5 flex flex-col">
+          <div
+            className="relative my-auto w-full max-w-xl max-h-[85dvh] border border-[var(--ink)] bg-[var(--paper-elevated)] p-5 flex flex-col shadow-2xl"
+            style={{ backgroundColor: 'var(--paper-elevated)' }}
+          >
             <div className="flex items-center justify-between border-b border-[var(--hairline)] pb-3 mb-3">
               <div>
                 <span className="micro-label text-[var(--muted)] block">
                   {getSlotDisplayName(pickerSlot)}
                 </span>
                 <h3 className="font-editorial text-2xl text-[var(--ink)]">
-                  {UZ.atelier.pickForSlot}
+                  {t.atelier.pickForSlot}
                 </h3>
               </div>
               <button
                 type="button"
                 onClick={() => setPickerSlot(null)}
                 className="min-h-[44px] min-w-[44px] border border-[var(--hairline)] text-sm text-[var(--ink)] hover:border-[var(--ink)] cursor-pointer"
-                aria-label={UZ.atelier.closePicker}
+                aria-label={t.atelier.closePicker}
               >
                 ×
               </button>
@@ -1302,7 +1372,7 @@ export function AtelierSection() {
               type="search"
               value={pickerSearch}
               onChange={(e) => setPickerSearch(e.target.value)}
-              placeholder={UZ.atelier.searchPlaceholder}
+              placeholder={t.atelier.searchPlaceholder}
               className="mb-3 min-h-[40px] w-full border border-[var(--hairline-strong)] bg-[var(--paper)] px-3 text-xs text-[var(--ink)]"
             />
 
@@ -1327,7 +1397,9 @@ export function AtelierSection() {
                     <div className="h-24 w-full overflow-hidden flex items-center justify-center mb-2">
                       <GarmentImage garment={cand} className="h-full w-full" />
                     </div>
-                    <div className="text-xs text-[var(--ink)] leading-tight">{cand.name_uz}</div>
+                    <div className="text-xs text-[var(--ink)] leading-tight">
+                      {localize(cand.name_uz)}
+                    </div>
                   </button>
                 );
               })}

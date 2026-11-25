@@ -1,6 +1,6 @@
 import type { Garment } from '../data/schema';
 import type { BoardSlots } from '../engine/stylist';
-import { UZ } from '../i18n/uz';
+import { useTranslation } from '../i18n/useTranslation';
 import { GarmentImage } from './GarmentImage';
 
 interface ReadOnlyBoardProps {
@@ -13,6 +13,7 @@ interface ReadOnlyBoardProps {
  * Editorial read-only capsule board composition used in Stylist Top Pick and alternatives.
  */
 export function ReadOnlyBoard({ slots, byId, compact = false }: ReadOnlyBoardProps) {
+  const { t, localize } = useTranslation();
   const outer = slots.outerwear ? byId.get(slots.outerwear) : undefined;
   const dress = slots.dress ? byId.get(slots.dress) : undefined;
   const top = slots.top ? byId.get(slots.top) : undefined;
@@ -43,7 +44,7 @@ export function ReadOnlyBoard({ slots, byId, compact = false }: ReadOnlyBoardPro
               />
             ) : (
               <span className="text-[10px] uppercase tracking-[0.12em] text-[var(--muted)]/60 text-center px-1">
-                {UZ.slots.outerwear}
+                {t.slots.outerwear}
               </span>
             )}
           </div>
@@ -80,7 +81,7 @@ export function ReadOnlyBoard({ slots, byId, compact = false }: ReadOnlyBoardPro
                   />
                 ) : (
                   <span className="text-[10px] uppercase tracking-[0.12em] text-[var(--muted)]/60">
-                    {UZ.slots.top}
+                    {t.slots.top}
                   </span>
                 )}
               </div>
@@ -92,7 +93,7 @@ export function ReadOnlyBoard({ slots, byId, compact = false }: ReadOnlyBoardPro
                   />
                 ) : (
                   <span className="text-[10px] uppercase tracking-[0.12em] text-[var(--muted)]/60">
-                    {UZ.slots.bottom}
+                    {t.slots.bottom}
                   </span>
                 )}
               </div>
@@ -110,7 +111,7 @@ export function ReadOnlyBoard({ slots, byId, compact = false }: ReadOnlyBoardPro
               />
             ) : (
               <span className="text-[10px] uppercase tracking-[0.12em] text-[var(--muted)]/60 text-center">
-                {UZ.slots.bag}
+                {t.slots.bag}
               </span>
             )}
           </div>
@@ -122,7 +123,7 @@ export function ReadOnlyBoard({ slots, byId, compact = false }: ReadOnlyBoardPro
               />
             ) : (
               <span className="text-[10px] uppercase tracking-[0.12em] text-[var(--muted)]/60 text-center">
-                {UZ.slots.shoes}
+                {t.slots.shoes}
               </span>
             )}
           </div>
@@ -139,7 +140,7 @@ export function ReadOnlyBoard({ slots, byId, compact = false }: ReadOnlyBoardPro
                   className="inline-block h-2.5 w-2.5 rounded-full border border-[var(--ink)]/20"
                   style={{ backgroundColor: g.color }}
                 />
-                {g.name_uz}
+                {localize(g.name_uz)}
               </span>
             ))}
         </div>

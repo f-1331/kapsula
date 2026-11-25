@@ -245,7 +245,7 @@ export default async function (message) {
       `Assalomu alaykum, <b>${from.first_name || 'doʻst'}</b>!\n\n` +
         `<b>Kapsula — Garderob & Stilist</b> Mini App va Telegram botiga xush kelibsiz.\n` +
         `• Shahringizdagi jonli ob-havoga qarab tayyor kiyim tavsiyasi oling\n` +
-        `• <b>3,894+ brend buyumlari</b> (Zara, Massimo Dutti, Nike, 7SABER, Terra Pro...) va 59 xil kiyim turi\n` +
+        `• <b>6,240+ brend buyumlari</b> (18 brend, 65 xil 3D kiyim turi, 16 rang palitrasi, 10 dizayn, 5 til)\n` +
         `• <b>Foto-tahlil</b>: kiyimingizni rasmga olib nima bilan kiyish va qaysi aksessuarni qoʻshishni bilib oling`;
 
     await api.sendMessage({
