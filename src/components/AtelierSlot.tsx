@@ -160,12 +160,18 @@ export function AtelierSlot({
         <button
           type="button"
           onClick={() => onOpenPicker(slotKey)}
-          className="w-full h-full min-h-[44px] flex flex-col items-center justify-center p-2 text-center cursor-pointer group"
+          className="w-full h-full min-h-[44px] flex flex-col items-center justify-center p-1 sm:p-2 text-center cursor-pointer group overflow-hidden"
         >
-          <span className="micro-label text-[9px] sm:text-[10px] text-[var(--muted)] group-hover:text-[var(--ink)] leading-tight">
+          <span
+            className={`uppercase font-medium text-[var(--muted)] group-hover:text-[var(--ink)] leading-tight max-w-full truncate ${
+              slotKey === 'accessory1' || slotKey === 'accessory2'
+                ? 'text-[8px] sm:text-[9px] tracking-[0.03em] sm:tracking-[0.08em]'
+                : 'text-[9px] sm:text-[10px] tracking-[0.1em]'
+            }`}
+          >
             {label}
           </span>
-          <span className="mt-1 text-[10px] text-[var(--muted)]/80 leading-tight">
+          <span className="mt-1 text-[9px] sm:text-[10px] text-[var(--muted)]/80 leading-tight max-w-full truncate">
             {UZ.atelier.emptySlotHint}
           </span>
         </button>
