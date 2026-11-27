@@ -1,6 +1,6 @@
 import { useEffect, useRef, type MutableRefObject } from 'react';
 import * as THREE from 'three';
-import type { Garment } from '../data/schema';
+import type { Garment, UserGenderFilter } from '../data/schema';
 import type { BoardSlots, SlotKey } from '../engine/stylist';
 import { buildOutfit3DScene, FLOOR_Y, type OutfitSlotGroups } from '../engine/three-garment-builder';
 
@@ -14,6 +14,7 @@ export interface ThreeStudioCanvasProps {
   autoSpin?: boolean;
   hoveredSlot: SlotKey | null;
   accentHex?: string;
+  gender?: UserGenderFilter;
   liveYawRef?: MutableRefObject<number>;
   onHoverSlot?: (slot: SlotKey | null, garment: Garment | null) => void;
   onSelectSlot?: (slot: SlotKey) => void;
@@ -83,6 +84,7 @@ export function ThreeStudioCanvas({
   autoSpin = false,
   hoveredSlot,
   accentHex = '#8F1D2C',
+  gender = 'all',
   liveYawRef,
   onHoverSlot,
   onSelectSlot,
@@ -473,12 +475,12 @@ export function ThreeStudioCanvas({
       disposeObjectTree(outfitRef.current.root);
       scene.remove(outfitRef.current.root);
     }
-    const built = buildOutfit3DScene(slots, byId, accentHex);
+    const built = buildOutfit3DScene(slots, byId, accentHex, gender);
     outfitRef.current = built;
     scene.add(built.root);
     shadowNeedsUpdateRef.current = true;
     wakeLoopRef.current?.();
-  }, [slots, byId, accentHex]);
+  }, [slots, byId, accentHex, gender]);
 
   return <div ref={hostRef} className="relative z-10 h-full w-full" />;
 }

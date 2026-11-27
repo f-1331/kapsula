@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { GarmentImage } from '../components/GarmentImage';
 import { CATEGORY_ORDER, type Category, type PriceTier } from '../data/schema';
+import { isGarmentGenderEligible } from '../engine/stylist';
 import { useTranslation } from '../i18n/useTranslation';
 import { useKapsulaStore } from '../store/useKapsulaStore';
 
@@ -23,7 +24,7 @@ export function BrandsSection() {
   const brandStats = useMemo(() => {
     const map = new Map<string, { name: string; count: number; tier: PriceTier }>();
     for (const g of manifest.garments) {
-      if (!g.brand || g.isUserUploaded) continue;
+      if (!g.brand || g.isUserUploaded || !isGarmentGenderEligible(g, query.gender)) continue;
       const existing = map.get(g.brand);
       if (existing) {
         existing.count += 1;
@@ -36,13 +37,13 @@ export function BrandsSection() {
       }
     }
     return [...map.values()].sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
-  }, [manifest.garments]);
+  }, [manifest.garments, query.gender]);
 
   const filteredItems = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
     return manifest.garments.filter((g) => {
       if (g.isUserUploaded) return false;
-      if (query.gender === 'm' && g.gender === 'w') return false;
+      if (!isGarmentGenderEligible(g, query.gender)) return false;
       if (selectedBrand !== 'all' && g.brand !== selectedBrand) return false;
       if (selectedTier !== 'all' && g.priceTier !== selectedTier) return false;
       if (selectedCat !== 'all' && g.category !== selectedCat) return false;
@@ -103,7 +104,7 @@ export function BrandsSection() {
               {t.brands.allBrands}
             </p>
             <p className="mt-1 text-[11px] opacity-80 font-tabular">
-              {manifest.garments.length} {t.brands.itemsSuffix}
+              {brandStats.reduce((sum, b) => sum + b.count, 0)} {t.brands.itemsSuffix}
             </p>
           </button>
 
@@ -171,7 +172,7 @@ export function BrandsSection() {
             >
               {t.categories.all}
             </button>
-            {CATEGORY_ORDER.map((cat) => (
+            {CATEGORY_ORDER.filter((cat) => query.gender !== 'm' || cat !== 'dress').map((cat) => (
               <button
                 key={cat}
                 type="button"

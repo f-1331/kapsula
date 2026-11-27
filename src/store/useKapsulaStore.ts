@@ -8,6 +8,7 @@ import {
   type Manifest,
   type Occasion,
   type PaletteId,
+  type UserGenderFilter,
   type WeatherBand,
 } from '../data/schema';
 import { SAMPLE_MANIFEST } from '../data/sample-manifest';
@@ -44,6 +45,7 @@ const STORAGE_LOC_KEY = 'kapsula_location_v1';
 const STORAGE_CUSTOM_GARMENTS_KEY = 'kapsula_custom_garments_v1';
 const STORAGE_WEEKLY_PLAN_KEY = 'kapsula_weekly_plan_v1';
 const STORAGE_PACKING_KEY = 'kapsula_packing_v1';
+const STORAGE_GENDER_CHOSEN_KEY = 'kapsula_gender_chosen_v1';
 const MAX_SAVED_OUTFITS = 24;
 const MAX_CUSTOM_GARMENTS = 24;
 const MAX_HISTORY = 40;
@@ -324,6 +326,20 @@ const initialTheme = applyDesignThemeToDocument(initialDesignTheme);
 const initialLang = readInitialLanguage();
 const initialActiveView = parseViewFromLocation();
 
+function readInitialGenderChosen(): boolean {
+  if (typeof window === 'undefined') return true;
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const g = params.get('g');
+    if (g === 'w' || g === 'm' || g === 'all') return true;
+    if (params.get('items')) return true;
+    return window.localStorage.getItem(STORAGE_GENDER_CHOSEN_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+const initialGenderChosen = readInitialGenderChosen();
+
 function resolveItemsToBoard(ids: string[], byId: Map<string, Garment>): { slots: BoardSlots; missingCount: number } {
   const resolved: Garment[] = [];
   let missingCount = 0;
@@ -372,8 +388,13 @@ export interface KapsulaState {
   randomSeedCounter: number;
   activeLookId: string | null;
   lastScoreAnnouncement: string;
+  genderChosen: boolean;
+  genderGateOpen: boolean;
 
   setActiveView: (view: ViewTab, syncHash?: boolean) => void;
+  openGenderGate: () => void;
+  closeGenderGate: () => void;
+  selectUserGender: (gender: UserGenderFilter, regenerateBoard?: boolean) => void;
   setAtelierBrandFilter: (brand: string) => void;
   setColorLabColors: (colors: string[]) => void;
   openColorsInLab: (colors: string[]) => void;
@@ -439,6 +460,48 @@ export const useKapsulaStore = create<KapsulaState>((set, get) => ({
   randomSeedCounter: 1,
   activeLookId: initialParsed.urlLookId,
   lastScoreAnnouncement: '',
+  genderChosen: initialGenderChosen,
+  genderGateOpen: !initialGenderChosen,
+
+  openGenderGate: () => set({ genderGateOpen: true }),
+
+  closeGenderGate: () => {
+    try {
+      window.localStorage.setItem(STORAGE_GENDER_CHOSEN_KEY, '1');
+    } catch {
+      // ignore
+    }
+    set({ genderGateOpen: false, genderChosen: true });
+  },
+
+  selectUserGender: (gender, regenerateBoard = true) => {
+    const state = get();
+    const nextQuery: StylistQuery = { ...state.query, gender };
+    safeWriteStorage(STORAGE_FILTERS_KEY, nextQuery);
+    try {
+      window.localStorage.setItem(STORAGE_GENDER_CHOSEN_KEY, '1');
+    } catch {
+      // ignore
+    }
+    if (regenerateBoard) {
+      const recs = recommendOutfits(state.manifest, nextQuery);
+      const nextSlots = recs.outfits[0]?.slots ?? state.slots;
+      set({
+        query: nextQuery,
+        genderChosen: true,
+        genderGateOpen: false,
+        slots: nextSlots,
+        past: [],
+        future: [],
+      });
+    } else {
+      set({
+        query: nextQuery,
+        genderChosen: true,
+        genderGateOpen: false,
+      });
+    }
+  },
 
   setActiveView: (view, syncHash = true) => {
     if (syncHash && typeof window !== 'undefined') {

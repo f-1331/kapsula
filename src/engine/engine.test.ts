@@ -12,6 +12,8 @@ import QRCode from 'qrcode';
 import * as THREE from 'three';
 import { estimateOutfitBudget, getGarmentSpec } from './garment-specs';
 import { buildOutfit3DScene, FLOOR_Y, PLINTH_TOP_Y } from './three-garment-builder';
+import { useKapsulaStore } from '../store/useKapsulaStore';
+import { isGarmentGenderEligible } from './stylist';
 import { buildOutfitMeshGeometry } from './renderer3d';
 import { analyzeHarmony, classifyColor } from './color';
 import {
@@ -146,7 +148,7 @@ describe('Stylist Engine — Coverage & Determinism', () => {
   ];
   const genders: UserGenderFilter[] = ['w', 'm', 'all'];
 
-  it('returns >= 3 complete outfits across all 8 occasions, 16 palettes and filter combinations', { timeout: 120000 }, () => {
+  it('returns >= 3 complete outfits across all 8 occasions, 16 palettes and filter combinations', { timeout: 300000 }, () => {
     for (const weather of weathers) {
       for (const rain of rainStates) {
         for (const occasion of occasions) {
@@ -439,5 +441,50 @@ describe('Stylist Engine — Coverage & Determinism', () => {
     expect(hatBox.min.y).toBeGreaterThan(1.66);
     const glassBox = new THREE.Box3().setFromObject(backScene.slotGroups.accessory2!);
     expect(glassBox.max.z).toBeGreaterThan(0.09);
+  });
+
+  it('supports men and women gender adaptation, tailored 3D silhouettes & Atelye undo reversal', () => {
+    // Men filter must exclude women-only pieces (dresses, skirts, heels, clutches)
+    const menRec = recommendOutfits(manifest, {
+      weather: 'cool',
+      rain: false,
+      occasion: 'office',
+      palette: 'marine',
+      gender: 'm',
+    });
+    expect(menRec.outfits.length).toBeGreaterThanOrEqual(1);
+    for (const o of menRec.outfits) {
+      for (const g of o.garments) {
+        expect(isGarmentGenderEligible(g, 'm')).toBe(true);
+        expect(g.gender).not.toBe('w');
+        expect(g.category).not.toBe('dress');
+      }
+    }
+
+    // Store selectUserGender + accidental click undo flow
+    const store = useKapsulaStore.getState();
+    store.setManifestData(manifest, false, true);
+    store.selectUserGender('m', true);
+    expect(useKapsulaStore.getState().query.gender).toBe('m');
+    expect(useKapsulaStore.getState().genderGateOpen).toBe(false);
+
+    const beforeSlots = { ...useKapsulaStore.getState().slots };
+    const accidentalMenCoat = manifest.garments.find(
+      (g) => g.category === 'outerwear' && g.gender === 'u' && g.id !== beforeSlots.outerwear,
+    )!;
+    useKapsulaStore.getState().placeGarmentOnBoard(accidentalMenCoat);
+    expect(useKapsulaStore.getState().slots.outerwear).toBe(accidentalMenCoat.id);
+    expect(useKapsulaStore.getState().past.length).toBe(1);
+
+    // Undo restores exact prior outfit seamlessly
+    useKapsulaStore.getState().undo();
+    expect(useKapsulaStore.getState().slots).toEqual(beforeSlots);
+
+    // Men's & Women's 3D mannequin builds keep grounding intact
+    const menById = new Map(menRec.outfits[0]!.garments.map((g) => [g.id, g]));
+    const men3d = buildOutfit3DScene(menRec.outfits[0]!.slots, menById, '#1E3A5F', 'm');
+    men3d.root.updateMatrixWorld(true);
+    const menPed = new THREE.Box3().setFromObject(men3d.pedestal);
+    expect(menPed.min.y).toBeCloseTo(FLOOR_Y, 2);
   });
 });

@@ -1,6 +1,6 @@
 import { useReducedMotion } from 'motion/react';
 import * as m from 'motion/react-m';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { LookModel, Occasion, PaletteId, WeatherBand } from '../data/schema';
 import { useTranslation } from '../i18n/useTranslation';
 import { useKapsulaStore } from '../store/useKapsulaStore';
@@ -19,7 +19,11 @@ export function LookbookSection() {
   const [occasionFilter, setOccasionFilter] = useState<Occasion | 'all'>('all');
   const [weatherFilter, setWeatherFilter] = useState<WeatherBand | 'all'>('all');
   const [paletteFilter, setPaletteFilter] = useState<PaletteId | 'all'>('all');
-  const [modelFilter, setModelFilter] = useState<LookModel | 'all'>('all');
+  const [modelFilter, setModelFilter] = useState<LookModel | 'all'>(query.gender);
+
+  useEffect(() => {
+    setModelFilter(query.gender);
+  }, [query.gender]);
 
   const paletteById = useMemo(
     () => new Map(manifest.palettes.map((p) => [p.id, p])),
@@ -186,7 +190,9 @@ export function LookbookSection() {
 
         {/* Mobile snap carousel -> Tablet 2-col -> Desktop staggered 3-col */}
         <div className="lookbook-grid flex overflow-x-auto snap-x snap-mandatory gap-4 pb-4 sm:pb-0 sm:overflow-visible sm:grid sm:grid-cols-2 lg:grid-cols-3 sm:gap-6 items-start">
-          {manifest.looks.map((look, index) => {
+          {manifest.looks
+            .filter((look) => modelFilter === 'all' || look.model === modelFilter)
+            .map((look, index) => {
             const matched = matchesFilter(look);
             const palette = paletteById.get(look.palette);
             return (

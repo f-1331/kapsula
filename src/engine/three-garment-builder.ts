@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import type { Garment } from '../data/schema';
+import type { Garment, UserGenderFilter } from '../data/schema';
 import type { BoardSlots, SlotKey } from './stylist';
 import { detectGarmentSubtype, type GarmentSubtype } from '../components/GarmentSilhouette';
 
@@ -296,20 +296,25 @@ function getFabricPropsForSubtype(subtype: GarmentSubtype): {
  * Prevents hollow disembodied garments, connects head/neck/shoulders/arms/ankles continuously,
  * and plants weight solidly through two feet into the shoes on the podium.
  */
-function buildAtelierMannequin(hasShoes: boolean): THREE.Group {
+function buildAtelierMannequin(hasShoes: boolean, gender: UserGenderFilter = 'all'): THREE.Group {
   const grp = new THREE.Group();
-  const bodyMat = makeFabricMaterial('#D5CBC0', { roughness: 0.62, sheen: 0.2, clearcoat: 0.08 });
+  const isMale = gender === 'm';
+  const bodyMat = makeFabricMaterial(isMale ? '#C7BEB3' : '#D5CBC0', {
+    roughness: 0.62,
+    sheen: 0.2,
+    clearcoat: 0.08,
+  });
   const jointMat = makeMetalMaterial('#A69E92');
 
-  // Sculpted torso from upper thighs/pelvis through waist, ribcage, trapezius, and neck base
+  // Anatomical mannequin proportions adapt cleanly for Menswear vs Womenswear
   const torso = new THREE.Mesh(
     buildLoftedShellGeometry(
       [
-        { y: RIG.hipY - 0.04, rx: 0.156, rz: 0.110 },
-        { y: RIG.waistY, rx: 0.135, rz: 0.095 },
-        { y: RIG.chestY, rx: 0.165, rz: 0.114, chest: 0.07 },
-        { y: RIG.shoulderY, rx: 0.178, rz: 0.100, chest: 0.03 },
-        { y: RIG.neckBaseY, rx: 0.064, rz: 0.062 },
+        { y: RIG.hipY - 0.04, rx: isMale ? 0.148 : 0.158, rz: isMale ? 0.106 : 0.114 },
+        { y: RIG.waistY, rx: isMale ? 0.144 : 0.130, rz: isMale ? 0.100 : 0.094 },
+        { y: RIG.chestY, rx: isMale ? 0.178 : 0.162, rz: isMale ? 0.118 : 0.112, chest: isMale ? 0.04 : 0.09 },
+        { y: RIG.shoulderY, rx: isMale ? 0.194 : 0.172, rz: isMale ? 0.106 : 0.098, chest: 0.03 },
+        { y: RIG.neckBaseY, rx: isMale ? 0.070 : 0.062, rz: isMale ? 0.066 : 0.060 },
       ],
       34,
       0,
@@ -1377,6 +1382,7 @@ export function buildOutfit3DScene(
   slots: BoardSlots,
   byId: Map<string, Garment>,
   accentHex = '#8F1D2C',
+  gender: UserGenderFilter = 'all',
 ): OutfitSlotGroups {
   const root = new THREE.Group();
   const pedestal = new THREE.Group();
@@ -1423,7 +1429,8 @@ export function buildOutfit3DScene(
   const acc2 = slots.accessory2 ? byId.get(slots.accessory2) : undefined;
 
   // Articulated anatomical mannequin attached directly to pedestal
-  pedestal.add(buildAtelierMannequin(Boolean(shoes)));
+  const effectiveGender: UserGenderFilter = dress ? 'w' : gender;
+  pedestal.add(buildAtelierMannequin(Boolean(shoes), effectiveGender));
   root.add(pedestal);
 
   const outerSub = outer ? detectGarmentSubtype(outer.category, outer.id, outer.name_uz) : null;

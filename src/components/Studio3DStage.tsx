@@ -45,6 +45,7 @@ export function Studio3DStage({
 }: Studio3DStageProps) {
   const { localize } = useTranslation();
   const designTheme = useKapsulaStore((s) => s.designTheme);
+  const gender = useKapsulaStore((s) => s.query.gender);
   const accentHex = getDesignThemeById(designTheme).vars['--accent'];
 
   const [rotY, setRotY] = useState(24);
@@ -339,6 +340,7 @@ export function Studio3DStage({
                 autoSpin={autoSpin}
                 hoveredSlot={hoveredInfo?.slot ?? null}
                 accentHex={accentHex}
+                gender={gender}
                 liveYawRef={liveYawRef}
                 onHoverSlot={handleHoverSlot}
                 onSelectSlot={handleSelectSlot}

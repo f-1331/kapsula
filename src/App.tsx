@@ -1,6 +1,7 @@
 import { AnimatePresence, LazyMotion, MotionConfig, domAnimation, useReducedMotion } from 'motion/react';
 import * as m from 'motion/react-m';
-import { Suspense, lazy, useEffect, useMemo } from 'react';
+import { lazy, Suspense, useEffect, useMemo } from 'react';
+import { GenderGateModal } from './components/GenderGateModal';
 import { LookbookModal } from './components/LookbookModal';
 import { StickyHeader } from './components/StickyHeader';
 import { loadManifest } from './data/manifest-loader';
@@ -212,6 +213,7 @@ export default function App() {
             onClose={() => setActiveLookId(null)}
             onNavigateLook={(lookId) => setActiveLookId(lookId)}
           />
+          <GenderGateModal />
         </div>
       </MotionConfig>
     </LazyMotion>

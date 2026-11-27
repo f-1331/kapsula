@@ -5,7 +5,7 @@ import { CONTACT_INFO } from '../config/contact';
 import type { PaletteId } from '../data/schema';
 import { resolveAssetUrl } from '../data/manifest-loader';
 import { estimateOutfitBudget } from '../engine/garment-specs';
-import { recommendOutfits } from '../engine/stylist';
+import { isGarmentGenderEligible, recommendOutfits } from '../engine/stylist';
 import { useTranslation } from '../i18n/useTranslation';
 import { useKapsulaStore, type ViewTab } from '../store/useKapsulaStore';
 import { Card3D } from '../components/Card3D';
@@ -61,6 +61,7 @@ export function CoverSection() {
   const liveWeather = useKapsulaStore((s) => s.liveWeather);
   const loadItemsToBoard = useKapsulaStore((s) => s.loadItemsToBoard);
   const setActiveView = useKapsulaStore((s) => s.setActiveView);
+  const selectUserGender = useKapsulaStore((s) => s.selectUserGender);
   const reducedMotion = useReducedMotion();
   const frameRef = useRef<HTMLDivElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
@@ -88,10 +89,22 @@ export function CoverSection() {
   const brandCount = useMemo(() => {
     const s = new Set<string>();
     for (const g of manifest.garments) {
-      if (g.brand && !g.isUserUploaded) s.add(g.brand);
+      if (g.brand && !g.isUserUploaded && isGarmentGenderEligible(g, query.gender)) s.add(g.brand);
     }
     return s.size || 18;
-  }, [manifest.garments]);
+  }, [manifest.garments, query.gender]);
+
+  const activeGarmentCount = useMemo(
+    () => manifest.garments.filter((g) => isGarmentGenderEligible(g, query.gender)).length,
+    [manifest.garments, query.gender],
+  );
+  const activeLookCount = useMemo(
+    () =>
+      query.gender === 'all'
+        ? manifest.looks.length
+        : manifest.looks.filter((l) => l.model === query.gender).length,
+    [manifest.looks, query.gender],
+  );
 
   const heroSrc = resolveAssetUrl(manifest.hero.cover);
   useEffect(() => {
@@ -122,10 +135,32 @@ export function CoverSection() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-center">
           {/* Left editorial masthead & promise */}
           <div className="lg:col-span-6 flex flex-col items-start min-w-0">
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mb-4">
-              <span className="micro-label text-[var(--muted)]">{t.sections.cover}</span>
-              <span className="h-3 w-px bg-[var(--hairline-strong)]" aria-hidden="true" />
-              <span className="micro-label text-[var(--accent)]">{t.cover.kicker}</span>
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-2 mb-4 w-full justify-between">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                <span className="micro-label text-[var(--muted)]">{t.sections.cover}</span>
+                <span className="h-3 w-px bg-[var(--hairline-strong)]" aria-hidden="true" />
+                <span className="micro-label text-[var(--accent)]">{t.cover.kicker}</span>
+              </div>
+              <div
+                role="group"
+                aria-label={t.gender.label}
+                className="inline-flex border border-[var(--hairline-strong)] bg-[var(--paper-elevated)] p-0.5"
+              >
+                {(['m', 'w', 'all'] as const).map((gOpt) => (
+                  <button
+                    key={gOpt}
+                    type="button"
+                    onClick={() => selectUserGender(gOpt, true)}
+                    className={`min-h-[28px] px-2.5 text-[10px] uppercase tracking-[0.09em] transition-colors cursor-pointer ${
+                      query.gender === gOpt
+                        ? 'bg-[var(--ink)] text-[var(--paper)] font-semibold'
+                        : 'text-[var(--muted)] hover:text-[var(--ink)]'
+                    }`}
+                  >
+                    {gOpt === 'm' ? t.gender.m : gOpt === 'w' ? t.gender.w : t.gender.all}
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div
@@ -224,8 +259,8 @@ export function CoverSection() {
             <div className="w-full border-t border-[var(--hairline)] pt-4 flex flex-wrap items-center justify-between gap-3">
               <p className="micro-label text-[var(--muted)] font-tabular">
                 {t.cover.counters(
-                  manifest.garments.length,
-                  manifest.looks.length,
+                  activeGarmentCount,
+                  activeLookCount,
                   manifest.palettes.length,
                   brandCount,
                 )}

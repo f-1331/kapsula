@@ -18,6 +18,9 @@ export function StickyHeader() {
   const location = useKapsulaStore((s) => s.location);
   const liveWeather = useKapsulaStore((s) => s.liveWeather);
   const temperatureC = useKapsulaStore((s) => s.temperatureC);
+  const gender = useKapsulaStore((s) => s.query.gender);
+  const openGenderGate = useKapsulaStore((s) => s.openGenderGate);
+  const selectUserGender = useKapsulaStore((s) => s.selectUserGender);
 
   const [moreOpen, setMoreOpen] = useState(false);
   const [designOpen, setDesignOpen] = useState(false);
@@ -99,6 +102,18 @@ export function StickyHeader() {
                 <span className="font-tabular font-medium text-[var(--ink)] shrink-0">
                   {displayTemp > 0 ? `+${displayTemp}` : displayTemp}°
                 </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={openGenderGate}
+                title={t.gender.label}
+                className="min-h-[34px] inline-flex items-center gap-1 border border-[var(--hairline-strong)] bg-[var(--paper-elevated)] px-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--ink)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors cursor-pointer shrink-0"
+              >
+                <span aria-hidden="true" className="text-[var(--accent)]">
+                  {gender === 'm' ? '♂' : gender === 'w' ? '♀' : '✦'}
+                </span>
+                <span>{gender === 'm' ? t.gender.m : gender === 'w' ? t.gender.w : t.gender.all}</span>
               </button>
             </div>
 
@@ -368,24 +383,45 @@ export function StickyHeader() {
               })}
             </div>
 
-            <div className="mt-3 pt-3 border-t border-[var(--hairline)] flex items-center justify-between gap-2">
-              <a
-                href={CONTACT_INFO.phoneHref}
-                className="flex-1 min-h-[40px] inline-flex items-center justify-center gap-1.5 bg-[var(--ink)] px-3 text-xs font-medium text-[var(--paper)] font-tabular"
-              >
-                <span aria-hidden="true">☎</span>
-                <span>{CONTACT_INFO.phoneDisplay}</span>
-              </a>
-              <button
-                type="button"
-                onClick={() => {
-                  setMoreOpen(false);
-                  setQrOpen(true);
-                }}
-                className="min-h-[40px] border border-[var(--accent)] bg-[var(--accent-soft)] px-3.5 text-xs uppercase tracking-[0.1em] text-[var(--accent)] font-semibold cursor-pointer"
-              >
-                QR Kod
-              </button>
+            <div className="mt-3 pt-3 border-t border-[var(--hairline)] space-y-2.5">
+              <div className="grid grid-cols-3 gap-1.5">
+                {(['m', 'w', 'all'] as const).map((gOpt) => (
+                  <button
+                    key={gOpt}
+                    type="button"
+                    onClick={() => {
+                      selectUserGender(gOpt, true);
+                      setMoreOpen(false);
+                    }}
+                    className={`min-h-[36px] border text-[11px] uppercase tracking-[0.08em] cursor-pointer ${
+                      gender === gOpt
+                        ? 'border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-ink)] font-semibold'
+                        : 'border-[var(--hairline)] bg-[var(--paper)] text-[var(--ink-2)]'
+                    }`}
+                  >
+                    {gOpt === 'm' ? t.gender.m : gOpt === 'w' ? t.gender.w : t.gender.all}
+                  </button>
+                ))}
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <a
+                  href={CONTACT_INFO.phoneHref}
+                  className="flex-1 min-h-[40px] inline-flex items-center justify-center gap-1.5 bg-[var(--ink)] px-3 text-xs font-medium text-[var(--paper)] font-tabular"
+                >
+                  <span aria-hidden="true">☎</span>
+                  <span>{CONTACT_INFO.phoneDisplay}</span>
+                </a>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMoreOpen(false);
+                    setQrOpen(true);
+                  }}
+                  className="min-h-[40px] border border-[var(--accent)] bg-[var(--accent-soft)] px-3.5 text-xs uppercase tracking-[0.1em] text-[var(--accent)] font-semibold cursor-pointer"
+                >
+                  QR Kod
+                </button>
+              </div>
             </div>
           </div>
         </div>

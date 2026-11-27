@@ -188,6 +188,46 @@ const FEATURED_SUBTYPES: SubtypeChipDef[] = [
 
 const ALL_SUBTYPE_CHIPS: SubtypeChipDef[] = Object.values(SUBTYPE_CHIPS_BY_CATEGORY).flat();
 
+const FEMININE_ONLY_SUBTYPES = new Set<GarmentSubtype>([
+  'cape',
+  'silk_blouse',
+  'tunic',
+  'crop_top',
+  'skirt',
+  'a_line_skirt',
+  'midi_silk',
+  'cocktail_dress',
+  'maxi_sundress',
+  'blazer_dress',
+  'aline_dress',
+  'atlas_dress',
+  'shirt_dress',
+  'knit_dress',
+  'hoodie_dress',
+  'heels',
+  'ballet_flats',
+  'mules',
+  'baguette',
+  'earrings',
+  'silk_scarf',
+]);
+
+interface AtelierChangeNotice {
+  id: number;
+  kind: 'placed' | 'replaced' | 'removed';
+  slotKey: SlotKey;
+  slotLabel: string;
+  garment: Garment;
+  replacedGarment?: Garment | null;
+}
+
+function findEquippedSlot(slots: BoardSlots, garmentId: string): SlotKey | null {
+  for (const key of Object.keys(slots) as SlotKey[]) {
+    if (slots[key] === garmentId) return key;
+  }
+  return null;
+}
+
 const TRAY_PAGE_SIZE = 36;
 
 function resolveTargetSlot(
@@ -249,6 +289,7 @@ export function AtelierSection() {
 
   const placeGarmentOnBoard = useKapsulaStore((s) => s.placeGarmentOnBoard);
   const removeSlot = useKapsulaStore((s) => s.removeSlot);
+  const selectUserGender = useKapsulaStore((s) => s.selectUserGender);
   const setBoardSlots = useKapsulaStore((s) => s.setBoardSlots);
   const clearBoard = useKapsulaStore((s) => s.clearBoard);
   const undo = useKapsulaStore((s) => s.undo);
@@ -281,17 +322,21 @@ export function AtelierSection() {
     { id: 'outerwear', label: t.categories.outerwear },
     { id: 'top', label: t.categories.top },
     { id: 'bottom', label: t.categories.bottom },
-    { id: 'dress', label: t.categories.dress },
+    ...(query.gender !== 'm' ? [{ id: 'dress' as const, label: t.categories.dress }] : []),
     { id: 'shoes', label: t.categories.shoes },
     { id: 'bag', label: t.categories.bag },
     { id: 'accessory', label: t.categories.accessory },
   ];
-  const rawSubtypeList =
+  const rawSubtypeListBase =
     activeCategory === 'all'
       ? showAllSubtypes
         ? ALL_SUBTYPE_CHIPS
         : FEATURED_SUBTYPES
       : SUBTYPE_CHIPS_BY_CATEGORY[activeCategory];
+  const rawSubtypeList =
+    query.gender === 'm'
+      ? rawSubtypeListBase.filter((c) => !FEMININE_ONLY_SUBTYPES.has(c.id))
+      : rawSubtypeListBase;
   const subtypeChips: Array<{ id: GarmentSubtype | 'all'; label: string }> = [
     { id: 'all', label: t.categories.all },
     ...rawSubtypeList.map((c) => ({
@@ -307,6 +352,7 @@ export function AtelierSection() {
   const [pickerSlot, setPickerSlot] = useState<SlotKey | null>(null);
   const [pickerSearch, setPickerSearch] = useState('');
   const [statusFeedback, setStatusFeedback] = useState<string | null>(null);
+  const [lastChange, setLastChange] = useState<AtelierChangeNotice | null>(null);
   const [harmonizeSuggestion, setHarmonizeSuggestion] = useState<AutoHarmonizeSuggestion | null>(null);
   const [harmonizeNoneMsg, setHarmonizeNoneMsg] = useState<string | null>(null);
   const [isExporting, setIsExporting] = useState(false);
@@ -403,6 +449,21 @@ export function AtelierSection() {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [pickerSlot]);
+
+  useEffect(() => {
+    if (query.gender === 'm' && activeCategory === 'dress') {
+      setActiveCategory('all');
+      setActiveSubtype('all');
+    }
+  }, [query.gender, activeCategory]);
+
+  useEffect(() => {
+    if (!lastChange) return;
+    const id = window.setTimeout(() => {
+      setLastChange((cur) => (cur?.id === lastChange.id ? null : cur));
+    }, 8000);
+    return () => window.clearTimeout(id);
+  }, [lastChange]);
 
   // Reset pagination when filters change
   useEffect(() => {
@@ -599,6 +660,68 @@ export function AtelierSection() {
     }
   };
 
+  const applyGarmentWithNotice = (item: Garment, preferredSlot?: SlotKey) => {
+    const target = resolveTargetSlot(item, slots, preferredSlot);
+    const prevId =
+      slots[target] ??
+      (item.category === 'top' || item.category === 'bottom' ? slots.dress : null) ??
+      (item.category === 'dress' ? slots.top ?? slots.bottom : null);
+    const prevGarment = prevId && prevId !== item.id ? byId.get(prevId) ?? null : null;
+    placeGarmentOnBoard(item, target);
+    setHarmonizeSuggestion(null);
+    setHarmonizeNoneMsg(null);
+    setLastChange({
+      id: Date.now(),
+      kind: prevGarment ? 'replaced' : 'placed',
+      slotKey: target,
+      slotLabel: getSlotDisplayName(target),
+      garment: item,
+      replacedGarment: prevGarment,
+    });
+  };
+
+  const handleQuickToggleFromTray = (item: Garment) => {
+    const equippedSlot = findEquippedSlot(slots, item.id);
+    if (equippedSlot) {
+      removeSlot(equippedSlot);
+      setHarmonizeSuggestion(null);
+      setHarmonizeNoneMsg(null);
+      setLastChange({
+        id: Date.now(),
+        kind: 'removed',
+        slotKey: equippedSlot,
+        slotLabel: getSlotDisplayName(equippedSlot),
+        garment: item,
+        replacedGarment: null,
+      });
+      return;
+    }
+    applyGarmentWithNotice(item);
+  };
+
+  const removeSlotWithNotice = (slotKey: SlotKey) => {
+    const existingId = slots[slotKey];
+    const existing = existingId ? byId.get(existingId) : undefined;
+    removeSlot(slotKey);
+    if (existing) {
+      setLastChange({
+        id: Date.now(),
+        kind: 'removed',
+        slotKey,
+        slotLabel: getSlotDisplayName(slotKey),
+        garment: existing,
+        replacedGarment: null,
+      });
+    }
+  };
+
+  const handleUndoWithNotice = () => {
+    if (past.length === 0) return;
+    undo();
+    setLastChange(null);
+    showTempFeedback(localize('Oxirgi oʻzgarish bekor qilindi ✓'));
+  };
+
   const handleDragEnd = (event: DragEndEvent) => {
     const activeData = event.active.data.current as
       | { type?: 'tray-garment' | 'board-garment'; slotKey?: SlotKey; garment?: Garment }
@@ -614,14 +737,14 @@ export function AtelierSection() {
 
     if (activeData.type === 'board-garment' && activeData.slotKey) {
       if (!overId || overId === 'tray-dropzone') {
-        removeSlot(activeData.slotKey);
+        removeSlotWithNotice(activeData.slotKey);
         setHarmonizeSuggestion(null);
         return;
       }
       if (overId.startsWith('slot:') && activeData.garment.category === 'accessory') {
         const target = overId.replace('slot:', '') as SlotKey;
         if (target === 'accessory1' || target === 'accessory2') {
-          placeGarmentOnBoard(activeData.garment, target);
+          applyGarmentWithNotice(activeData.garment, target);
         }
       }
       return;
@@ -631,10 +754,7 @@ export function AtelierSection() {
       const hovered = overId.startsWith('slot:')
         ? (overId.replace('slot:', '') as SlotKey)
         : undefined;
-      const target = resolveTargetSlot(activeData.garment, slots, hovered);
-      placeGarmentOnBoard(activeData.garment, target);
-      setHarmonizeSuggestion(null);
-      setHarmonizeNoneMsg(null);
+      applyGarmentWithNotice(activeData.garment, hovered);
     }
   };
 
@@ -671,9 +791,7 @@ export function AtelierSection() {
 
   const applyHarmonizeSuggestion = () => {
     if (!harmonizeSuggestion) return;
-    placeGarmentOnBoard(harmonizeSuggestion.garment, harmonizeSuggestion.slot);
-    setHarmonizeSuggestion(null);
-    setHarmonizeNoneMsg(null);
+    applyGarmentWithNotice(harmonizeSuggestion.garment, harmonizeSuggestion.slot);
   };
 
   const handleSave = () => {
@@ -750,9 +868,27 @@ export function AtelierSection() {
     <div ref={setTrayDropRef} className="flex flex-col h-full">
       <div className="flex items-center justify-between border-b border-[var(--hairline)] pb-2.5 mb-2.5">
         <h3 className="micro-label text-[var(--ink)]">{t.atelier.trayTitle}</h3>
-        <span className="micro-label text-[var(--muted)] font-tabular">
-          {filteredTrayGarments.length}
-        </span>
+        <div className="flex items-center gap-1.5">
+          <div className="inline-flex border border-[var(--hairline)] bg-[var(--paper)] p-0.5">
+            {(['m', 'w', 'all'] as const).map((gOpt) => (
+              <button
+                key={gOpt}
+                type="button"
+                onClick={() => selectUserGender(gOpt, false)}
+                className={`px-1.5 py-0.5 text-[9px] uppercase tracking-[0.06em] cursor-pointer ${
+                  query.gender === gOpt
+                    ? 'bg-[var(--ink)] text-[var(--paper)] font-semibold'
+                    : 'text-[var(--muted)] hover:text-[var(--ink)]'
+                }`}
+              >
+                {gOpt === 'm' ? t.gender.m : gOpt === 'w' ? t.gender.w : t.gender.all}
+              </button>
+            ))}
+          </div>
+          <span className="micro-label text-[var(--muted)] font-tabular">
+            {filteredTrayGarments.length}
+          </span>
+        </div>
       </div>
 
       {/* Search across 9,600+ garments */}
@@ -886,19 +1022,27 @@ export function AtelierSection() {
         ) : (
           <>
             <div className="grid grid-cols-2 gap-2 pb-3">
-              {visibleTrayGarments.map((g) => (
-                <AtelierTrayItem
-                  key={g.id}
-                  garment={g}
-                  isOnBoard={placedIds.has(g.id)}
-                  scoreDelta={trayDeltas.get(g.id) ?? null}
-                  onQuickPlace={(item) => {
-                    placeGarmentOnBoard(item);
-                    setHarmonizeSuggestion(null);
-                    setHarmonizeNoneMsg(null);
-                  }}
-                />
-              ))}
+              {visibleTrayGarments.map((g) => {
+                const targetSlot = resolveTargetSlot(g, slots);
+                const isEquipped = placedIds.has(g.id);
+                const replacesExisting =
+                  !isEquipped &&
+                  Boolean(
+                    slots[targetSlot] ??
+                      ((g.category === 'top' || g.category === 'bottom') ? slots.dress : null) ??
+                      (g.category === 'dress' ? (slots.top ?? slots.bottom) : null),
+                  );
+                return (
+                  <AtelierTrayItem
+                    key={g.id}
+                    garment={g}
+                    isOnBoard={isEquipped}
+                    replacesExisting={replacesExisting}
+                    scoreDelta={trayDeltas.get(g.id) ?? null}
+                    onQuickPlace={handleQuickToggleFromTray}
+                  />
+                );
+              })}
             </div>
             {visibleLimit < filteredTrayGarments.length && (
               <button
@@ -1029,12 +1173,13 @@ export function AtelierSection() {
               <div className="flex flex-wrap items-center gap-1.5 border border-[var(--hairline)] bg-[var(--paper-elevated)] p-2">
                 <button
                   type="button"
-                  onClick={undo}
+                  onClick={handleUndoWithNotice}
                   disabled={past.length === 0}
                   title="Ctrl+Z"
-                  className="min-h-[42px] px-2.5 py-2 text-[11px] uppercase tracking-[0.09em] border border-[var(--hairline)] text-[var(--ink)] hover:border-[var(--ink)] disabled:opacity-35 disabled:cursor-not-allowed cursor-pointer"
+                  className="min-h-[42px] px-2.5 py-2 text-[11px] uppercase tracking-[0.09em] border border-[var(--hairline)] text-[var(--ink)] hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:opacity-35 disabled:cursor-not-allowed cursor-pointer font-tabular"
                 >
-                  {t.atelier.toolbar.undo}
+                  ↩ {t.atelier.toolbar.undo}
+                  {past.length > 0 ? ` (${past.length})` : ''}
                 </button>
                 <button
                   type="button"
@@ -1129,6 +1274,125 @@ export function AtelierSection() {
                   </button>
                 </div>
               </div>
+
+              {/* Active Equipped Layers Pill Strip (shows exact slots worn + 1-tap remove/highlight) */}
+              {placedGarments.length > 0 && (
+                <div className="border border-[var(--hairline)] bg-[var(--paper-elevated)] px-3 py-2">
+                  <div className="flex items-center justify-between gap-2 mb-1.5">
+                    <span className="text-[10px] uppercase tracking-[0.12em] text-[var(--muted)] font-semibold">
+                      {localize('Hozir kiyilgan qismlar')} ({placedGarments.length})
+                    </span>
+                    <span className="text-[10px] text-[var(--muted)]">
+                      {localize('Bosib yechish yoki 3D ustidan almashtirish')}
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {(
+                      [
+                        'outerwear',
+                        'dress',
+                        'top',
+                        'bottom',
+                        'shoes',
+                        'bag',
+                        'accessory1',
+                        'accessory2',
+                      ] as const
+                    ).map((slotKey) => {
+                      const gid = slots[slotKey];
+                      const g = gid ? byId.get(gid) : undefined;
+                      if (!g) return null;
+                      const isRecent = lastChange?.slotKey === slotKey && lastChange.kind !== 'removed';
+                      return (
+                        <div
+                          key={slotKey}
+                          className={`inline-flex items-center gap-1.5 border px-2 py-1 text-[11px] transition-all ${
+                            isRecent
+                              ? 'border-[var(--accent)] bg-[var(--accent-soft)] ring-1 ring-[var(--accent)] text-[var(--ink)] font-medium'
+                              : 'border-[var(--hairline)] bg-[var(--paper)] text-[var(--ink-2)]'
+                          }`}
+                        >
+                          <span
+                            className="h-2 w-2 rounded-full border border-black/20 shrink-0"
+                            style={{ backgroundColor: g.color }}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleSlotPickerOpen(slotKey)}
+                            className="hover:text-[var(--ink)] cursor-pointer max-w-[140px] truncate"
+                            title={`${getSlotDisplayName(slotKey)}: ${localize(g.name_uz)}`}
+                          >
+                            <span className="text-[9px] uppercase tracking-[0.06em] text-[var(--muted)] mr-1">
+                              {getSlotDisplayName(slotKey)}:
+                            </span>
+                            {localize(g.name_uz)}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => removeSlotWithNotice(slotKey)}
+                            aria-label={`${localize(g.name_uz)} ${localize('yechish')}`}
+                            className="ml-0.5 px-1 text-xs text-[var(--muted)] hover:text-[var(--negative)] cursor-pointer"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Live Swap / Accidental-Tap Change Banner directly above 3D Stage */}
+              {lastChange && (
+                <div
+                  role="status"
+                  className="flex flex-wrap items-center justify-between gap-2.5 border border-[var(--accent)] bg-[var(--accent-soft)] px-3.5 py-2.5 text-xs shadow-sm"
+                >
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                    <span
+                      className="h-3 w-3 rounded-full border border-black/20 shrink-0"
+                      style={{ backgroundColor: lastChange.garment.color }}
+                    />
+                    <div className="min-w-0">
+                      <span className="text-[10px] uppercase tracking-[0.1em] text-[var(--accent)] font-semibold block">
+                        {lastChange.slotLabel} ·{' '}
+                        {lastChange.kind === 'removed'
+                          ? localize('Yechildi')
+                          : lastChange.kind === 'replaced'
+                            ? localize('Almashtirildi')
+                            : localize('Kiyildi')}
+                      </span>
+                      <p className="text-[var(--ink)] font-medium truncate">
+                        {localize(lastChange.garment.name_uz)}
+                        {lastChange.replacedGarment ? (
+                          <span className="text-[var(--muted)] font-normal ml-1.5">
+                            ({localize('oldingi')}: {localize(lastChange.replacedGarment.name_uz)})
+                          </span>
+                        ) : null}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    {past.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={handleUndoWithNotice}
+                        className="min-h-[32px] bg-[var(--ink)] px-3 text-[10px] uppercase tracking-[0.1em] font-semibold text-[var(--paper)] hover:bg-[var(--accent)] cursor-pointer"
+                      >
+                        ↩ {localize('Bekor qilish')}
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setLastChange(null)}
+                      aria-label={t.atelier.closePicker}
+                      className="min-h-[32px] px-2 border border-[var(--hairline-strong)] bg-[var(--paper)] text-xs text-[var(--ink)] cursor-pointer"
+                    >
+                      ×
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {(harmonizeSuggestion || harmonizeNoneMsg || statusFeedback) && (
                 <div
@@ -1327,7 +1591,7 @@ export function AtelierSection() {
                       type="button"
                       onClick={() => {
                         if (smartAdvice.recommendedAdd) {
-                          placeGarmentOnBoard(smartAdvice.recommendedAdd);
+                          applyGarmentWithNotice(smartAdvice.recommendedAdd);
                         }
                       }}
                       className="min-h-[40px] shrink-0 bg-[var(--accent)] text-[var(--accent-ink)] px-3.5 py-2 text-[11px] uppercase tracking-[0.12em] font-medium hover:opacity-90 cursor-pointer"
@@ -1613,8 +1877,7 @@ export function AtelierSection() {
                     key={cand.id}
                     type="button"
                     onClick={() => {
-                      placeGarmentOnBoard(cand, pickerSlot);
-                      setHarmonizeSuggestion(null);
+                      applyGarmentWithNotice(cand, pickerSlot);
                       setPickerSlot(null);
                     }}
                     className={`text-left border p-2.5 transition-colors cursor-pointer flex flex-col justify-between ${
@@ -1633,6 +1896,59 @@ export function AtelierSection() {
                 );
               })}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Floating Accidental-Click Protection Toast (stays visible even when scrolled deep inside Garderob) */}
+      {lastChange && (
+        <div
+          style={{ backgroundColor: 'var(--paper-elevated)' }}
+          className="fixed bottom-28 md:bottom-6 right-4 z-40 max-w-sm border border-[var(--accent)] bg-[var(--paper-elevated)] p-3 shadow-2xl flex items-center justify-between gap-3"
+        >
+          <div className="min-w-0 flex-1">
+            <span className="text-[9px] uppercase tracking-[0.12em] text-[var(--accent)] font-semibold block">
+              {lastChange.slotLabel} ·{' '}
+              {lastChange.kind === 'removed'
+                ? localize('Yechildi')
+                : lastChange.kind === 'replaced'
+                  ? localize('Almashtirildi')
+                  : localize('Tanlandi')}
+            </span>
+            <p className="text-xs font-medium text-[var(--ink)] truncate">
+              {localize(lastChange.garment.name_uz)}
+            </p>
+          </div>
+          <div className="flex items-center gap-1.5 shrink-0">
+            {mobilePanel === 'tray' && (
+              <button
+                type="button"
+                onClick={() => {
+                  setMobilePanel('board');
+                  setMobileTrayOpen(false);
+                }}
+                className="md:hidden min-h-[32px] border border-[var(--accent)] bg-[var(--accent-soft)] px-2.5 text-[10px] font-semibold text-[var(--accent)] cursor-pointer"
+              >
+                3D →
+              </button>
+            )}
+            {past.length > 0 && (
+              <button
+                type="button"
+                onClick={handleUndoWithNotice}
+                className="min-h-[32px] bg-[var(--ink)] px-2.5 text-[10px] uppercase tracking-[0.08em] font-semibold text-[var(--paper)] hover:bg-[var(--accent)] cursor-pointer"
+              >
+                ↩ {localize('Bekor')}
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => setLastChange(null)}
+              aria-label={t.atelier.closePicker}
+              className="min-h-[32px] px-1.5 text-xs text-[var(--muted)] hover:text-[var(--ink)] cursor-pointer"
+            >
+              ×
+            </button>
           </div>
         </div>
       )}
