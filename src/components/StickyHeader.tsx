@@ -89,7 +89,7 @@ export function StickyHeader() {
               <button
                 type="button"
                 onClick={() => handleSelectView('stilist')}
-                className="inline-flex items-center gap-1.5 border border-[var(--hairline)] bg-[var(--paper-elevated)] px-2 py-1 text-[11px] text-[var(--ink-2)] hover:border-[var(--ink)] transition-colors truncate max-w-[130px] sm:max-w-[180px] cursor-pointer"
+                className="inline-flex items-center gap-1.5 border border-[var(--hairline)] bg-[var(--paper-elevated)] px-2 py-1 text-[11px] text-[var(--ink-2)] hover:border-[var(--ink)] transition-colors sm:max-w-[180px] shrink-0 cursor-pointer"
                 title={`${location.city}, ${location.country}`}
               >
                 <span
@@ -98,7 +98,7 @@ export function StickyHeader() {
                   }`}
                   aria-hidden="true"
                 />
-                <span className="truncate">{location.city}</span>
+                <span className="hidden sm:inline truncate">{location.city}</span>
                 <span className="font-tabular font-medium text-[var(--ink)] shrink-0">
                   {displayTemp > 0 ? `+${displayTemp}` : displayTemp}°
                 </span>

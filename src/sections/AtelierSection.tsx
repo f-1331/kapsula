@@ -760,7 +760,7 @@ export function AtelierSection() {
 
   const showTempFeedback = (msg: string) => {
     setStatusFeedback(msg);
-    window.setTimeout(() => setStatusFeedback((cur) => (cur === msg ? null : cur)), 2400);
+    window.setTimeout(() => setStatusFeedback((cur) => (cur === msg ? null : cur)), 4500);
   };
 
   const handleRandom = () => {

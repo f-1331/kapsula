@@ -63,12 +63,13 @@ export function AtelierTrayItem({
         ) : null}
       </div>
 
-      {/* Draggable image area */}
+      {/* Draggable image area — clicking/tapping (<6px drag threshold) also toggles cleanly */}
       <div
         {...listeners}
         {...attributes}
+        onClick={() => onQuickPlace(garment)}
         aria-label={localize(garment.name_uz)}
-        className="h-24 w-full overflow-hidden p-2 flex items-center justify-center cursor-grab active:cursor-grabbing touch-none focus-visible:outline-2 focus-visible:outline-[var(--accent)]"
+        className="h-24 w-full overflow-hidden p-2 flex items-center justify-center cursor-pointer active:cursor-grabbing touch-none focus-visible:outline-2 focus-visible:outline-[var(--accent)]"
       >
         <GarmentImage garment={garment} className="h-full w-full" />
       </div>

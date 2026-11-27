@@ -212,7 +212,7 @@ export function LookbookSection() {
                     onClick={() => setActiveLookId(look.id)}
                     className="group relative w-full text-left border border-[var(--hairline)] bg-[var(--paper-elevated)] p-3 hover:border-[var(--ink)] transition-colors cursor-pointer"
                   >
-                    <span className="absolute top-5 right-5 z-10 border border-[var(--ink)]/20 bg-[var(--paper)]/92 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.12em] text-[var(--accent)] shadow-xs">
+                    <span className="absolute top-5 left-5 z-10 border border-[var(--ink)]/20 bg-[var(--paper)]/92 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.12em] text-[var(--accent)] shadow-xs">
                       3D · QR
                     </span>
                     <div className="overflow-hidden mb-3">
