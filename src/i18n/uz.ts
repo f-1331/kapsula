@@ -41,7 +41,7 @@ export const UZ = {
     kicker: 'Garderob & Stilist · Nashr № 01',
     title: 'Bugun nima kiyasiz?',
     promise:
-      'Har bir boʻlim alohida sahifa koʻrinishida: jonli ob-havo stilisti, 6240+ dizaynerlik kiyimlari 3D atelyesi, kamera/rasm tahlili, haftalik reja va OKLCH rang laboratoriyasi.',
+      'Har bir boʻlim alohida sahifa koʻrinishida: jonli ob-havo stilisti, 9600+ dizaynerlik kiyimlari 3D atelyesi, kamera/rasm tahlili, haftalik reja va OKLCH rang laboratoriyasi.',
     ctaPrimary: 'Stilistni ochish',
     ctaSecondary: 'Rasm orqali tahlil',
     counters: (items: number, looks: number, palettes: number, brands: number) =>

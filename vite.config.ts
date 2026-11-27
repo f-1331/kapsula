@@ -7,7 +7,7 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        manualChunks(id) {
+        manualChunks(id: string) {
           if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) {
             return 'vendor-react'
           }
@@ -19,6 +19,12 @@ export default defineConfig({
           }
           if (id.includes('node_modules/culori') || id.includes('node_modules/zod') || id.includes('node_modules/zustand')) {
             return 'vendor-engine'
+          }
+          if (id.includes('node_modules/three')) {
+            return 'vendor-three'
+          }
+          if (id.includes('node_modules/qrcode')) {
+            return 'vendor-qr'
           }
         },
       },

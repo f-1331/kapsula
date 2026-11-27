@@ -3,6 +3,7 @@ import {
   OccasionSchema,
   PaletteIdSchema,
   WeatherBandSchema,
+  type Category,
   type Garment,
   type Manifest,
   type Occasion,
@@ -10,6 +11,7 @@ import {
   type WeatherBand,
 } from '../data/schema';
 import { SAMPLE_MANIFEST } from '../data/sample-manifest';
+import { analyzeGarmentsHarmony } from '../engine/color';
 import {
   EMPTY_BOARD,
   boardSlotsToGarments,
@@ -19,6 +21,11 @@ import {
   type SlotKey,
   type StylistQuery,
 } from '../engine/stylist';
+import {
+  syncCustomGarmentToCloud,
+  syncOutfitToCloud,
+  type TelegramMiniAppSession,
+} from '../utils/tg-miniapp';
 import {
   DEFAULT_LOCATION,
   weatherBandDefaultTemp,
@@ -80,6 +87,7 @@ export function parseViewFromLocation(): ViewTab {
 
 export interface SavedOutfit {
   id: string;
+  cloudId?: number;
   title: string;
   createdAt: string;
   items: string[];
@@ -184,6 +192,10 @@ function readInitialLocation(): GeoLocationInfo {
 function parseInitialQueryFromStorageOrUrl(): {
   query: StylistQuery;
   urlItems: string[] | null;
+  urlLocation: GeoLocationInfo | null;
+  urlLookId: string | null;
+  hasExplicitWeather: boolean;
+  hasExplicitCity: boolean;
 } {
   const defaultQuery: StylistQuery = {
     weather: 'cool',
@@ -209,7 +221,14 @@ function parseInitialQueryFromStorageOrUrl(): {
   };
 
   if (typeof window === 'undefined') {
-    return { query: merged, urlItems: null };
+    return {
+      query: merged,
+      urlItems: null,
+      urlLocation: null,
+      urlLookId: null,
+      hasExplicitWeather: false,
+      hasExplicitCity: false,
+    };
   }
 
   const params = new URLSearchParams(window.location.search);
@@ -218,17 +237,41 @@ function parseInitialQueryFromStorageOrUrl(): {
   const pal = params.get('pal');
   const g = params.get('g');
   const itemsRaw = params.get('items');
+  const cityParam = params.get('city');
+  const countryParam = params.get('country');
+  const latParam = Number(params.get('lat'));
+  const lonParam = Number(params.get('lon'));
+  const lookParam = params.get('look');
 
-  if (wx && WeatherBandSchema.safeParse(wx).success) merged.weather = wx as WeatherBand;
+  const hasExplicitWeather = Boolean(wx && WeatherBandSchema.safeParse(wx).success);
+  if (hasExplicitWeather) merged.weather = wx as WeatherBand;
   if (oc && OccasionSchema.safeParse(oc).success) merged.occasion = oc as Occasion;
   if (pal === 'any' || (pal && PaletteIdSchema.safeParse(pal).success)) merged.palette = pal as PaletteId | 'any';
   if (g === 'w' || g === 'm' || g === 'all') merged.gender = g;
+
+  const hasExplicitCity = Boolean(cityParam && cityParam.trim().length > 0);
+  const urlLocation: GeoLocationInfo | null = hasExplicitCity
+    ? {
+        city: cityParam!.trim(),
+        country: countryParam?.trim() || 'Oʻzbekiston',
+        latitude: Number.isFinite(latParam) && latParam !== 0 ? latParam : DEFAULT_LOCATION.latitude,
+        longitude: Number.isFinite(lonParam) && lonParam !== 0 ? lonParam : DEFAULT_LOCATION.longitude,
+        isAutoDetected: false,
+      }
+    : null;
 
   const urlItems = itemsRaw
     ? itemsRaw.split(',').map((s) => s.trim()).filter(Boolean)
     : null;
 
-  return { query: merged, urlItems };
+  return {
+    query: merged,
+    urlItems,
+    urlLocation,
+    urlLookId: lookParam?.trim() || null,
+    hasExplicitWeather,
+    hasExplicitCity,
+  };
 }
 
 function parseSavedOutfitsFromStorage(): SavedOutfit[] {
@@ -307,6 +350,8 @@ export interface KapsulaState {
   weeklyPlan: Record<string, string[]>;
   packingChecked: Record<string, boolean>;
   atelierBrandFilter: string;
+  colorLabColors: string[];
+  telegramRole: 'owner' | 'admin' | 'user' | 'guest';
   isSampleData: boolean;
   hasWebpAssets: boolean;
   manifestLoaded: boolean;
@@ -330,6 +375,9 @@ export interface KapsulaState {
 
   setActiveView: (view: ViewTab, syncHash?: boolean) => void;
   setAtelierBrandFilter: (brand: string) => void;
+  setColorLabColors: (colors: string[]) => void;
+  openColorsInLab: (colors: string[]) => void;
+  hydrateFromTelegramSession: (session: TelegramMiniAppSession) => void;
   addCustomGarment: (garment: Garment) => void;
   removeCustomGarment: (id: string) => void;
   setDayPlan: (dateStr: string, itemIds: string[]) => void;
@@ -369,15 +417,17 @@ export const useKapsulaStore = create<KapsulaState>((set, get) => ({
   weeklyPlan: safeReadStorage<Record<string, string[]>>(STORAGE_WEEKLY_PLAN_KEY, {}),
   packingChecked: safeReadStorage<Record<string, boolean>>(STORAGE_PACKING_KEY, {}),
   atelierBrandFilter: 'all',
+  colorLabColors: ['#151412', '#F4EFE6', '#B98E5E'],
+  telegramRole: 'guest',
   isSampleData: true,
   hasWebpAssets: false,
   manifestLoaded: false,
   theme: initialTheme,
   designTheme: initialDesignTheme,
   language: initialLang,
-  location: readInitialLocation(),
+  location: initialParsed.urlLocation ?? readInitialLocation(),
   liveWeather: null,
-  autoWeatherEnabled: !initialParsed.urlItems,
+  autoWeatherEnabled: !initialParsed.urlItems && !initialParsed.hasExplicitWeather,
   weatherLoading: false,
   query: initialParsed.query,
   temperatureC: weatherBandDefaultTemp(initialParsed.query.weather),
@@ -387,7 +437,7 @@ export const useKapsulaStore = create<KapsulaState>((set, get) => ({
   savedOutfits: parseSavedOutfitsFromStorage(),
   missingIdsNotice: initialBoardInfo.missingCount > 0,
   randomSeedCounter: 1,
-  activeLookId: null,
+  activeLookId: initialParsed.urlLookId,
   lastScoreAnnouncement: '',
 
   setActiveView: (view, syncHash = true) => {
@@ -407,12 +457,122 @@ export const useKapsulaStore = create<KapsulaState>((set, get) => ({
 
   setAtelierBrandFilter: (atelierBrandFilter) => set({ atelierBrandFilter }),
 
+  setColorLabColors: (colors) => {
+    const cleaned = colors.filter((c) => /^#[0-9a-fA-F]{6}$/.test(c)).slice(0, 5);
+    if (cleaned.length >= 2) {
+      set({ colorLabColors: cleaned.map((c) => c.toUpperCase()) });
+    }
+  },
+
+  openColorsInLab: (colors) => {
+    get().setColorLabColors(colors);
+    get().setActiveView('ranglar');
+  },
+
+  hydrateFromTelegramSession: (session) => {
+    const state = get();
+    const cloudCustom: Garment[] = (session.customGarments ?? []).map((cg) => ({
+      id: cg.slug,
+      category: (['outerwear', 'top', 'bottom', 'dress', 'shoes', 'bag', 'accessory'].includes(cg.category)
+        ? cg.category
+        : 'top') as Category,
+      name_uz: cg.titleUz,
+      name_en: cg.titleUz,
+      image: '',
+      w: 240,
+      h: 320,
+      color: cg.colorHex,
+      color2: null,
+      warmth: 3,
+      waterproof: false,
+      formality: 2,
+      palettes: [PaletteIdSchema.safeParse(cg.palette).success ? cg.palette : 'sand'],
+      occasions: [OccasionSchema.safeParse(cg.occasion).success ? cg.occasion : 'office'],
+      weather: [WeatherBandSchema.safeParse(cg.weather).success ? cg.weather : 'cool'],
+      gender: 'u',
+      brand: cg.addedByUsername ? `@${cg.addedByUsername}` : 'Kapsula Bot',
+      isUserUploaded: true,
+    }));
+
+    const seenCustom = new Set(state.customGarments.map((g) => g.id));
+    const mergedCustom = [
+      ...state.customGarments,
+      ...cloudCustom.filter((g) => !seenCustom.has(g.id)),
+    ].slice(0, MAX_CUSTOM_GARMENTS);
+    safeWriteStorage(STORAGE_CUSTOM_GARMENTS_KEY, mergedCustom);
+
+    const cloudOutfits: SavedOutfit[] = (session.outfits ?? []).map((o) => ({
+      id: `cloud-${o.id}`,
+      cloudId: o.id,
+      title: o.title,
+      createdAt:
+        typeof o.createdAt === 'number'
+          ? new Date(o.createdAt * 1000).toISOString()
+          : String(o.createdAt ?? new Date().toISOString()),
+      items: Array.isArray(o.items) ? o.items : [],
+      query: {
+        weather: WeatherBandSchema.safeParse(o.weather).success ? (o.weather as WeatherBand) : state.query.weather,
+        rain: state.query.rain,
+        occasion: OccasionSchema.safeParse(o.occasion).success ? (o.occasion as Occasion) : state.query.occasion,
+        palette:
+          o.palette === 'any' || PaletteIdSchema.safeParse(o.palette).success
+            ? (o.palette as PaletteId | 'any')
+            : state.query.palette,
+        gender: state.query.gender,
+      },
+    }));
+
+    const knownCloudIds = new Set(state.savedOutfits.map((s) => s.cloudId).filter(Boolean));
+    const mergedOutfits = [
+      ...state.savedOutfits,
+      ...cloudOutfits.filter((o) => !knownCloudIds.has(o.cloudId)),
+    ].slice(0, MAX_SAVED_OUTFITS);
+    safeWriteStorage(STORAGE_SAVED_KEY, mergedOutfits);
+
+    const mergedManifest = mergeManifestWithCustom(state.baseManifest, mergedCustom);
+    const nextPatch: Partial<KapsulaState> = {
+      telegramRole: session.role,
+      customGarments: mergedCustom,
+      savedOutfits: mergedOutfits,
+      manifest: mergedManifest,
+    };
+
+    if (
+      !initialParsed.hasExplicitCity &&
+      session.user?.city &&
+      typeof session.user.latitude === 'number' &&
+      typeof session.user.longitude === 'number'
+    ) {
+      const botLoc: GeoLocationInfo = {
+        city: session.user.city,
+        country: session.user.country || 'Oʻzbekiston',
+        latitude: session.user.latitude,
+        longitude: session.user.longitude,
+        isAutoDetected: false,
+      };
+      safeWriteStorage(STORAGE_LOC_KEY, botLoc);
+      nextPatch.location = botLoc;
+    }
+
+    set(nextPatch);
+  },
+
   addCustomGarment: (garment) => {
     const existing = get().customGarments.filter((g) => g.id !== garment.id);
     const nextCustom = [garment, ...existing].slice(0, MAX_CUSTOM_GARMENTS);
     safeWriteStorage(STORAGE_CUSTOM_GARMENTS_KEY, nextCustom);
     const merged = mergeManifestWithCustom(get().baseManifest, nextCustom);
     set({ customGarments: nextCustom, manifest: merged });
+    void syncCustomGarmentToCloud({
+      action: 'save',
+      slug: garment.id,
+      titleUz: garment.name_uz,
+      category: garment.category,
+      colorHex: garment.color,
+      palette: garment.palettes[0] ?? 'sand',
+      weather: garment.weather[0] ?? 'cool',
+      occasion: garment.occasions[0] ?? 'office',
+    });
   },
 
   removeCustomGarment: (id) => {
@@ -425,6 +585,7 @@ export const useKapsulaStore = create<KapsulaState>((set, get) => ({
       if (nextSlots[k] === id) nextSlots[k] = null;
     }
     set({ customGarments: nextCustom, manifest: merged, slots: nextSlots });
+    void syncCustomGarmentToCloud({ action: 'delete', slug: id });
   },
 
   setDayPlan: (dateStr, itemIds) => {
@@ -657,11 +818,12 @@ export const useKapsulaStore = create<KapsulaState>((set, get) => ({
   saveOutfit: (itemIds, title) => {
     const cleaned = Array.from(new Set(itemIds.filter(Boolean)));
     if (cleaned.length === 0) return false;
-    const { savedOutfits, query } = get();
+    const { savedOutfits, query, manifest } = get();
     const id = `saved-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+    const outfitTitle = title ?? `Kapsula № ${savedOutfits.length + 1}`;
     const entry: SavedOutfit = {
       id,
-      title: title ?? `Kapsula № ${savedOutfits.length + 1}`,
+      title: outfitTitle,
       createdAt: new Date().toISOString(),
       items: cleaned,
       query: { ...query },
@@ -669,13 +831,38 @@ export const useKapsulaStore = create<KapsulaState>((set, get) => ({
     const next = [entry, ...savedOutfits].slice(0, MAX_SAVED_OUTFITS);
     safeWriteStorage(STORAGE_SAVED_KEY, next);
     set({ savedOutfits: next });
+
+    const byId = new Map(manifest.garments.map((g) => [g.id, g]));
+    const items = cleaned.map((gid) => byId.get(gid)).filter((g): g is Garment => Boolean(g));
+    const pal = manifest.palettes.find((p) => p.id === query.palette);
+    const score = items.length > 0 ? analyzeGarmentsHarmony(items, pal).score : 85;
+    void syncOutfitToCloud({
+      action: 'save',
+      title: outfitTitle,
+      items: cleaned,
+      score,
+      weather: query.weather,
+      occasion: query.occasion,
+      palette: query.palette,
+    }).then((res) => {
+      const cloudId = res?.outfit?.id;
+      if (!cloudId) return;
+      const updated = get().savedOutfits.map((s) => (s.id === id ? { ...s, cloudId } : s));
+      safeWriteStorage(STORAGE_SAVED_KEY, updated);
+      set({ savedOutfits: updated });
+    });
+
     return true;
   },
 
   deleteSavedOutfit: (id) => {
+    const target = get().savedOutfits.find((s) => s.id === id);
     const next = get().savedOutfits.filter((s) => s.id !== id);
     safeWriteStorage(STORAGE_SAVED_KEY, next);
     set({ savedOutfits: next });
+    if (target?.cloudId) {
+      void syncOutfitToCloud({ action: 'delete', id: target.cloudId });
+    }
   },
 
   incrementRandomSeed: () => {

@@ -1,6 +1,6 @@
 import { api, db } from 'sdk';
 import { desc, eq } from 'sdk/db';
-import { admins, auditLogs, customGarments, users } from '../schema.js';
+import { admins, auditLogs, customGarments, savedOutfits, users } from '../schema.js';
 import {
   getAccessContext,
   getSetting,
@@ -138,16 +138,57 @@ export default async function (cb) {
       return;
     }
     const webAppUrl = await getMiniAppUrl();
+    const qParams = new URLSearchParams({
+      tab: 'stilist',
+      wx: report.band,
+      city: u.city || 'Toshkent',
+      lat: String(u.latitude),
+      lon: String(u.longitude),
+      g: u.genderPref || 'all',
+    });
     await api.sendMessage({
       chat_id: chatId,
       text: report.summaryText,
       parse_mode: 'HTML',
       reply_markup: {
         inline_keyboard: [
-          [{ text: '✨ Atelyeda ochish', web_app: { url: `${webAppUrl}/?wx=${report.band}#stilist` } }],
+          [{ text: '✨ Stilistda ochish', web_app: { url: `${webAppUrl}/?${qParams.toString()}#stilist` } }],
           [{ text: '← Bosh menyu', callback_data: 'user:home' }],
         ],
       },
+    });
+    return;
+  }
+
+  if (data === 'user:saved') {
+    await answer();
+    const webAppUrl = await getMiniAppUrl();
+    const saved = await db
+      .select()
+      .from(savedOutfits)
+      .where(eq(savedOutfits.userTgId, access.user.tgId))
+      .orderBy(desc(savedOutfits.id))
+      .limit(8)
+      .all();
+    const rows = saved.slice(0, 6).map((o) => {
+      const items = Array.isArray(o.items) ? o.items : [];
+      return [
+        {
+          text: `📐 ${o.title} (${o.score}/100)`,
+          web_app: { url: `${webAppUrl}/?items=${encodeURIComponent(items.join(','))}#atelye` },
+        },
+      ];
+    });
+    rows.push([{ text: '📅 Garderobim', web_app: { url: `${webAppUrl}/?tab=garderobim` } }]);
+    rows.push([{ text: '← Bosh menyu', callback_data: 'user:home' }]);
+    await api.sendMessage({
+      chat_id: chatId,
+      text:
+        saved.length === 0
+          ? '📋 Hozircha saqlangan obrazlaringiz yoʻq. Mini App da obraz saqlasangiz, shu yerda darhol koʻrinadi.'
+          : `📋 <b>Saqlangan obrazlaringiz (${saved.length} ta)</b>\nTanlab 3D Atelyeda oching:`,
+      parse_mode: 'HTML',
+      reply_markup: { inline_keyboard: rows },
     });
     return;
   }

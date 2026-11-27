@@ -11,7 +11,11 @@ import { FooterSection } from './sections/FooterSection';
 import { LookbookSection } from './sections/LookbookSection';
 import { StylistSection } from './sections/StylistSection';
 import { parseViewFromLocation, useKapsulaStore } from './store/useKapsulaStore';
-import { getTelegramWebApp, syncMiniAppHeartbeat } from './utils/tg-miniapp';
+import {
+  fetchTelegramSession,
+  getTelegramWebApp,
+  syncMiniAppHeartbeat,
+} from './utils/tg-miniapp';
 import { detectUserLocation, fetchLiveWeatherAnalysis } from './utils/weather-api';
 
 const PhotoAnalyzerSection = lazy(() =>
@@ -36,6 +40,8 @@ export default function App() {
   const manifest = useKapsulaStore((s) => s.manifest);
   const activeView = useKapsulaStore((s) => s.activeView);
   const location = useKapsulaStore((s) => s.location);
+  const liveWeather = useKapsulaStore((s) => s.liveWeather);
+  const temperatureC = useKapsulaStore((s) => s.temperatureC);
   const gender = useKapsulaStore((s) => s.query.gender);
   const activeLookId = useKapsulaStore((s) => s.activeLookId);
   const setActiveView = useKapsulaStore((s) => s.setActiveView);
@@ -43,14 +49,36 @@ export default function App() {
   const setActiveLookId = useKapsulaStore((s) => s.setActiveLookId);
   const setWeatherLoading = useKapsulaStore((s) => s.setWeatherLoading);
   const setLiveWeather = useKapsulaStore((s) => s.setLiveWeather);
+  const hydrateFromTelegramSession = useKapsulaStore((s) => s.hydrateFromTelegramSession);
   const reducedMotion = useReducedMotion();
 
-  // Initialize Telegram Mini App integration & keep hash routing synced
+  // Initialize Telegram Mini App integration, load Cloud Session & keep hash routing synced
   useEffect(() => {
     const tg = getTelegramWebApp();
     if (tg) {
       tg.ready?.();
       tg.expand?.();
+      void fetchTelegramSession().then((session) => {
+        if (!session) return;
+        hydrateFromTelegramSession(session);
+        if (
+          session.user?.latitude &&
+          session.user?.longitude &&
+          !new URLSearchParams(window.location.search).get('city')
+        ) {
+          void fetchLiveWeatherAnalysis({
+            city: session.user.city,
+            country: session.user.country || 'Oʻzbekiston',
+            latitude: session.user.latitude,
+            longitude: session.user.longitude,
+            isAutoDetected: false,
+          }).then((analysis) => {
+            if (analysis) {
+              setLiveWeather(analysis, useKapsulaStore.getState().autoWeatherEnabled);
+            }
+          });
+        }
+      });
     }
 
     const onHashChange = () => {
@@ -58,12 +86,20 @@ export default function App() {
     };
     window.addEventListener('hashchange', onHashChange);
     return () => window.removeEventListener('hashchange', onHashChange);
-  }, [setActiveView]);
+  }, [setActiveView, hydrateFromTelegramSession, setLiveWeather]);
 
-  // Send lightweight Telegram Mini App live presence heartbeat when inside Telegram
+  // Send Telegram Mini App live presence + active city/coordinates heartbeat when inside Telegram
   useEffect(() => {
-    void syncMiniAppHeartbeat({ view: activeView, city: location.city, gender });
-  }, [activeView, location.city, gender]);
+    void syncMiniAppHeartbeat({
+      view: activeView,
+      city: location.city,
+      country: location.country,
+      latitude: location.latitude,
+      longitude: location.longitude,
+      tempC: liveWeather?.temperatureC ?? temperatureC,
+      gender,
+    });
+  }, [activeView, location.city, location.country, location.latitude, location.longitude, liveWeather?.temperatureC, temperatureC, gender]);
 
   // Load 3,894+ branded catalog manifest.json
   useEffect(() => {
@@ -83,7 +119,11 @@ export default function App() {
     let cancelled = false;
     const syncWeather = async () => {
       setWeatherLoading(true);
-      const loc = await detectUserLocation();
+      const urlParams = new URLSearchParams(window.location.search);
+      const currentState = useKapsulaStore.getState();
+      const loc = urlParams.get('city')
+        ? currentState.location
+        : await detectUserLocation();
       if (cancelled) return;
       const analysis = await fetchLiveWeatherAnalysis(loc);
       if (cancelled) return;
@@ -115,12 +155,7 @@ export default function App() {
   const renderActiveSection = () => {
     switch (activeView) {
       case 'cover':
-        return (
-          <>
-            <CoverSection />
-            <FooterSection />
-          </>
-        );
+        return <CoverSection />;
       case 'stilist':
         return <StylistSection />;
       case 'atelye':
@@ -148,12 +183,7 @@ export default function App() {
       case 'ranglar':
         return <ColorLabSection />;
       default:
-        return (
-          <>
-            <CoverSection />
-            <FooterSection />
-          </>
-        );
+        return <CoverSection />;
     }
   };
 
@@ -174,6 +204,7 @@ export default function App() {
                 {renderActiveSection()}
               </m.div>
             </AnimatePresence>
+            <FooterSection />
           </main>
           <LookbookModal
             look={activeLook}

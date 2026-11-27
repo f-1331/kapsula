@@ -278,13 +278,28 @@ export async function setUserStep(tgId, step, payload = null) {
     .where(eq(users.tgId, tgId));
 }
 
-export async function touchPresence(tgId, { view, city, gender } = {}) {
+export async function touchPresence(
+  tgId,
+  { view, city, country, latitude, longitude, tempC, gender } = {},
+) {
   const patch = { lastActiveAt: new Date() };
   if (typeof view === 'string' && view.length > 0 && view.length <= 24) {
     patch.lastView = view;
   }
   if (typeof city === 'string' && city.trim().length > 0 && city.trim().length <= 64) {
     patch.city = city.trim();
+  }
+  if (typeof country === 'string' && country.trim().length > 0 && country.trim().length <= 64) {
+    patch.country = country.trim();
+  }
+  if (typeof latitude === 'number' && Number.isFinite(latitude)) {
+    patch.latitude = latitude;
+  }
+  if (typeof longitude === 'number' && Number.isFinite(longitude)) {
+    patch.longitude = longitude;
+  }
+  if (typeof tempC === 'number' && Number.isFinite(tempC)) {
+    patch.lastTempC = Math.round(tempC);
   }
   if (gender === 'w' || gender === 'm' || gender === 'all') {
     patch.genderPref = gender;

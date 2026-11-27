@@ -1,6 +1,6 @@
 import { api, db } from 'sdk';
-import { desc, eq, or } from 'sdk/db';
-import { auditLogs, customGarments, users } from '../schema.js';
+import { desc, eq } from 'sdk/db';
+import { auditLogs, customGarments, savedOutfits, users } from '../schema.js';
 import {
   addAdminByOwner,
   cleanUsername,
@@ -42,7 +42,15 @@ async function sendWeatherSummary(chatId, user, lat, lon, cityLabel) {
     .where(eq(users.tgId, user.tgId));
 
   const webAppUrl = await getMiniAppUrl();
-  const deepUrl = `${webAppUrl}/?wx=${report.band}#stilist`;
+  const qParams = new URLSearchParams({
+    tab: 'stilist',
+    wx: report.band,
+    city: cityLabel.split(',')[0].trim(),
+    lat: String(lat),
+    lon: String(lon),
+    g: user.genderPref || 'all',
+  });
+  const deepUrl = `${webAppUrl}/?${qParams.toString()}#stilist`;
 
   await api.sendMessage({
     chat_id: chatId,
@@ -50,7 +58,7 @@ async function sendWeatherSummary(chatId, user, lat, lon, cityLabel) {
     parse_mode: 'HTML',
     reply_markup: {
       inline_keyboard: [
-        [{ text: '✨ Shu ob-havoga mos obrazni Atelyeda ochish', web_app: { url: deepUrl } }],
+        [{ text: '✨ Shu ob-havoga mos obrazni Stilistda ochish', web_app: { url: deepUrl } }],
         [{ text: '🏙 Shaharni almashtirish', callback_data: 'user:city' }],
       ],
     },
@@ -106,6 +114,23 @@ export default async function (message) {
 
   const chatId = message.chat.id;
   const text = (message.text || '').trim();
+
+  // Photo sent in bot chat -> guide directly into Mini App Photo Analyzer
+  if (Array.isArray(message.photo) && message.photo.length > 0) {
+    const webAppUrl = await getMiniAppUrl();
+    await api.sendMessage({
+      chat_id: chatId,
+      text: '📸 Kiyim rasmini AI/OKLCH tahlilidan oʻtkazish va unga mos obraz yigʻish uchun <b>Foto-tahlil</b> boʻlimini oching:',
+      parse_mode: 'HTML',
+      reply_markup: {
+        inline_keyboard: [
+          [{ text: '📸 Foto-tahlilni ochish', web_app: { url: `${webAppUrl}/?tab=skaner` } }],
+          [{ text: '📐 3D Atelye', web_app: { url: `${webAppUrl}/?tab=atelye` } }],
+        ],
+      },
+    });
+    return;
+  }
 
   // Location sharing -> auto-detect weather & save coordinates
   if (message.location) {
@@ -245,8 +270,9 @@ export default async function (message) {
       `Assalomu alaykum, <b>${from.first_name || 'doʻst'}</b>!\n\n` +
         `<b>Kapsula — Garderob & Stilist</b> Mini App va Telegram botiga xush kelibsiz.\n` +
         `• Shahringizdagi jonli ob-havoga qarab tayyor kiyim tavsiyasi oling\n` +
-        `• <b>6,240+ brend buyumlari</b> (18 brend, 65 xil 3D kiyim turi, 16 rang palitrasi, 10 dizayn, 5 til)\n` +
-        `• <b>Foto-tahlil</b>: kiyimingizni rasmga olib nima bilan kiyish va qaysi aksessuarni qoʻshishni bilib oling`;
+        `• <b>9,600+ brend buyumlari</b> (18 brend, 100 xil 3D kiyim turi, 16 rang palitrasi, 10 dizayn, 5 til)\n` +
+        `• <b>Foto-tahlil</b>: kiyimingizni rasmga olib nima bilan kiyish va qaysi aksessuarni qoʻshishni bilib oling\n` +
+        `• <b>Aloqa:</b> +998 77 272 3101 · https://kapsulauz.vercel.app`;
 
     await api.sendMessage({
       chat_id: chatId,
@@ -290,11 +316,84 @@ export default async function (message) {
     return;
   }
 
+  if (text === '📐 3D Atelye') {
+    const webAppUrl = await getMiniAppUrl();
+    await api.sendMessage({
+      chat_id: chatId,
+      text: '📐 <b>3D Atelye</b> — barcha kiyimlarni hajmli 3D sahnada 360° aylantirib koʻring va rang uygʻunligini tekshiring:',
+      parse_mode: 'HTML',
+      reply_markup: {
+        inline_keyboard: [
+          [{ text: '📐 3D Atelyeni ochish', web_app: { url: `${webAppUrl}/?tab=atelye` } }],
+        ],
+      },
+    });
+    return;
+  }
+
+  if (text === '📞 Aloqa' || text === '/contact') {
+    const webAppUrl = await getMiniAppUrl();
+    await api.sendMessage({
+      chat_id: chatId,
+      text:
+        `📞 <b>Kapsula — Stilist va Aloqa</b>\n\n` +
+        `• Telefon: <b>+998 77 272 3101</b>\n` +
+        `• Web ilova: https://kapsulauz.vercel.app\n` +
+        `• GitHub: https://github.com/f-1331/kapsula`,
+      parse_mode: 'HTML',
+      reply_markup: {
+        inline_keyboard: [[{ text: '✨ Kapsula 3D Mini App', web_app: { url: webAppUrl } }]],
+      },
+    });
+    return;
+  }
+
+  if (text === '📋 Obrazlarim') {
+    const webAppUrl = await getMiniAppUrl();
+    const saved = await db
+      .select()
+      .from(savedOutfits)
+      .where(eq(savedOutfits.userTgId, user.tgId))
+      .orderBy(desc(savedOutfits.id))
+      .limit(8)
+      .all();
+    if (saved.length === 0) {
+      await api.sendMessage({
+        chat_id: chatId,
+        text: '📋 Hozircha saqlangan obrazlaringiz yoʻq. Atelye yoki Stilistda obraz yigʻib «Saqlash» tugmasini bosing — shu yerda darhol chiqadi!',
+        reply_markup: {
+          inline_keyboard: [
+            [{ text: '🎯 Stilistda obraz yaratish', web_app: { url: `${webAppUrl}/?tab=stilist` } }],
+            [{ text: '📐 3D Atelye', web_app: { url: `${webAppUrl}/?tab=atelye` } }],
+          ],
+        },
+      });
+      return;
+    }
+    const rows = saved.slice(0, 6).map((o) => {
+      const items = Array.isArray(o.items) ? o.items : [];
+      return [
+        {
+          text: `📐 ${o.title} (${o.score}/100)`,
+          web_app: { url: `${webAppUrl}/?items=${encodeURIComponent(items.join(','))}#atelye` },
+        },
+      ];
+    });
+    rows.push([{ text: '📅 Garderobim boʻlimi', web_app: { url: `${webAppUrl}/?tab=garderobim` } }]);
+    await api.sendMessage({
+      chat_id: chatId,
+      text: `📋 <b>Saqlangan obrazlaringiz (${saved.length} ta)</b>\nIstalganini tanlab toʻgʻridan-toʻgʻri 3D Atelyeda oching:`,
+      parse_mode: 'HTML',
+      reply_markup: { inline_keyboard: rows },
+    });
+    return;
+  }
+
   if (text === '🏷 Brendlar') {
     const webAppUrl = await getMiniAppUrl();
     await api.sendMessage({
       chat_id: chatId,
-      text: '🏷 <b>16 ta Brend Katalogi</b> (Zara, Massimo Dutti, COS, Uniqlo, Nike, Adidas, 7SABER, Terra Pro...):',
+      text: '🏷 <b>18 ta Brend Katalogi</b> (Zara, Massimo Dutti, COS, Uniqlo, Nike, Adidas, 7SABER, Terra Pro...):',
       parse_mode: 'HTML',
       reply_markup: {
         inline_keyboard: [[{ text: '🏷 Brendlarni koʻrish', web_app: { url: `${webAppUrl}/?tab=brendlar` } }]],
@@ -354,7 +453,7 @@ export default async function (message) {
 
   if (text.startsWith('/tavsiya')) {
     await sendWeatherSummary(
-      chat_id,
+      chatId,
       user,
       user.latitude,
       user.longitude,

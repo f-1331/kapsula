@@ -4,12 +4,16 @@ import { useMemo, useState } from 'react';
 import type { LookModel, Occasion, PaletteId, WeatherBand } from '../data/schema';
 import { useTranslation } from '../i18n/useTranslation';
 import { useKapsulaStore } from '../store/useKapsulaStore';
+import { Card3D } from '../components/Card3D';
 import { LookImage } from '../components/LookImage';
 
 export function LookbookSection() {
   const { t, localize } = useTranslation();
   const manifest = useKapsulaStore((s) => s.manifest);
+  const query = useKapsulaStore((s) => s.query);
   const setActiveLookId = useKapsulaStore((s) => s.setActiveLookId);
+  const updateQuery = useKapsulaStore((s) => s.updateQuery);
+  const setActiveView = useKapsulaStore((s) => s.setActiveView);
   const reducedMotion = useReducedMotion();
 
   const [occasionFilter, setOccasionFilter] = useState<Occasion | 'all'>('all');
@@ -147,6 +151,36 @@ export function LookbookSection() {
                     : t.gender.m}
               </button>
             ))}
+
+            <div className="ml-auto flex flex-wrap gap-1.5">
+              <button
+                type="button"
+                onClick={() => {
+                  setOccasionFilter(query.occasion);
+                  setWeatherFilter(query.weather);
+                  setPaletteFilter(query.palette === 'any' ? 'all' : query.palette);
+                  setModelFilter(query.gender);
+                }}
+                className="min-h-[38px] px-3 py-1.5 text-xs border border-[var(--hairline-strong)] bg-[var(--paper)] text-[var(--ink)] hover:border-[var(--ink)] cursor-pointer"
+              >
+                {localize('Stilist filtrini yuklash')}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  updateQuery({
+                    occasion: occasionFilter === 'all' ? query.occasion : occasionFilter,
+                    weather: weatherFilter === 'all' ? query.weather : weatherFilter,
+                    palette: paletteFilter === 'all' ? 'any' : paletteFilter,
+                    gender: modelFilter,
+                  });
+                  setActiveView('stilist');
+                }}
+                className="min-h-[38px] px-3 py-1.5 text-xs bg-[var(--ink)] text-[var(--paper)] hover:bg-[var(--accent)] transition-colors cursor-pointer"
+              >
+                {localize('Stilistda ochish')}
+              </button>
+            </div>
           </div>
         </div>
 
@@ -166,36 +200,41 @@ export function LookbookSection() {
                   index % 3 === 1 ? 'lg:mt-10' : ''
                 } ${matched ? 'opacity-100' : 'opacity-30 saturate-50'}`}
               >
-                <button
-                  type="button"
-                  onClick={() => setActiveLookId(look.id)}
-                  className="group w-full text-left border border-[var(--hairline)] bg-[var(--paper-elevated)] p-3 hover:border-[var(--ink)] transition-colors cursor-pointer"
-                >
-                  <div className="overflow-hidden mb-3">
-                    <LookImage
-                      look={look}
-                      garments={manifest.garments}
-                      palette={palette}
-                      className="group-hover:scale-[1.02] transition-transform duration-500"
-                    />
-                  </div>
-                  <div className="flex items-baseline justify-between gap-2">
-                    <h3 className="font-editorial italic text-2xl text-[var(--ink)] group-hover:text-[var(--accent)] transition-colors">
-                      {localize(look.title_uz)}
-                    </h3>
-                    <span className="micro-label text-[10px] text-[var(--muted)]">
-                      {palette ? localize(palette.name_uz) : ''}
+                <Card3D intensity={6}>
+                  <button
+                    type="button"
+                    onClick={() => setActiveLookId(look.id)}
+                    className="group relative w-full text-left border border-[var(--hairline)] bg-[var(--paper-elevated)] p-3 hover:border-[var(--ink)] transition-colors cursor-pointer"
+                  >
+                    <span className="absolute top-5 right-5 z-10 border border-[var(--ink)]/20 bg-[var(--paper)]/92 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.12em] text-[var(--accent)] shadow-xs">
+                      3D · QR
                     </span>
-                  </div>
-                  <div className="mt-1 flex items-center justify-between text-xs text-[var(--ink-2)]">
-                    <span>
-                      {t.occasions[look.occasion].label} · {t.weather[look.weather].label}
-                    </span>
-                    <span className="text-[var(--muted)]">
-                      {t.lookbook.itemsCount(look.items.length)}
-                    </span>
-                  </div>
-                </button>
+                    <div className="overflow-hidden mb-3">
+                      <LookImage
+                        look={look}
+                        garments={manifest.garments}
+                        palette={palette}
+                        className="group-hover:scale-[1.02] transition-transform duration-500"
+                      />
+                    </div>
+                    <div className="flex items-baseline justify-between gap-2">
+                      <h3 className="font-editorial italic text-2xl text-[var(--ink)] group-hover:text-[var(--accent)] transition-colors">
+                        {localize(look.title_uz)}
+                      </h3>
+                      <span className="micro-label text-[10px] text-[var(--muted)]">
+                        {palette ? localize(palette.name_uz) : ''}
+                      </span>
+                    </div>
+                    <div className="mt-1 flex items-center justify-between text-xs text-[var(--ink-2)]">
+                      <span>
+                        {t.occasions[look.occasion].label} · {t.weather[look.weather].label}
+                      </span>
+                      <span className="text-[var(--muted)]">
+                        {t.lookbook.itemsCount(look.items.length)}
+                      </span>
+                    </div>
+                  </button>
+                </Card3D>
               </m.article>
             );
           })}

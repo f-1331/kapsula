@@ -300,30 +300,30 @@ export function PhotoAnalyzerSection() {
                 {localize('Tez sinov (namunaviy matolar)')}
               </p>
               <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={() => testWithSampleGarment('Kulrang oversize hudi', '#4A4E57', '#D8D2C5', 'top')}
-                  className="px-2.5 py-1.5 text-[11px] border border-[var(--hairline)] bg-[var(--paper)] hover:border-[var(--ink)] cursor-pointer flex items-center gap-1.5"
-                >
-                  <span className="h-2.5 w-2.5 rounded-full bg-[#4A4E57]" />
-                  <span>{localize('Kulrang hudi')}</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => testWithSampleGarment('Zaytun kargo shim', '#5F6642', '#2E2B25', 'bottom')}
-                  className="px-2.5 py-1.5 text-[11px] border border-[var(--hairline)] bg-[var(--paper)] hover:border-[var(--ink)] cursor-pointer flex items-center gap-1.5"
-                >
-                  <span className="h-2.5 w-2.5 rounded-full bg-[#5F6642]" />
-                  <span>{localize('Zaytun kargo')}</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => testWithSampleGarment('Tuyarang palto', '#B98E5E', '#3E3228', 'outerwear')}
-                  className="px-2.5 py-1.5 text-[11px] border border-[var(--hairline)] bg-[var(--paper)] hover:border-[var(--ink)] cursor-pointer flex items-center gap-1.5"
-                >
-                  <span className="h-2.5 w-2.5 rounded-full bg-[#B98E5E]" />
-                  <span>{localize('Tuyarang palto')}</span>
-                </button>
+                {(
+                  [
+                    { full: 'Kulrang oversize hudi', short: 'Kulrang hudi', c1: '#4A4E57', c2: '#D8D2C5', cat: 'top' },
+                    { full: 'Zaytun kargo shim', short: 'Zaytun kargo', c1: '#5F6642', c2: '#2E2B25', cat: 'bottom' },
+                    { full: 'Tuyarang palto', short: 'Tuyarang palto', c1: '#B98E5E', c2: '#3E3228', cat: 'outerwear' },
+                    { full: 'Xon-atlas koʻylak', short: 'Xon-atlas koʻylak', c1: '#A8263A', c2: '#D9A74A', cat: 'dress' },
+                    { full: 'Qora lofer', short: 'Qora lofer', c1: '#1E1D1B', c2: '#6A4E35', cat: 'shoes' },
+                    { full: 'Shoper sumka', short: 'Shoper sumka', c1: '#6D4C38', c2: '#C8B9A6', cat: 'bag' },
+                    { full: 'Milliy doʻppi', short: 'Milliy doʻppi', c1: '#1A1C22', c2: '#F1EFEA', cat: 'accessory' },
+                  ] as const
+                ).map((preset) => (
+                  <button
+                    key={preset.full}
+                    type="button"
+                    onClick={() => testWithSampleGarment(preset.full, preset.c1, preset.c2, preset.cat)}
+                    className="px-2.5 py-1.5 text-[11px] border border-[var(--hairline)] bg-[var(--paper)] hover:border-[var(--ink)] cursor-pointer flex items-center gap-1.5"
+                  >
+                    <span
+                      className="h-2.5 w-2.5 rounded-full border border-black/15"
+                      style={{ backgroundColor: preset.c1 }}
+                    />
+                    <span>{localize(preset.short)}</span>
+                  </button>
+                ))}
               </div>
             </div>
 

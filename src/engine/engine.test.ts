@@ -7,6 +7,11 @@ import { UZ } from '../i18n/uz';
 import { LANGUAGE_OPTIONS, getDictionary, latinToCyrillicUz } from '../i18n/languages';
 import { DESIGN_THEMES, getDesignThemeById } from '../styles/themes';
 import { detectGarmentSubtype } from '../components/GarmentSilhouette';
+import { CONTACT_INFO } from '../config/contact';
+import QRCode from 'qrcode';
+import { estimateOutfitBudget, getGarmentSpec } from './garment-specs';
+import { buildOutfit3DScene } from './three-garment-builder';
+import { buildOutfitMeshGeometry } from './renderer3d';
 import { analyzeHarmony, classifyColor } from './color';
 import {
   findBestHarmonizeSwap,
@@ -246,8 +251,8 @@ describe('Stylist Engine — Coverage & Determinism', () => {
     expect(advice?.summaryUz.length).toBeGreaterThan(20);
   });
 
-  it('validates v4 expanded catalog, 10 site design themes, 5 languages, Cyrillic transliterator & 65 3D subtypes', () => {
-    expect(manifest.garments.length).toBeGreaterThanOrEqual(6000);
+  it('validates v4 expanded catalog, 10 site design themes, 5 languages, Cyrillic transliterator & 100 3D subtypes', () => {
+    expect(manifest.garments.length).toBeGreaterThanOrEqual(9600);
     expect(manifest.palettes.length).toBe(16);
     expect(manifest.looks.length).toBeGreaterThanOrEqual(30);
 
@@ -267,7 +272,86 @@ describe('Stylist Engine — Coverage & Determinism', () => {
 
     expect(detectGarmentSubtype('outerwear', 'outerwear-cape-noir-1', 'Keyp')).toBe('cape');
     expect(detectGarmentSubtype('outerwear', 'outerwear-kimono-sand-1', 'Kimono')).toBe('kimono');
+    expect(detectGarmentSubtype('outerwear', 'outerwear-shearling-1', 'Dublyonka')).toBe('shearling');
+    expect(detectGarmentSubtype('dress', 'dress-atlas_dress-1', 'Xon-atlas koʻylak')).toBe('atlas_dress');
+    expect(detectGarmentSubtype('shoes', 'shoes-heels-1', 'Baland tufli')).toBe('heels');
     expect(detectGarmentSubtype('bag', 'bag-saddle-espresso-1', 'Egar sumka')).toBe('saddle');
+    expect(detectGarmentSubtype('bag', 'bag-briefcase-1', 'Portfel')).toBe('briefcase');
     expect(detectGarmentSubtype('accessory', 'acc-bucket_hat-denim-1', 'Panama')).toBe('bucket_hat');
+    expect(detectGarmentSubtype('accessory', 'acc-doppi-noir-1', 'Milliy doʻppi')).toBe('doppi');
+  });
+
+  it('builds genuine volumetric 3D garment meshes with full Z depth across outfit slots', () => {
+    const pick = (cat: string) => manifest.garments.find((g) => g.category === cat)!;
+    const outer = pick('outerwear');
+    const top = pick('top');
+    const bottom = pick('bottom');
+    const shoes = pick('shoes');
+    const bag = pick('bag');
+    const acc = manifest.garments.find((g) => g.category === 'accessory' && g.id.includes('doppi')) ?? pick('accessory');
+
+    const byId = new Map([outer, top, bottom, shoes, bag, acc].map((g) => [g.id, g]));
+    const { tris, slotGarmentMap } = buildOutfitMeshGeometry(
+      {
+        outerwear: outer.id,
+        top: top.id,
+        bottom: bottom.id,
+        dress: null,
+        shoes: shoes.id,
+        bag: bag.id,
+        accessory1: acc.id,
+        accessory2: null,
+      },
+      byId,
+      false,
+    );
+
+    expect(slotGarmentMap.size).toBe(6);
+    expect(tris.length).toBeGreaterThan(500);
+    let minZ = Infinity;
+    let maxZ = -Infinity;
+    for (const tri of tris) {
+      minZ = Math.min(minZ, tri.a.z, tri.b.z, tri.c.z);
+      maxZ = Math.max(maxZ, tri.a.z, tri.b.z, tri.c.z);
+    }
+    expect(maxZ - minZ).toBeGreaterThan(0.4);
+  });
+
+  it('builds Three.js PBR 3D scene graph, QR SVG codes, textile specs & phone contact', async () => {
+    expect(CONTACT_INFO.phoneDisplay).toBe('+998 77 272 3101');
+    expect(CONTACT_INFO.phoneHref).toBe('tel:+998772723101');
+
+    const pick = (cat: string) => manifest.garments.find((g) => g.category === cat)!;
+    const outer = pick('outerwear');
+    const top = pick('top');
+    const bottom = pick('bottom');
+    const shoes = pick('shoes');
+    const bag = pick('bag');
+    const byId = new Map([outer, top, bottom, shoes, bag].map((g) => [g.id, g]));
+
+    const built = buildOutfit3DScene(
+      {
+        outerwear: outer.id,
+        top: top.id,
+        bottom: bottom.id,
+        dress: null,
+        shoes: shoes.id,
+        bag: bag.id,
+        accessory1: null,
+        accessory2: null,
+      },
+      byId,
+    );
+    expect(built.interactiveMeshes.length).toBeGreaterThan(15);
+    expect(Object.keys(built.slotGroups).length).toBe(5);
+
+    const spec = getGarmentSpec(outer);
+    expect(spec.minUzs).toBeGreaterThan(100_000);
+    const budget = estimateOutfitBudget([outer, top, bottom, shoes, bag]);
+    expect(budget.maxUzs).toBeGreaterThan(budget.minUzs);
+
+    const svg = await QRCode.toString(CONTACT_INFO.siteUrl, { type: 'svg' });
+    expect(svg).toContain('<svg');
+    expect(svg).toContain('</svg>');
   });
 });

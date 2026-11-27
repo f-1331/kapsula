@@ -20,6 +20,7 @@ import {
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Category, Garment } from '../data/schema';
 import { analyzeGarmentsHarmony } from '../engine/color';
+import { estimateOutfitBudget, getGarmentSpec } from '../engine/garment-specs';
 import {
   boardSlotsToGarments,
   findBestHarmonizeSwap,
@@ -36,20 +37,156 @@ import { exportBoardPng } from '../utils/export-png';
 import { AtelierSlot } from '../components/AtelierSlot';
 import { AtelierTrayItem } from '../components/AtelierTrayItem';
 import { GarmentImage } from '../components/GarmentImage';
+import {
+  detectGarmentSubtype,
+  type GarmentSubtype,
+} from '../components/GarmentSilhouette';
+import { QrContactModal } from '../components/QrContactModal';
 import { RangLaboratoriyasi } from '../components/RangLaboratoriyasi';
 import { Studio3DStage } from '../components/Studio3DStage';
 
-const SUBTYPE_KEYS: Array<{ id: string; label: string; keyword: string }> = [
-  { id: 'all', label: 'Barcha turlar', keyword: '' },
-  { id: 'hoodie', label: 'Hudi', keyword: 'hudi' },
-  { id: 'sweatshirt', label: 'Svitshot', keyword: 'svitshot' },
-  { id: 'palto', label: 'Palto', keyword: 'palto' },
-  { id: 'puffer', label: 'Puffer', keyword: 'puffer' },
-  { id: 'trench', label: 'Plash', keyword: 'yomgʻirplash' },
-  { id: 'cargo', label: 'Kargo', keyword: 'kargo' },
-  { id: 'denim', label: 'Jinsi', keyword: 'jinsi' },
-  { id: 'sneakers', label: 'Krossovka', keyword: 'krossovka' },
+interface SubtypeChipDef {
+  id: GarmentSubtype;
+  label: string;
+}
+
+const SUBTYPE_CHIPS_BY_CATEGORY: Record<Category, SubtypeChipDef[]> = {
+  outerwear: [
+    { id: 'palto', label: 'Palto' },
+    { id: 'peacoat', label: 'Pikat' },
+    { id: 'mac_coat', label: 'Makintosh' },
+    { id: 'trench', label: 'Trench / Plash' },
+    { id: 'cape', label: 'Keyp' },
+    { id: 'kimono', label: 'Kimono' },
+    { id: 'blazer', label: 'Blazer / Pijak' },
+    { id: 'tuxedo_blazer', label: 'Smoking pijak' },
+    { id: 'fur_coat', label: 'Shuba / Moʻyna' },
+    { id: 'shearling', label: 'Dublyonka' },
+    { id: 'puffer', label: 'Puffer' },
+    { id: 'cropped_puffer', label: 'Qisqa puffer' },
+    { id: 'parka', label: 'Parka' },
+    { id: 'anorak', label: 'Anorak' },
+    { id: 'bomber', label: 'Bomber' },
+    { id: 'varsity', label: 'Varsity kurtka' },
+    { id: 'leather_jacket', label: 'Charm kurtka' },
+    { id: 'denim_jacket', label: 'Jinsi kurtka' },
+    { id: 'vest', label: 'Jilet' },
+    { id: 'cardigan', label: 'Kardigan' },
+  ],
+  top: [
+    { id: 'hoodie', label: 'Hudi' },
+    { id: 'ziphoodie', label: 'Zamokli hudi' },
+    { id: 'sweatshirt', label: 'Svitshot' },
+    { id: 'overshirt', label: 'Overshort' },
+    { id: 'turtleneck', label: 'Vodolazka' },
+    { id: 'halfzip_knit', label: 'Yarim zamok sviter' },
+    { id: 'vneck_sweater', label: 'V-yoqa sviter' },
+    { id: 'sweater', label: 'Sviter' },
+    { id: 'shirt', label: 'Koʻylak' },
+    { id: 'silk_blouse', label: 'Ipak bluza' },
+    { id: 'polo', label: 'Polo' },
+    { id: 'knit_polo', label: 'Trikotaj polo' },
+    { id: 'longsleeve', label: 'Longsliv' },
+    { id: 'track_top', label: 'Olimpiyka' },
+    { id: 'tunic', label: 'Tunika' },
+    { id: 'crop_top', label: 'Krop-top' },
+    { id: 'tank_top', label: 'Mayka / Top' },
+    { id: 'tee', label: 'Futbolka' },
+  ],
+  bottom: [
+    { id: 'wide_trousers', label: 'Keng shim' },
+    { id: 'pleated_trousers', label: 'Buxma shim' },
+    { id: 'slim_trousers', label: 'Klassik shim' },
+    { id: 'culottes', label: 'Kyulot shim' },
+    { id: 'chinos', label: 'Chinos' },
+    { id: 'corduroy_pants', label: 'Velvet shim' },
+    { id: 'cargo', label: 'Kargo shim' },
+    { id: 'joggers', label: 'Jogger' },
+    { id: 'track_pants', label: 'Sport shim' },
+    { id: 'leggings', label: 'Leggins' },
+    { id: 'denim', label: 'Jinsi' },
+    { id: 'shorts', label: 'Shortik' },
+    { id: 'skirt', label: 'Yubka' },
+    { id: 'a_line_skirt', label: 'A-fason yubka' },
+  ],
+  dress: [
+    { id: 'midi_silk', label: 'Ipak midi koʻylak' },
+    { id: 'cocktail_dress', label: 'Kokteyl koʻylak' },
+    { id: 'maxi_sundress', label: 'Yozgi sarafan' },
+    { id: 'blazer_dress', label: 'Blazer-koʻylak' },
+    { id: 'aline_dress', label: 'A-siluet koʻylak' },
+    { id: 'atlas_dress', label: 'Xon-atlas koʻylak' },
+    { id: 'shirt_dress', label: 'Koʻylak-rubashka' },
+    { id: 'knit_dress', label: 'Trikotaj koʻylak' },
+    { id: 'hoodie_dress', label: 'Hudi-koʻylak' },
+  ],
+  shoes: [
+    { id: 'sneakers', label: 'Krossovka' },
+    { id: 'canvas_sneakers', label: 'Keda' },
+    { id: 'running_shoes', label: 'Yugurish krossovka' },
+    { id: 'chelsea_boots', label: 'Chelsi etik' },
+    { id: 'lug_boots', label: 'Massiv botinka' },
+    { id: 'loafers', label: 'Lofer' },
+    { id: 'moccasins', label: 'Mokasin' },
+    { id: 'derbies', label: 'Derbi / Oksford' },
+    { id: 'heels', label: 'Baland tufli' },
+    { id: 'ballet_flats', label: 'Baletka' },
+    { id: 'mules', label: 'Myuli / Sabo' },
+    { id: 'sandals', label: 'Sandal' },
+  ],
+  bag: [
+    { id: 'tote', label: 'Shoper' },
+    { id: 'woven_tote', label: 'Toʻqima shoper' },
+    { id: 'briefcase', label: 'Portfel' },
+    { id: 'crossbody', label: 'Krossbodi' },
+    { id: 'baguette', label: 'Baget sumka' },
+    { id: 'belt_bag', label: 'Bel sumkasi' },
+    { id: 'saddle', label: 'Egar sumka' },
+    { id: 'backpack', label: 'Ryukzak' },
+    { id: 'duffle', label: 'Sayohat sumkasi' },
+    { id: 'clutch', label: 'Klatch' },
+  ],
+  accessory: [
+    { id: 'scarf', label: 'Sharf' },
+    { id: 'silk_scarf', label: 'Ipak roʻmol' },
+    { id: 'cap', label: 'Kepka' },
+    { id: 'bucket_hat', label: 'Panama' },
+    { id: 'fedora', label: 'Fedora shlyapa' },
+    { id: 'doppi', label: 'Milliy doʻppi' },
+    { id: 'beanie', label: 'Shapka' },
+    { id: 'sunglasses', label: 'Koʻzoynak' },
+    { id: 'belt', label: 'Kamar' },
+    { id: 'watch', label: 'Soat' },
+    { id: 'tie', label: 'Galstuk' },
+    { id: 'bowtie', label: 'Babochka' },
+    { id: 'gloves', label: 'Qoʻlqop' },
+    { id: 'bracelet', label: 'Bilaguzuk' },
+    { id: 'earrings', label: 'Sirgʻa' },
+    { id: 'necklace', label: 'Marjon / Zanjir' },
+    { id: 'umbrella', label: 'Soyabon' },
+  ],
+};
+
+const FEATURED_SUBTYPES: SubtypeChipDef[] = [
+  { id: 'hoodie', label: 'Hudi' },
+  { id: 'sweatshirt', label: 'Svitshot' },
+  { id: 'shirt', label: 'Koʻylak' },
+  { id: 'tee', label: 'Futbolka' },
+  { id: 'palto', label: 'Palto' },
+  { id: 'trench', label: 'Trench / Plash' },
+  { id: 'puffer', label: 'Puffer' },
+  { id: 'blazer', label: 'Blazer / Pijak' },
+  { id: 'cargo', label: 'Kargo shim' },
+  { id: 'denim', label: 'Jinsi' },
+  { id: 'midi_silk', label: 'Ipak midi koʻylak' },
+  { id: 'atlas_dress', label: 'Xon-atlas koʻylak' },
+  { id: 'sneakers', label: 'Krossovka' },
+  { id: 'loafers', label: 'Lofer' },
+  { id: 'tote', label: 'Shoper' },
+  { id: 'doppi', label: 'Milliy doʻppi' },
 ];
+
+const ALL_SUBTYPE_CHIPS: SubtypeChipDef[] = Object.values(SUBTYPE_CHIPS_BY_CATEGORY).flat();
 
 const TRAY_PAGE_SIZE = 36;
 
@@ -120,14 +257,17 @@ export function AtelierSection() {
   const deleteSavedOutfit = useKapsulaStore((s) => s.deleteSavedOutfit);
   const loadItemsToBoard = useKapsulaStore((s) => s.loadItemsToBoard);
   const setAtelierBrandFilter = useKapsulaStore((s) => s.setAtelierBrandFilter);
+  const openColorsInLab = useKapsulaStore((s) => s.openColorsInLab);
+  const setActiveView = useKapsulaStore((s) => s.setActiveView);
   const incrementRandomSeed = useKapsulaStore((s) => s.incrementRandomSeed);
   const setScoreAnnouncement = useKapsulaStore((s) => s.setScoreAnnouncement);
   const dismissMissingNotice = useKapsulaStore((s) => s.dismissMissingNotice);
   const buildShareUrl = useKapsulaStore((s) => s.buildShareUrl);
 
-  // Tray filters & pagination for 3,894+ garments
+  // Tray filters & pagination for 9,600+ garments across 100 subtypes
   const [activeCategory, setActiveCategory] = useState<Category | 'all'>('all');
-  const [activeSubtype, setActiveSubtype] = useState<string>('all');
+  const [activeSubtype, setActiveSubtype] = useState<GarmentSubtype | 'all'>('all');
+  const [showAllSubtypes, setShowAllSubtypes] = useState(false);
   const [searchText, setSearchText] = useState('');
   const [visibleLimit, setVisibleLimit] = useState(TRAY_PAGE_SIZE);
   const [filterWeather, setFilterWeather] = useState(false);
@@ -146,14 +286,24 @@ export function AtelierSection() {
     { id: 'bag', label: t.categories.bag },
     { id: 'accessory', label: t.categories.accessory },
   ];
-  const subtypeChips = SUBTYPE_KEYS.map((c) => ({
-    ...c,
-    label: c.id === 'all' ? t.categories.all : localize(c.label),
-  }));
+  const rawSubtypeList =
+    activeCategory === 'all'
+      ? showAllSubtypes
+        ? ALL_SUBTYPE_CHIPS
+        : FEATURED_SUBTYPES
+      : SUBTYPE_CHIPS_BY_CATEGORY[activeCategory];
+  const subtypeChips: Array<{ id: GarmentSubtype | 'all'; label: string }> = [
+    { id: 'all', label: t.categories.all },
+    ...rawSubtypeList.map((c) => ({
+      id: c.id,
+      label: localize(c.label),
+    })),
+  ];
   const [boardMode, setBoardMode] = useState<'2d' | '3d'>('3d');
   const [mobilePanel, setMobilePanel] = useState<'board' | 'tray' | 'lab'>('board');
   const [mobileTrayOpen, setMobileTrayOpen] = useState(false);
   const [savedOpen, setSavedOpen] = useState(false);
+  const [qrOpen, setQrOpen] = useState(false);
   const [pickerSlot, setPickerSlot] = useState<SlotKey | null>(null);
   const [pickerSearch, setPickerSearch] = useState('');
   const [statusFeedback, setStatusFeedback] = useState<string | null>(null);
@@ -271,7 +421,6 @@ export function AtelierSection() {
   // Filtered tray garments across 3,894+ branded items + user photos
   const filteredTrayGarments = useMemo(() => {
     const q = searchText.trim().toLowerCase();
-    const subtypeKw = SUBTYPE_KEYS.find((c) => c.id === activeSubtype)?.keyword ?? '';
 
     return manifest.garments.filter((g) => {
       if (onlyCustomFilter && !g.isUserUploaded) return false;
@@ -283,8 +432,8 @@ export function AtelierSection() {
         return false;
       }
       if (
-        subtypeKw &&
-        !`${g.name_uz} ${g.name_en} ${g.id} ${g.brand ?? ''}`.toLowerCase().includes(subtypeKw)
+        activeSubtype !== 'all' &&
+        detectGarmentSubtype(g.category, g.id, `${g.name_uz} ${g.name_en}`) !== activeSubtype
       ) {
         return false;
       }
@@ -606,7 +755,7 @@ export function AtelierSection() {
         </span>
       </div>
 
-      {/* Search across 6,240+ garments */}
+      {/* Search across 9,600+ garments */}
       <input
         type="search"
         value={searchText}
@@ -615,8 +764,12 @@ export function AtelierSection() {
         className="mb-2.5 min-h-[38px] w-full border border-[var(--hairline-strong)] bg-[var(--paper)] px-2.5 text-xs text-[var(--ink)] placeholder:text-[var(--muted)]"
       />
 
-      {/* Subtype quick chips (Hudi, Svitshot, Palto, Kargo...) */}
-      <div className="flex flex-wrap gap-1 mb-2.5">
+      {/* Category-aware Subtype Chips (100 garment types) */}
+      <div
+        className={`flex flex-wrap gap-1 mb-2.5 ${
+          showAllSubtypes || activeCategory !== 'all' ? 'max-h-[120px] overflow-y-auto editorial-scroll pr-0.5' : ''
+        }`}
+      >
         {subtypeChips.map((chip) => {
           const active = activeSubtype === chip.id;
           return (
@@ -624,7 +777,7 @@ export function AtelierSection() {
               key={chip.id}
               type="button"
               onClick={() => setActiveSubtype(chip.id)}
-              className={`min-h-[30px] px-2 py-0.5 text-[10px] border transition-colors cursor-pointer ${
+              className={`min-h-[28px] px-2 py-0.5 text-[10px] border transition-colors cursor-pointer ${
                 active
                   ? 'border-[var(--ink)] bg-[var(--ink)] text-[var(--paper)]'
                   : 'border-[var(--hairline)] bg-[var(--paper)] text-[var(--ink-2)] hover:border-[var(--ink)]'
@@ -634,6 +787,17 @@ export function AtelierSection() {
             </button>
           );
         })}
+        {activeCategory === 'all' && (
+          <button
+            type="button"
+            onClick={() => setShowAllSubtypes((v) => !v)}
+            className="min-h-[28px] px-2 py-0.5 text-[10px] border border-dashed border-[var(--accent)] text-[var(--accent)] hover:bg-[var(--accent-soft)] transition-colors cursor-pointer font-medium"
+          >
+            {showAllSubtypes
+              ? localize('Yigʻish')
+              : localize(`+ Barcha turlar (${ALL_SUBTYPE_CHIPS.length})`)}
+          </button>
+        )}
       </div>
 
       {/* Weather, Palette, Brand & Custom Photo toggles */}
@@ -698,7 +862,11 @@ export function AtelierSection() {
             <button
               key={tab.id}
               type="button"
-              onClick={() => setActiveCategory(tab.id)}
+              onClick={() => {
+                setActiveCategory(tab.id);
+                setActiveSubtype('all');
+                setVisibleLimit(TRAY_PAGE_SIZE);
+              }}
               className={`min-h-[32px] px-2 py-1 text-[10px] uppercase tracking-[0.09em] border transition-colors cursor-pointer ${
                 active
                   ? 'border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)] font-semibold'
@@ -926,6 +1094,13 @@ export function AtelierSection() {
                   className="min-h-[42px] px-2.5 py-2 text-[11px] uppercase tracking-[0.09em] border border-[var(--hairline-strong)] bg-[var(--paper-2)] text-[var(--ink)] hover:border-[var(--ink)] cursor-pointer font-tabular"
                 >
                   {t.atelier.toolbar.savedList} ({savedOutfits.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setQrOpen(true)}
+                  className="min-h-[42px] px-2.5 py-2 text-[11px] uppercase tracking-[0.09em] border border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)] font-semibold hover:bg-[var(--accent)] hover:text-[var(--accent-ink)] transition-colors cursor-pointer"
+                >
+                  QR Kod
                 </button>
 
                 {/* 2D Taxta / 3D Sahna Switch */}
@@ -1163,6 +1338,37 @@ export function AtelierSection() {
                 </div>
               )}
 
+              {/* Atelier Textile Specs & Estimated Budget Bar */}
+              {placedGarments.length > 0 && (
+                <div className="panel-3d border border-[var(--hairline)] bg-[var(--paper-elevated)] p-3.5 sm:p-4 space-y-2.5">
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[var(--hairline)] pb-2">
+                    <span className="micro-label text-[var(--muted)]">
+                      {localize('Mato & Taxminiy byudjet')}
+                    </span>
+                    <span className="text-xs font-semibold font-tabular text-[var(--ink)]">
+                      {localize(estimateOutfitBudget(placedGarments).labelUz)}
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {placedGarments.slice(0, 5).map((item) => {
+                      const sp = getGarmentSpec(item);
+                      return (
+                        <span
+                          key={item.id}
+                          className="inline-flex items-center gap-1.5 border border-[var(--hairline)] bg-[var(--paper)] px-2 py-1 text-[10px] text-[var(--ink-2)]"
+                        >
+                          <span
+                            className="h-2 w-2 rounded-full border border-[var(--ink)]/20 shrink-0"
+                            style={{ backgroundColor: item.color }}
+                          />
+                          <span>{localize(sp.fabricUz)}</span>
+                        </span>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
               {savedOpen && (
                 <div className="border border-[var(--hairline-strong)] bg-[var(--paper-elevated)] p-4">
                   <div className="flex items-center justify-between border-b border-[var(--hairline)] pb-2 mb-3">
@@ -1226,9 +1432,32 @@ export function AtelierSection() {
             <div
               className={`${
                 mobilePanel === 'lab' ? 'block' : 'hidden'
-              } md:block md:col-span-5 xl:col-span-4 md:order-2 xl:order-3`}
+              } md:block md:col-span-5 xl:col-span-4 md:order-2 xl:order-3 space-y-3`}
             >
               <RangLaboratoriyasi analysis={harmony} extraTips={contextualTips} />
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const cols = Array.from(new Set(placedGarments.map((g) => g.color))).slice(0, 5);
+                    if (cols.length >= 2) {
+                      openColorsInLab(cols);
+                    } else {
+                      setActiveView('ranglar');
+                    }
+                  }}
+                  className="min-h-[40px] border border-[var(--hairline-strong)] bg-[var(--paper-elevated)] px-3 py-1.5 text-[10px] uppercase tracking-[0.1em] text-[var(--ink)] hover:border-[var(--ink)] cursor-pointer"
+                >
+                  {localize('Ranglar laboratoriyasi')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveView('garderobim')}
+                  className="min-h-[40px] border border-[var(--hairline-strong)] bg-[var(--paper-elevated)] px-3 py-1.5 text-[10px] uppercase tracking-[0.1em] text-[var(--ink)] hover:border-[var(--ink)] cursor-pointer"
+                >
+                  {t.nav.garderobim} ({savedOutfits.length})
+                </button>
+              </div>
             </div>
           </div>
 
@@ -1407,6 +1636,8 @@ export function AtelierSection() {
           </div>
         </div>
       )}
+
+      <QrContactModal open={qrOpen} initialMode="outfit" onClose={() => setQrOpen(false)} />
     </section>
   );
 }

@@ -1,13 +1,16 @@
 import { AnimatePresence, useReducedMotion } from 'motion/react';
 import * as m from 'motion/react-m';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { CONTACT_INFO } from '../config/contact';
 import type { Garment, Look } from '../data/schema';
 import { analyzeGarmentsHarmony } from '../engine/color';
+import { estimateOutfitBudget, getGarmentSpec } from '../engine/garment-specs';
 import { garmentsToBoardSlots } from '../engine/stylist';
 import { useTranslation } from '../i18n/useTranslation';
 import { useKapsulaStore } from '../store/useKapsulaStore';
 import { GarmentImage } from './GarmentImage';
 import { LookImage } from './LookImage';
+import { QrCodeCard } from './QrCodeCard';
 import { Studio3DStage } from './Studio3DStage';
 
 interface LookbookModalProps {
@@ -26,7 +29,11 @@ export function LookbookModal({
   const { t, localize } = useTranslation();
   const manifest = useKapsulaStore((s) => s.manifest);
   const loadItemsToBoard = useKapsulaStore((s) => s.loadItemsToBoard);
+  const saveOutfit = useKapsulaStore((s) => s.saveOutfit);
+  const openColorsInLab = useKapsulaStore((s) => s.openColorsInLab);
   const setActiveView = useKapsulaStore((s) => s.setActiveView);
+  const [savedNotice, setSavedNotice] = useState(false);
+  const [showQr, setShowQr] = useState(false);
   const reducedMotion = useReducedMotion();
   const modalRef = useRef<HTMLDivElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
@@ -43,6 +50,7 @@ export function LookbookModal({
 
   useEffect(() => {
     setPreviewMode('poster');
+    setShowQr(false);
   }, [look?.id]);
 
   // Store previously focused element, lock body scroll, trap focus & handle Esc
@@ -270,37 +278,64 @@ export function LookbookModal({
                   </span>
                 </div>
 
-                {/* Item cutouts list */}
-                <ul className="space-y-2.5 mb-6">
-                  {lookItems.map((item) => (
-                    <li
-                      key={item.id}
-                      style={{ backgroundColor: 'var(--paper-elevated)' }}
-                      className="flex items-center gap-3.5 border border-[var(--hairline)] bg-[var(--paper-elevated)] p-2.5"
-                    >
-                      <div className="h-14 w-14 shrink-0 flex items-center justify-center bg-[var(--paper)] p-1 border border-[var(--hairline)]">
-                        <GarmentImage garment={item} className="max-h-full w-full" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="text-sm font-medium text-[var(--ink)] truncate">
-                          {localize(item.name_uz)}
+                {/* Item cutouts list with material specs */}
+                <ul className="space-y-2.5 mb-5">
+                  {lookItems.map((item) => {
+                    const spec = getGarmentSpec(item);
+                    return (
+                      <li
+                        key={item.id}
+                        style={{ backgroundColor: 'var(--paper-elevated)' }}
+                        className="flex items-center gap-3.5 border border-[var(--hairline)] bg-[var(--paper-elevated)] p-2.5"
+                      >
+                        <div className="h-14 w-14 shrink-0 flex items-center justify-center bg-[var(--paper)] p-1 border border-[var(--hairline)]">
+                          <GarmentImage garment={item} className="max-h-full w-full" />
                         </div>
-                        <div className="micro-label text-[10px] text-[var(--muted)] mt-0.5">
-                          {t.categories[item.category]}
-                          {item.brand ? ` · ${item.brand}` : ''}
+                        <div className="min-w-0 flex-1">
+                          <div className="text-sm font-medium text-[var(--ink)] truncate">
+                            {localize(item.name_uz)}
+                          </div>
+                          <div className="micro-label text-[10px] text-[var(--muted)] mt-0.5 truncate">
+                            {t.categories[item.category]}
+                            {item.brand ? ` · ${item.brand}` : ''} · {localize(spec.fabricUz)}
+                          </div>
                         </div>
-                      </div>
-                      <span
-                        className="h-3.5 w-3.5 rounded-full border border-[var(--ink)]/20 shrink-0 mr-1"
-                        style={{ backgroundColor: item.color }}
-                        title={item.color}
-                      />
-                    </li>
-                  ))}
+                        <span
+                          className="h-3.5 w-3.5 rounded-full border border-[var(--ink)]/20 shrink-0 mr-1"
+                          style={{ backgroundColor: item.color }}
+                          title={item.color}
+                        />
+                      </li>
+                    );
+                  })}
                 </ul>
+
+                {/* Estimated UZS Capsule Budget */}
+                {lookItems.length > 0 && (
+                  <div className="mb-4 flex items-center justify-between gap-2 border border-[var(--hairline)] bg-[var(--paper-2)]/70 px-3 py-2 text-xs">
+                    <span className="text-[var(--muted)] uppercase tracking-[0.08em] text-[10px]">
+                      {localize('Taxminiy kapsula byudjeti')}
+                    </span>
+                    <span className="font-semibold font-tabular text-[var(--ink)]">
+                      {localize(estimateOutfitBudget(lookItems).labelUz)}
+                    </span>
+                  </div>
+                )}
+
+                {showQr && (
+                  <div className="mb-4 max-w-[230px] mx-auto">
+                    <QrCodeCard
+                      value={`${CONTACT_INFO.siteUrl}/?items=${encodeURIComponent(look.items.join(','))}#atelye`}
+                      title={look.title_uz}
+                      subtitle="Obrazni telefonda ochish uchun"
+                      size={140}
+                      downloadName={`kapsula-${look.id}`}
+                    />
+                  </div>
+                )}
               </div>
 
-              <div className="border-t border-[var(--hairline)] pt-4 space-y-3">
+              <div className="border-t border-[var(--hairline)] pt-4 space-y-2.5">
                 <button
                   type="button"
                   onClick={handleOpenInAtelier}
@@ -308,6 +343,49 @@ export function LookbookModal({
                 >
                   {t.lookbook.openInAtelier}
                 </button>
+
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const ok = saveOutfit(
+                        look.items,
+                        look.title_uz ?? `Lookbook · ${t.occasions[look.occasion].label}`,
+                      );
+                      if (ok) {
+                        setSavedNotice(true);
+                        window.setTimeout(() => setSavedNotice(false), 1800);
+                      }
+                    }}
+                    className="min-h-[40px] border border-[var(--hairline-strong)] px-2 py-1.5 text-[10px] uppercase tracking-[0.08em] text-[var(--ink)] hover:border-[var(--ink)] cursor-pointer"
+                  >
+                    {savedNotice ? localize('Saqlandi ✓') : t.atelier.toolbar.save}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const cols = Array.from(new Set(lookItems.map((g) => g.color))).slice(0, 5);
+                      if (cols.length >= 2) {
+                        onClose();
+                        openColorsInLab(cols);
+                      }
+                    }}
+                    className="min-h-[40px] border border-[var(--hairline-strong)] px-2 py-1.5 text-[10px] uppercase tracking-[0.08em] text-[var(--ink)] hover:border-[var(--ink)] cursor-pointer"
+                  >
+                    {localize('Ranglar')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowQr((v) => !v)}
+                    className={`min-h-[40px] border px-2 py-1.5 text-[10px] uppercase tracking-[0.08em] cursor-pointer ${
+                      showQr
+                        ? 'border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-ink)] font-semibold'
+                        : 'border-[var(--hairline-strong)] text-[var(--ink)] hover:border-[var(--ink)]'
+                    }`}
+                  >
+                    {localize('QR Kod')}
+                  </button>
+                </div>
 
                 <div className="flex items-center justify-between gap-2">
                   <button

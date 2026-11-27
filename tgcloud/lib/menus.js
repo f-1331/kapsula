@@ -10,16 +10,20 @@ export async function getMiniAppUrl() {
 export async function buildMainMenu(access) {
   const webAppUrl = await getMiniAppUrl();
   const rows = [
-    [{ text: '✨ Kapsula Mini App (6,240+ kiyim · 3D)', web_app: { url: webAppUrl } }],
+    [{ text: '✨ Kapsula Mini App (9,600+ kiyim · 3D)', web_app: { url: webAppUrl } }],
     [
       { text: '🎯 Stilist', web_app: { url: `${webAppUrl}/?tab=stilist` } },
-      { text: '📐 Atelye', web_app: { url: `${webAppUrl}/?tab=atelye` } },
+      { text: '📐 3D Atelye', web_app: { url: `${webAppUrl}/?tab=atelye` } },
       { text: '📸 Foto-tahlil', web_app: { url: `${webAppUrl}/?tab=skaner` } },
     ],
     [
+      { text: '📖 Lookbook', web_app: { url: `${webAppUrl}/?tab=lookbook` } },
       { text: '🏷 Brendlar', web_app: { url: `${webAppUrl}/?tab=brendlar` } },
-      { text: '📅 7-kunlik reja', web_app: { url: `${webAppUrl}/?tab=garderobim` } },
       { text: '🎨 Ranglar', web_app: { url: `${webAppUrl}/?tab=ranglar` } },
+    ],
+    [
+      { text: '📅 7-kunlik reja', web_app: { url: `${webAppUrl}/?tab=garderobim` } },
+      { text: '📋 Saqlangan obrazlarim', callback_data: 'user:saved' },
     ],
     [
       { text: '🌦 Ob-havo va tavsiya', callback_data: 'user:weather' },
@@ -38,8 +42,9 @@ export async function buildMainMenu(access) {
 
 export function buildReplyKeyboard(access) {
   const keyboard = [
-    [{ text: '🎯 Stilist' }, { text: '📸 Foto-tahlil' }, { text: '🌦 Ob-havo' }],
-    [{ text: '🏫 Maktab / Universitet' }, { text: '🏷 Brendlar' }, { text: '🏙 Shahar' }],
+    [{ text: '🎯 Stilist' }, { text: '📐 3D Atelye' }, { text: '📸 Foto-tahlil' }],
+    [{ text: '🌦 Ob-havo' }, { text: '📋 Obrazlarim' }, { text: '🏙 Shahar' }],
+    [{ text: '🏫 Maktab / Universitet' }, { text: '🏷 Brendlar' }, { text: '📞 Aloqa' }],
   ];
 
   if (access.isOwner) {

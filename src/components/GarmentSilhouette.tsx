@@ -2,78 +2,113 @@ import { useId } from 'react';
 import type { Category } from '../data/schema';
 
 export type GarmentSubtype =
-  // Outerwear (15)
+  // Outerwear (20)
   | 'palto'
   | 'peacoat'
+  | 'mac_coat'
   | 'trench'
   | 'cape'
   | 'kimono'
   | 'blazer'
+  | 'tuxedo_blazer'
+  | 'fur_coat'
+  | 'shearling'
   | 'puffer'
   | 'cropped_puffer'
   | 'parka'
+  | 'anorak'
   | 'bomber'
   | 'varsity'
   | 'leather_jacket'
   | 'denim_jacket'
   | 'vest'
   | 'cardigan'
-  // Tops (13)
+  // Tops (18)
   | 'hoodie'
   | 'ziphoodie'
   | 'sweatshirt'
   | 'overshirt'
   | 'turtleneck'
+  | 'halfzip_knit'
+  | 'vneck_sweater'
   | 'sweater'
   | 'shirt'
   | 'silk_blouse'
   | 'polo'
+  | 'knit_polo'
   | 'longsleeve'
   | 'track_top'
   | 'tunic'
+  | 'crop_top'
+  | 'tank_top'
   | 'tee'
-  // Bottoms (9)
+  // Bottoms (14)
   | 'wide_trousers'
   | 'pleated_trousers'
+  | 'slim_trousers'
+  | 'culottes'
   | 'chinos'
+  | 'corduroy_pants'
   | 'cargo'
   | 'joggers'
   | 'track_pants'
+  | 'leggings'
   | 'denim'
   | 'shorts'
   | 'skirt'
-  // Dresses (4)
+  | 'a_line_skirt'
+  // Dresses (9)
   | 'midi_silk'
+  | 'cocktail_dress'
+  | 'maxi_sundress'
+  | 'blazer_dress'
+  | 'aline_dress'
+  | 'atlas_dress'
   | 'shirt_dress'
   | 'knit_dress'
   | 'hoodie_dress'
-  // Shoes (7)
+  // Shoes (12)
   | 'sneakers'
+  | 'canvas_sneakers'
   | 'running_shoes'
   | 'chelsea_boots'
   | 'lug_boots'
   | 'loafers'
+  | 'moccasins'
   | 'derbies'
+  | 'heels'
+  | 'ballet_flats'
+  | 'mules'
   | 'sandals'
-  // Bags (6)
+  // Bags (10)
   | 'tote'
+  | 'woven_tote'
+  | 'briefcase'
   | 'crossbody'
+  | 'baguette'
+  | 'belt_bag'
   | 'saddle'
   | 'backpack'
   | 'duffle'
   | 'clutch'
-  // Accessories (11)
+  // Accessories (17)
   | 'scarf'
   | 'silk_scarf'
   | 'cap'
   | 'bucket_hat'
+  | 'fedora'
+  | 'doppi'
   | 'beanie'
   | 'sunglasses'
   | 'belt'
   | 'watch'
   | 'tie'
+  | 'bowtie'
   | 'gloves'
-  | 'bracelet';
+  | 'bracelet'
+  | 'earrings'
+  | 'necklace'
+  | 'umbrella';
 
 interface GarmentSilhouetteProps {
   category: Category;
@@ -94,11 +129,16 @@ export function detectGarmentSubtype(
   if (category === 'outerwear') {
     if (s.includes('cape') || s.includes('keyp') || s.includes('nakidka')) return 'cape';
     if (s.includes('kimono')) return 'kimono';
+    if (s.includes('fur_coat') || s.includes('shuba') || s.includes('moʻyna')) return 'fur_coat';
+    if (s.includes('shearling') || s.includes('dublyonka')) return 'shearling';
+    if (s.includes('mac_coat') || s.includes('makintosh')) return 'mac_coat';
+    if (s.includes('tuxedo') || s.includes('smoking')) return 'tuxedo_blazer';
     if (s.includes('cropped_puffer') || s.includes('kalta puffer')) return 'cropped_puffer';
     if (s.includes('peacoat') || s.includes('bortli')) return 'peacoat';
     if (s.includes('trench') || s.includes('yomgʻirplash')) return 'trench';
     if (s.includes('blazer') || s.includes('jaket')) return 'blazer';
     if (s.includes('puffer') || s.includes('quilted')) return 'puffer';
+    if (s.includes('anorak') || s.includes('vetrovka')) return 'anorak';
     if (s.includes('parka')) return 'parka';
     if (s.includes('varsity') || s.includes('kollej')) return 'varsity';
     if (s.includes('leather') || s.includes('charm')) return 'leather_jacket';
@@ -109,15 +149,20 @@ export function detectGarmentSubtype(
     return 'palto';
   }
   if (category === 'top') {
-    if (s.includes('ziphoodie') || s.includes('zip-up') || s.includes('zamokli')) return 'ziphoodie';
+    if (s.includes('ziphoodie') || s.includes('zip-up') || s.includes('zamokli hudi')) return 'ziphoodie';
     if (s.includes('hoodie') || s.includes('hudi')) return 'hoodie';
     if (s.includes('sweatshirt') || s.includes('svitshot')) return 'sweatshirt';
     if (s.includes('overshirt') || s.includes('koʻylak-kurtka')) return 'overshirt';
     if (s.includes('turtleneck') || s.includes('vodolazka')) return 'turtleneck';
-    if (s.includes('sweater') || s.includes('sviter') || s.includes('knit') || s.includes('cashmere')) return 'sweater';
+    if (s.includes('halfzip') || s.includes('yarim zamok')) return 'halfzip_knit';
+    if (s.includes('vneck') || s.includes('v-yoqa') || s.includes('jemper')) return 'vneck_sweater';
+    if (s.includes('sweater') || s.includes('sviter') || s.includes('cashmere')) return 'sweater';
     if (s.includes('blouse') || s.includes('bluza')) return 'silk_blouse';
     if (s.includes('track_top') || s.includes('sportivnaya') || s.includes('olimp')) return 'track_top';
     if (s.includes('tunic') || s.includes('tunika')) return 'tunic';
+    if (s.includes('crop_top') || s.includes('qisqa top')) return 'crop_top';
+    if (s.includes('tank_top') || s.includes('mayka')) return 'tank_top';
+    if (s.includes('knit_polo') || s.includes('polo-jemper')) return 'knit_polo';
     if (s.includes('longsleeve') || s.includes('longsliv') || s.includes('henley')) return 'longsleeve';
     if (s.includes('polo')) return 'polo';
     if (s.includes('tee') || s.includes('futbolka')) return 'tee';
@@ -125,6 +170,11 @@ export function detectGarmentSubtype(
   }
   if (category === 'bottom') {
     if (s.includes('pleated') || s.includes('burmali')) return 'pleated_trousers';
+    if (s.includes('slim_trousers') || s.includes('tekis klassik')) return 'slim_trousers';
+    if (s.includes('culotte') || s.includes('kulyot')) return 'culottes';
+    if (s.includes('corduroy') || s.includes('velvet shim')) return 'corduroy_pants';
+    if (s.includes('legging') || s.includes('tayts')) return 'leggings';
+    if (s.includes('a_line_skirt') || s.includes('mini yubka')) return 'a_line_skirt';
     if (s.includes('cargo') || s.includes('kargo')) return 'cargo';
     if (s.includes('jogger')) return 'joggers';
     if (s.includes('track_pants') || s.includes('sport shim')) return 'track_pants';
@@ -135,21 +185,35 @@ export function detectGarmentSubtype(
     return 'wide_trousers';
   }
   if (category === 'dress') {
+    if (s.includes('cocktail') || s.includes('kokteyl')) return 'cocktail_dress';
+    if (s.includes('maxi_sundress') || s.includes('sarafan') || s.includes('maksi')) return 'maxi_sundress';
+    if (s.includes('blazer_dress') || s.includes('bleyzer')) return 'blazer_dress';
+    if (s.includes('aline_dress') || s.includes('a-siluet')) return 'aline_dress';
+    if (s.includes('atlas_dress') || s.includes('atlas')) return 'atlas_dress';
     if (s.includes('hoodie') || s.includes('hudi')) return 'hoodie_dress';
     if (s.includes('knit') || s.includes('trikotaj')) return 'knit_dress';
     if (s.includes('shirt') || s.includes('koʻylak')) return 'shirt_dress';
     return 'midi_silk';
   }
   if (category === 'shoes') {
+    if (s.includes('canvas_sneaker') || s.includes('keda') || s.includes('kanvas')) return 'canvas_sneakers';
     if (s.includes('running') || s.includes('yugurish')) return 'running_shoes';
-    if (s.includes('sneaker') || s.includes('keda') || s.includes('krossovka')) return 'sneakers';
+    if (s.includes('sneaker') || s.includes('krossovka')) return 'sneakers';
     if (s.includes('lug') || s.includes('botinka') || s.includes('qishki')) return 'lug_boots';
     if (s.includes('boot') || s.includes('chelsea') || s.includes('etik')) return 'chelsea_boots';
+    if (s.includes('heels') || s.includes('baland posh')) return 'heels';
+    if (s.includes('ballet') || s.includes('baletka')) return 'ballet_flats';
+    if (s.includes('mule') || s.includes('myuli')) return 'mules';
+    if (s.includes('moccasin') || s.includes('mokasin')) return 'moccasins';
     if (s.includes('derb') || s.includes('oxford') || s.includes('oksford') || s.includes('tufli')) return 'derbies';
     if (s.includes('sandal')) return 'sandals';
     return 'loafers';
   }
   if (category === 'bag') {
+    if (s.includes('woven') || s.includes('savat') || s.includes('toʻqilgan')) return 'woven_tote';
+    if (s.includes('briefcase') || s.includes('portfel') || s.includes('noutbuk')) return 'briefcase';
+    if (s.includes('baguette') || s.includes('baget')) return 'baguette';
+    if (s.includes('belt_bag') || s.includes('bel va koʻkrak') || s.includes('banan')) return 'belt_bag';
     if (s.includes('saddle') || s.includes('egar')) return 'saddle';
     if (s.includes('duffle') || s.includes('safar') || s.includes('weekender')) return 'duffle';
     if (s.includes('backpack') || s.includes('ryukzak')) return 'backpack';
@@ -158,6 +222,8 @@ export function detectGarmentSubtype(
     return 'tote';
   }
   // accessory
+  if (s.includes('doppi') || s.includes('doʻppi')) return 'doppi';
+  if (s.includes('fedora') || s.includes('fetr')) return 'fedora';
   if (s.includes('bucket') || s.includes('panama')) return 'bucket_hat';
   if (s.includes('silk') || s.includes('roʻmol')) return 'silk_scarf';
   if (s.includes('cap') || s.includes('kepka')) return 'cap';
@@ -165,9 +231,13 @@ export function detectGarmentSubtype(
   if (s.includes('sunglass') || s.includes('koʻzoynak')) return 'sunglasses';
   if (s.includes('belt') || s.includes('kamar')) return 'belt';
   if (s.includes('watch') || s.includes('soat')) return 'watch';
+  if (s.includes('bowtie') || s.includes('babochka')) return 'bowtie';
   if (s.includes('tie') || s.includes('galstuk')) return 'tie';
   if (s.includes('glove') || s.includes('qoʻlqop')) return 'gloves';
   if (s.includes('bracelet') || s.includes('bilaguzuk')) return 'bracelet';
+  if (s.includes('earring') || s.includes('sirgʻa')) return 'earrings';
+  if (s.includes('necklace') || s.includes('marjon') || s.includes('zanjir')) return 'necklace';
+  if (s.includes('umbrella') || s.includes('soyabon')) return 'umbrella';
   return 'scarf';
 }
 
@@ -181,7 +251,7 @@ function getLuminance(hex: string): number {
 }
 
 /**
- * Volumetric 3D studio-lit vector garment system (65 subtypes).
+ * Volumetric 3D studio-lit vector garment system (100 subtypes).
  * Features directional cylindrical lighting, rim shadows, interior neck/hood depth,
  * extruded 3D bag gussets, contoured sneaker soles, and metallic hardware gleam.
  */
@@ -290,11 +360,18 @@ export function GarmentSilhouette({
         </g>
       )}
 
-      {/* ==================== SWEATSHIRT / SWEATER / TURTLENECK / LONGSLEEVE ==================== */}
-      {(sub === 'sweatshirt' || sub === 'sweater' || sub === 'turtleneck' || sub === 'longsleeve') && (
+      {/* ==================== SWEATSHIRT / SWEATER / TURTLENECK / LONGSLEEVE / HALFZIP / VNECK ==================== */}
+      {(sub === 'sweatshirt' ||
+        sub === 'sweater' ||
+        sub === 'turtleneck' ||
+        sub === 'longsleeve' ||
+        sub === 'halfzip_knit' ||
+        sub === 'vneck_sweater') && (
         <g>
-          {sub === 'turtleneck' ? (
+          {sub === 'turtleneck' || sub === 'halfzip_knit' ? (
             <path d="M76 20 Q100 15 124 20 L127 52 Q100 58 73 52 Z" fill={color} stroke={outline} strokeWidth="1.6" />
+          ) : sub === 'vneck_sweater' ? (
+            <path d="M72 38 L100 72 L128 38 L120 42 L100 64 L80 42 Z" fill={`url(#cav-${uid})`} stroke={outline} strokeWidth="1.3" />
           ) : (
             <path d="M72 38 Q100 53 128 38 L122 55 Q100 66 78 55 Z" fill={`url(#cav-${uid})`} stroke={outline} strokeWidth="1.3" />
           )}
@@ -310,11 +387,20 @@ export function GarmentSilhouette({
             fill={`url(#cyl-${uid})`}
             opacity="0.52"
           />
-          {sub === 'turtleneck' && (
+          {(sub === 'turtleneck' || sub === 'halfzip_knit') && (
             <>
               <path d="M77 35 Q100 40 123 35" stroke={detail} strokeWidth="1.1" />
               <path d="M76 20 H124 V52 H76 Z" fill={`url(#rib-${uid})`} opacity="0.5" />
             </>
+          )}
+          {sub === 'halfzip_knit' && (
+            <>
+              <path d="M100 32 V96" stroke={`url(#metal-${uid})`} strokeWidth="2.4" />
+              <rect x="97" y="42" width="6" height="8" rx="1" fill={`url(#metal-${uid})`} stroke={outline} strokeWidth="0.9" />
+            </>
+          )}
+          {sub === 'vneck_sweater' && (
+            <path d="M76 41 L100 72 L124 41" fill="none" stroke={accentFill} strokeWidth="2.4" />
           )}
           {sub === 'sweatshirt' && (
             <path d="M92 52 L100 68 L108 52 Z" fill={softShade} stroke={detail} strokeWidth="1" />
@@ -326,14 +412,33 @@ export function GarmentSilhouette({
               <circle cx="100" cy="78" r="1.8" fill={accentFill} stroke={outline} strokeWidth="0.8" />
             </>
           )}
-          {sub === 'sweater' && (
+          {(sub === 'sweater' || sub === 'vneck_sweater' || sub === 'halfzip_knit') && (
             <g>
-              <path d="M56 54 H144 V184 H56 Z" fill={`url(#rib-${uid})`} opacity="0.5" />
+              <path d="M56 54 H144 V184 H56 Z" fill={`url(#rib-${uid})`} opacity="0.45" />
               <path d="M84 58 C82 95 86 135 84 182 M100 60 C98 95 102 135 100 182 M116 58 C114 95 118 135 116 182" stroke={detail} strokeWidth="1" strokeDasharray="5 3" />
             </g>
           )}
           <path d="M24 130 L46 135 M176 130 L154 135" stroke={outline} strokeWidth="1.3" />
           <path d="M56 184 H144 V198 H56 Z" fill={softShade} stroke={outline} strokeWidth="1" />
+        </g>
+      )}
+
+      {/* ==================== CROP TOP / TANK TOP ==================== */}
+      {(sub === 'crop_top' || sub === 'tank_top') && (
+        <g>
+          <path
+            d={
+              sub === 'crop_top'
+                ? 'M68 42 Q100 58 132 42 L144 68 L142 142 H58 L56 68 Z'
+                : 'M68 38 L78 38 Q100 68 122 38 L132 38 L142 86 L140 188 H60 L58 86 Z'
+            }
+            fill={`url(#grad-${uid})`}
+            stroke={outline}
+            strokeWidth="1.6"
+            strokeLinejoin="round"
+          />
+          <path d="M62 46 H138 V186 H62 Z" fill={`url(#rib-${uid})`} opacity="0.45" />
+          <path d={sub === 'crop_top' ? 'M58 130 H142' : 'M60 176 H140'} stroke={detail} strokeWidth="1.2" />
         </g>
       )}
 
@@ -361,11 +466,12 @@ export function GarmentSilhouette({
         </g>
       )}
 
-      {/* ==================== SHIRT / OVERSHIRT / SILK BLOUSE / POLO / TEE / TUNIC ==================== */}
+      {/* ==================== SHIRT / OVERSHIRT / SILK BLOUSE / POLO / KNIT POLO / TEE / TUNIC ==================== */}
       {(sub === 'shirt' ||
         sub === 'overshirt' ||
         sub === 'silk_blouse' ||
         sub === 'polo' ||
+        sub === 'knit_polo' ||
         sub === 'tee' ||
         sub === 'tunic') && (
         <g>
@@ -429,11 +535,11 @@ export function GarmentSilhouette({
             </>
           )}
 
-          {(sub === 'shirt' || sub === 'polo' || sub === 'overshirt') && (
+          {(sub === 'shirt' || sub === 'polo' || sub === 'knit_polo' || sub === 'overshirt') && (
             <>
               <path d="M74 32 L88 54 L100 46 L112 54 L126 32" fill={highlight} stroke={outline} strokeWidth="1.3" strokeLinejoin="round" />
               <path
-                d={sub === 'polo' ? 'M96 48 H104 V92 H96 Z' : 'M96 48 H104 V199 H96 Z'}
+                d={sub === 'polo' || sub === 'knit_polo' ? 'M96 48 H104 V92 H96 Z' : 'M96 48 H104 V199 H96 Z'}
                 fill={softShade}
                 stroke={detail}
                 strokeWidth="0.9"
@@ -485,11 +591,18 @@ export function GarmentSilhouette({
         </g>
       )}
 
-      {(sub === 'palto' || sub === 'peacoat' || sub === 'trench' || sub === 'blazer' || sub === 'cardigan') && (
+      {(sub === 'palto' ||
+        sub === 'peacoat' ||
+        sub === 'mac_coat' ||
+        sub === 'trench' ||
+        sub === 'blazer' ||
+        sub === 'tuxedo_blazer' ||
+        sub === 'fur_coat' ||
+        sub === 'cardigan') && (
         <g>
           <path
             d={
-              sub === 'blazer'
+              sub === 'blazer' || sub === 'tuxedo_blazer'
                 ? 'M68 30 L88 22 L100 34 L112 22 L132 30 L170 54 L160 148 L142 146 L140 82 L138 184 L62 184 L60 82 L58 146 L40 148 L30 54 Z'
                 : sub === 'peacoat'
                   ? 'M68 28 L88 20 L100 33 L112 20 L132 28 L170 52 L160 150 L142 148 L140 82 L140 198 L60 198 L60 82 L58 148 L40 150 L30 52 Z'
@@ -504,7 +617,7 @@ export function GarmentSilhouette({
           />
           <path
             d={
-              sub === 'blazer'
+              sub === 'blazer' || sub === 'tuxedo_blazer'
                 ? 'M68 30 L88 22 L100 34 L112 22 L132 30 L170 54 L160 148 L142 146 L140 82 L138 184 L62 184 L60 82 L58 146 L40 148 L30 54 Z'
                 : 'M68 26 L88 18 L100 32 L112 18 L132 26 L172 52 L162 152 L144 150 L142 82 L146 218 L54 218 L58 82 L56 150 L38 152 L28 52 Z'
             }
@@ -524,7 +637,7 @@ export function GarmentSilhouette({
             </>
           ) : (
             <>
-              <path d="M88 18 L74 58 L86 64 L78 78 L100 102 L122 78 L114 64 L126 58 L112 18" fill={`url(#cav-${uid})`} opacity="0.45" stroke={outline} strokeWidth="1.3" strokeLinejoin="round" />
+              <path d="M88 18 L74 58 L86 64 L78 78 L100 102 L122 78 L114 64 L126 58 L112 18" fill={sub === 'tuxedo_blazer' || sub === 'fur_coat' ? accentFill : `url(#cav-${uid})`} opacity={sub === 'tuxedo_blazer' ? '0.85' : '0.45'} stroke={outline} strokeWidth="1.3" strokeLinejoin="round" />
               <path d="M100 102 V198" stroke={detail} strokeWidth="1.1" />
               <path d="M66 138 H86 M114 138 H134" stroke={outline} strokeWidth="1.5" strokeLinecap="round" />
               {(sub === 'trench' || sub === 'peacoat' ? [108, 134, 160] : [110, 140]).map((cy) => (
@@ -542,28 +655,35 @@ export function GarmentSilhouette({
                   <path d="M52 38 L70 30 M148 38 L130 30" stroke={outline} strokeWidth="1.6" />
                 </>
               )}
-              {sub === 'blazer' && (
+              {(sub === 'blazer' || sub === 'tuxedo_blazer') && (
                 <path d="M114 82 H128 V90 H114 Z" fill={accentFill} stroke={outline} strokeWidth="0.9" />
+              )}
+              {sub === 'fur_coat' && (
+                <g stroke={highlight} strokeWidth="1.2" opacity="0.65">
+                  <path d="M58 106 Q100 112 142 106 M56 146 Q100 152 144 146 M55 186 Q100 192 145 186" />
+                </g>
               )}
             </>
           )}
         </g>
       )}
 
-      {/* ==================== PUFFER / CROPPED PUFFER / PARKA / BOMBER / VARSITY / LEATHER / DENIM / VEST ==================== */}
+      {/* ==================== PUFFER / CROPPED PUFFER / PARKA / ANORAK / BOMBER / VARSITY / SHEARLING / LEATHER / DENIM / VEST ==================== */}
       {(sub === 'puffer' ||
         sub === 'cropped_puffer' ||
         sub === 'parka' ||
+        sub === 'anorak' ||
         sub === 'bomber' ||
         sub === 'varsity' ||
+        sub === 'shearling' ||
         sub === 'leather_jacket' ||
         sub === 'denim_jacket' ||
         sub === 'vest') && (
         <g>
-          {sub === 'parka' ? (
+          {sub === 'parka' || sub === 'anorak' ? (
             <path d="M72 40 C72 15 128 15 128 40 Z" fill={`url(#cav-${uid})`} stroke={outline} strokeWidth="1.5" />
-          ) : sub === 'leather_jacket' ? (
-            <path d="M72 28 L100 44 L128 28 L122 52 H78 Z" fill={softShade} stroke={outline} strokeWidth="1.4" />
+          ) : sub === 'leather_jacket' || sub === 'shearling' ? (
+            <path d="M72 28 L100 44 L128 28 L122 52 H78 Z" fill={sub === 'shearling' ? accentFill : softShade} stroke={outline} strokeWidth="1.4" />
           ) : (
             <path d="M74 28 Q100 36 126 28 L128 44 Q100 50 72 44 Z" fill={softShade} stroke={outline} strokeWidth="1.5" />
           )}
@@ -618,13 +738,22 @@ export function GarmentSilhouette({
                 </>
               )}
 
-              {sub === 'leather_jacket' && (
+              {(sub === 'leather_jacket' || sub === 'shearling') && (
                 <>
-                  <path d="M74 42 L92 84 L74 88 Z M126 42 L108 84 L126 88 Z" fill={softShade} stroke={outline} strokeWidth="1.3" />
+                  <path d="M74 42 L92 84 L74 88 Z M126 42 L108 84 L126 88 Z" fill={sub === 'shearling' ? accentFill : softShade} stroke={outline} strokeWidth="1.3" />
                   <path d="M108 48 L92 178" stroke={`url(#metal-${uid})`} strokeWidth="2.8" />
                   <path d="M62 114 L84 128 M116 114 L138 128" stroke={`url(#metal-${uid})`} strokeWidth="2" />
-                  <path d="M52 178 H148 V190 H52 Z" fill={softShade} stroke={outline} strokeWidth="1.2" />
+                  <path d="M52 178 H148 V190 H52 Z" fill={sub === 'shearling' ? accentFill : softShade} stroke={outline} strokeWidth="1.2" />
                   <rect x="92" y="177" width="14" height="14" rx="1" fill="none" stroke={`url(#metal-${uid})`} strokeWidth="1.8" />
+                </>
+              )}
+
+              {sub === 'anorak' && (
+                <>
+                  <path d="M100 42 V98" stroke={`url(#metal-${uid})`} strokeWidth="2.6" />
+                  <rect x="70" y="106" width="60" height="32" rx="2" fill={softShade} stroke={outline} strokeWidth="1.3" />
+                  <path d="M70 116 H130" stroke={outline} strokeWidth="1.2" />
+                  <path d="M54 182 H146" stroke={detail} strokeWidth="1.2" strokeDasharray="3 2" />
                 </>
               )}
 
@@ -676,14 +805,36 @@ export function GarmentSilhouette({
         </g>
       )}
 
-      {/* ==================== BOTTOMS (9 SUBTYPES) ==================== */}
-      {category === 'bottom' && sub === 'skirt' && (
+      {/* ==================== BOTTOMS (14 SUBTYPES) ==================== */}
+      {category === 'bottom' && (sub === 'skirt' || sub === 'a_line_skirt') && (
         <g>
-          <path d="M66 30 H134 L162 204 Q100 214 38 204 Z" fill={`url(#grad-${uid})`} stroke={outline} strokeWidth="1.6" strokeLinejoin="round" />
-          <path d="M66 30 H134 L162 204 Q100 214 38 204 Z" fill={`url(#cyl-${uid})`} opacity="0.45" />
-          <path d="M66 44 H134" stroke={outline} strokeWidth="1.4" />
+          <path
+            d={
+              sub === 'a_line_skirt'
+                ? 'M68 42 H132 L152 146 Q100 156 48 146 Z'
+                : 'M66 30 H134 L162 204 Q100 214 38 204 Z'
+            }
+            fill={`url(#grad-${uid})`}
+            stroke={outline}
+            strokeWidth="1.6"
+            strokeLinejoin="round"
+          />
+          <path
+            d={
+              sub === 'a_line_skirt'
+                ? 'M68 42 H132 L152 146 Q100 156 48 146 Z'
+                : 'M66 30 H134 L162 204 Q100 214 38 204 Z'
+            }
+            fill={`url(#cyl-${uid})`}
+            opacity="0.45"
+          />
+          <path d={sub === 'a_line_skirt' ? 'M68 54 H132' : 'M66 44 H134'} stroke={outline} strokeWidth="1.4" />
           <g stroke={detail} strokeWidth="1.1">
-            <path d="M80 44 L64 204 M94 44 L88 208 M106 44 L112 208 M120 44 L136 204" />
+            {sub === 'a_line_skirt' ? (
+              <path d="M84 54 L76 146 M116 54 L124 146" />
+            ) : (
+              <path d="M80 44 L64 204 M94 44 L88 208 M106 44 L112 208 M120 44 L136 204" />
+            )}
           </g>
         </g>
       )}
@@ -699,15 +850,19 @@ export function GarmentSilhouette({
         </g>
       )}
 
-      {category === 'bottom' && sub !== 'skirt' && sub !== 'shorts' && (
+      {category === 'bottom' && sub !== 'skirt' && sub !== 'a_line_skirt' && sub !== 'shorts' && (
         <g>
           <path
             d={
-              sub === 'wide_trousers' || sub === 'pleated_trousers'
-                ? 'M56 24 H144 L158 214 H108 L100 100 L92 214 H42 Z'
-                : sub === 'joggers' || sub === 'track_pants'
-                  ? 'M58 24 H142 L148 198 L120 202 L100 104 L80 202 L52 198 Z'
-                  : 'M58 24 H142 L148 212 H108 L100 102 L92 212 H52 Z'
+              sub === 'culottes'
+                ? 'M56 26 H144 L164 176 H108 L100 98 L92 176 H36 Z'
+                : sub === 'wide_trousers' || sub === 'pleated_trousers'
+                  ? 'M56 24 H144 L158 214 H108 L100 100 L92 214 H42 Z'
+                  : sub === 'leggings'
+                    ? 'M62 24 H138 L136 212 H112 L100 98 L88 212 H64 Z'
+                    : sub === 'joggers' || sub === 'track_pants'
+                      ? 'M58 24 H142 L148 198 L120 202 L100 104 L80 202 L52 198 Z'
+                      : 'M58 24 H142 L148 212 H108 L100 102 L92 212 H52 Z'
             }
             fill={`url(#grad-${uid})`}
             stroke={outline}
@@ -715,16 +870,19 @@ export function GarmentSilhouette({
             strokeLinejoin="round"
           />
           <path d="M58 26 H142 V210 H58 Z" fill={`url(#cyl-${uid})`} opacity="0.4" />
+          {sub === 'corduroy_pants' && (
+            <path d="M58 26 H142 V210 H58 Z" fill={`url(#rib-${uid})`} opacity="0.45" />
+          )}
           <path d="M58 38 H142" stroke={outline} strokeWidth="1.3" />
           {[68, 86, 114, 132].map((lx) => (
             <path key={lx} d={`M${lx} 24 V39`} stroke={outline} strokeWidth="1.6" />
           ))}
           <path d="M100 38 V78" stroke={detail} strokeWidth="1.1" />
           <circle cx="100" cy="31" r="2.2" fill={accentFill} stroke={outline} strokeWidth="0.9" />
-          {(sub === 'wide_trousers' || sub === 'pleated_trousers') && (
+          {(sub === 'wide_trousers' || sub === 'pleated_trousers' || sub === 'slim_trousers') && (
             <path d="M76 42 L70 210 M124 42 L130 210" stroke={detail} strokeWidth="1.1" opacity="0.7" />
           )}
-          {sub === 'pleated_trousers' && (
+          {(sub === 'pleated_trousers' || sub === 'culottes') && (
             <path d="M68 40 L66 76 M84 40 L84 76 M116 40 L116 76 M132 40 L134 76" stroke={outline} strokeWidth="1.1" />
           )}
           {sub === 'denim' && (
@@ -746,25 +904,32 @@ export function GarmentSilhouette({
               <path d="M52 190 H82 M118 190 H148" stroke={outline} strokeWidth="1.4" />
             </>
           )}
-          {sub === 'track_pants' && (
+          {(sub === 'track_pants' || sub === 'leggings') && (
             <path d="M59 38 L53 196 M64 38 L58 196 M141 38 L147 196 M136 38 L142 196" stroke={accentFill} strokeWidth="2" />
           )}
         </g>
       )}
 
-      {/* ==================== DRESSES (4 SUBTYPES) ==================== */}
+      {/* ==================== DRESSES (9 SUBTYPES) ==================== */}
       {category === 'dress' && (
         <g>
           {sub === 'hoodie_dress' && (
             <path d="M76 42 C76 18 124 18 124 42 Z" fill={`url(#cav-${uid})`} stroke={outline} strokeWidth="1.5" />
           )}
+          {sub === 'maxi_sundress' && (
+            <path d="M76 22 V44 M124 22 V44" stroke={outline} strokeWidth="2.2" />
+          )}
           <path
             d={
-              sub === 'shirt_dress'
+              sub === 'shirt_dress' || sub === 'blazer_dress'
                 ? 'M72 28 L100 42 L128 28 L142 66 L124 88 L156 210 Q100 220 44 210 L76 88 L58 66 Z'
                 : sub === 'hoodie_dress'
                   ? 'M70 40 L40 62 L32 132 L50 136 L58 88 L50 208 Q100 216 150 208 L142 88 L150 136 L168 132 L160 62 L130 40 Z'
-                  : 'M72 28 Q100 44 128 28 L138 66 L124 88 L152 212 Q100 222 48 212 L76 88 L62 66 Z'
+                  : sub === 'maxi_sundress'
+                    ? 'M72 44 Q100 54 128 44 L132 84 L164 224 Q100 232 36 224 L68 84 Z'
+                    : sub === 'cocktail_dress'
+                      ? 'M72 34 Q100 52 128 34 L132 82 L142 164 Q100 172 58 164 L68 82 Z'
+                      : 'M72 28 Q100 44 128 28 L138 66 L124 88 L152 212 Q100 222 48 212 L76 88 L62 66 Z'
             }
             fill={`url(#grad-${uid})`}
             stroke={outline}
@@ -774,8 +939,19 @@ export function GarmentSilhouette({
           <path d="M70 40 H130 L148 212 H52 Z" fill={`url(#cyl-${uid})`} opacity="0.48" />
           <path d="M75 90 H125" stroke={accentFill} strokeWidth="3.5" />
           <path d="M75 90 H125" stroke={outline} strokeWidth="1" />
-          {sub === 'shirt_dress' && (
+          {(sub === 'shirt_dress' || sub === 'blazer_dress') && (
             <path d="M100 42 V214" stroke={detail} strokeWidth="1.1" strokeDasharray="3 3" />
+          )}
+          {sub === 'blazer_dress' && (
+            <>
+              <path d="M84 32 L100 72 L116 32" stroke={outline} strokeWidth="1.4" fill="none" />
+              {[104, 128, 152].map((cy) => (
+                <g key={cy}>
+                  <circle cx="91" cy={cy} r="2.4" fill={accentFill} stroke={outline} strokeWidth="0.9" />
+                  <circle cx="109" cy={cy} r="2.4" fill={accentFill} stroke={outline} strokeWidth="0.9" />
+                </g>
+              ))}
+            </>
           )}
           {sub === 'knit_dress' && (
             <>
@@ -783,14 +959,23 @@ export function GarmentSilhouette({
               <path d="M84 48 L72 210 M100 48 V214 M116 48 L128 210" stroke={detail} strokeWidth="0.9" opacity="0.55" />
             </>
           )}
-          {sub === 'midi_silk' && (
+          {sub === 'atlas_dress' && (
+            <path
+              d="M72 110 L86 98 L100 110 L114 98 L128 110 M62 148 L82 134 L100 148 L118 134 L138 148 M54 186 L78 170 L100 186 L122 170 L146 186"
+              stroke={accentFill}
+              strokeWidth="2.2"
+              opacity="0.82"
+              fill="none"
+            />
+          )}
+          {(sub === 'midi_silk' || sub === 'cocktail_dress' || sub === 'aline_dress') && (
             <path d="M88 94 Q80 156 68 212 M112 94 Q120 156 132 212" stroke={highlight} strokeWidth="1.5" />
           )}
         </g>
       )}
 
-      {/* ==================== SHOES (7 SUBTYPES WITH 3D MIDSOLE & FLOOR SHADOW) ==================== */}
-      {(sub === 'sneakers' || sub === 'running_shoes') && (
+      {/* ==================== SHOES (12 SUBTYPES WITH 3D MIDSOLE & FLOOR SHADOW) ==================== */}
+      {(sub === 'sneakers' || sub === 'canvas_sneakers' || sub === 'running_shoes') && (
         <g>
           <ellipse cx="102" cy="183" rx="68" ry="6" fill="rgba(0,0,0,0.22)" />
           <path
@@ -856,7 +1041,7 @@ export function GarmentSilhouette({
         </g>
       )}
 
-      {(sub === 'loafers' || sub === 'derbies') && (
+      {(sub === 'loafers' || sub === 'derbies' || sub === 'moccasins') && (
         <g>
           <ellipse cx="101" cy="177" rx="66" ry="5" fill="rgba(0,0,0,0.22)" />
           <path
@@ -869,6 +1054,8 @@ export function GarmentSilhouette({
           <path d="M104 128 Q132 138 158 148" stroke={highlight} strokeWidth="2.2" strokeLinecap="round" opacity="0.55" />
           {sub === 'loafers' ? (
             <path d="M84 114 L106 130 L96 138 L74 122 Z" fill={softShade} stroke={outline} strokeWidth="1.2" />
+          ) : sub === 'moccasins' ? (
+            <path d="M104 128 Q128 138 152 146" stroke={accentFill} strokeWidth="1.6" strokeDasharray="3 3" />
           ) : (
             <>
               <path d="M90 116 L100 111 M98 122 L108 117 M106 128 L116 123" stroke={accentFill} strokeWidth="2" strokeLinecap="round" />
@@ -876,6 +1063,41 @@ export function GarmentSilhouette({
             </>
           )}
           <path d="M36 164 H166 V171 H98 V168 H78 V176 H36 Z" fill="#1D1A17" stroke={outline} strokeWidth="1.1" />
+        </g>
+      )}
+
+      {sub === 'heels' && (
+        <g>
+          <ellipse cx="104" cy="184" rx="62" ry="5" fill="rgba(0,0,0,0.22)" />
+          <path
+            d="M42 94 C54 118 78 136 120 142 L166 152 C172 156 170 166 158 166 H102 L68 126 L56 178 H44 L44 120 Z"
+            fill={`url(#grad-${uid})`}
+            stroke={outline}
+            strokeWidth="1.6"
+            strokeLinejoin="round"
+          />
+          <path d="M62 114 Q96 142 154 156" stroke={highlight} strokeWidth="2" opacity="0.55" />
+        </g>
+      )}
+
+      {(sub === 'ballet_flats' || sub === 'mules') && (
+        <g>
+          <ellipse cx="102" cy="172" rx="66" ry="5" fill="rgba(0,0,0,0.2)" />
+          <path
+            d={
+              sub === 'mules'
+                ? 'M54 154 L94 122 L158 140 C168 144 170 156 164 164 H38 L46 156 Z'
+                : 'M40 130 Q74 148 118 134 L160 144 C170 148 170 160 164 166 H36 L36 142 Z'
+            }
+            fill={`url(#grad-${uid})`}
+            stroke={outline}
+            strokeWidth="1.6"
+            strokeLinejoin="round"
+          />
+          {sub === 'ballet_flats' && (
+            <path d="M126 136 L136 128 L138 140 L148 132" stroke={accentFill} strokeWidth="1.8" fill="none" />
+          )}
+          <path d="M36 166 H164 V172 H36 Z" fill="#1D1A17" stroke={outline} strokeWidth="1" />
         </g>
       )}
 
@@ -889,18 +1111,54 @@ export function GarmentSilhouette({
         </g>
       )}
 
-      {/* ==================== BAGS (6 SUBTYPES WITH 3D EXTRUDED GUSSET) ==================== */}
-      {sub === 'tote' && (
+      {/* ==================== BAGS (10 SUBTYPES WITH 3D EXTRUDED GUSSET) ==================== */}
+      {(sub === 'tote' || sub === 'woven_tote') && (
         <g>
           {/* Back handle depth */}
           <path d="M78 78 C78 36 134 36 134 78" stroke={detail} strokeWidth="2.2" fill="none" />
           {/* 3D Side Gusset */}
           <path d="M156 78 L170 86 L176 196 L164 202 Z" fill={deepShade} stroke={outline} strokeWidth="1.4" strokeLinejoin="round" />
           <path d="M44 78 H156 L164 202 H36 Z" fill={`url(#grad-${uid})`} stroke={outline} strokeWidth="1.6" strokeLinejoin="round" />
+          {sub === 'woven_tote' && (
+            <g stroke={detail} strokeWidth="1" opacity="0.55">
+              <path d="M42 118 H158 M40 144 H160 M38 170 H162" />
+              <path d="M64 102 L58 202 M90 102 L88 202 M116 102 L118 202 M140 102 L144 202" />
+            </g>
+          )}
           <path d="M72 78 C72 34 128 34 128 78" stroke={outline} strokeWidth="3.2" fill="none" />
           <path d="M44 102 H156" stroke={detail} strokeWidth="1.2" />
           <path d="M72 78 V126 M128 78 V126" stroke={outline} strokeWidth="1.4" />
           <rect x="93" y="96" width="14" height="10" rx="1" fill={`url(#metal-${uid})`} stroke={outline} strokeWidth="1.1" />
+        </g>
+      )}
+
+      {sub === 'briefcase' && (
+        <g>
+          <path d="M80 76 C80 56 120 56 120 76" stroke={outline} strokeWidth="3" fill="none" />
+          <path d="M168 78 L178 86 V186 L166 190 Z" fill={deepShade} stroke={outline} strokeWidth="1.4" />
+          <rect x="32" y="78" width="136" height="110" rx="4" fill={`url(#grad-${uid})`} stroke={outline} strokeWidth="1.6" />
+          <path d="M32 118 H168" stroke={outline} strokeWidth="1.4" />
+          <rect x="54" y="112" width="14" height="12" rx="1" fill={`url(#metal-${uid})`} stroke={outline} strokeWidth="1" />
+          <rect x="132" y="112" width="14" height="12" rx="1" fill={`url(#metal-${uid})`} stroke={outline} strokeWidth="1" />
+        </g>
+      )}
+
+      {sub === 'baguette' && (
+        <g>
+          <path d="M56 102 C56 54 144 54 144 102" stroke={outline} strokeWidth="2.8" fill="none" />
+          <path d="M164 102 L174 110 V168 L160 172 Z" fill={deepShade} stroke={outline} strokeWidth="1.3" />
+          <rect x="36" y="102" width="128" height="68" rx="12" fill={`url(#grad-${uid})`} stroke={outline} strokeWidth="1.6" />
+          <path d="M38 128 L100 140 L162 128" fill={softShade} stroke={outline} strokeWidth="1.3" />
+          <rect x="92" y="134" width="16" height="10" rx="1" fill={`url(#metal-${uid})`} stroke={outline} strokeWidth="1" />
+        </g>
+      )}
+
+      {sub === 'belt_bag' && (
+        <g>
+          <path d="M20 112 H44 M156 112 H180" stroke={outline} strokeWidth="5" strokeLinecap="round" />
+          <path d="M40 94 H160 L150 150 Q100 162 50 150 Z" fill={`url(#grad-${uid})`} stroke={outline} strokeWidth="1.6" strokeLinejoin="round" />
+          <path d="M54 110 H146" stroke={`url(#metal-${uid})`} strokeWidth="2.5" />
+          <rect x="95" y="106" width="10" height="8" rx="1" fill={`url(#metal-${uid})`} stroke={outline} strokeWidth="0.9" />
         </g>
       )}
 
@@ -1071,6 +1329,56 @@ export function GarmentSilhouette({
           <ellipse cx="100" cy="122" rx="44" ry="30" fill="none" stroke={color} strokeWidth="7" />
           <ellipse cx="100" cy="122" rx="44" ry="30" fill="none" stroke={highlight} strokeWidth="2" strokeDasharray="16 28" />
           <rect x="92" y="146" width="16" height="10" rx="2" fill={`url(#metal-${uid})`} stroke={outline} strokeWidth="1.2" />
+        </g>
+      )}
+
+      {sub === 'doppi' && (
+        <g>
+          <path d="M52 138 L60 92 L100 80 L140 92 L148 138 Z" fill={`url(#grad-${uid})`} stroke={outline} strokeWidth="1.6" strokeLinejoin="round" />
+          <path d="M52 130 H148 V142 H52 Z" fill={softShade} stroke={outline} strokeWidth="1.3" />
+          <path d="M72 108 Q80 96 86 112 M128 108 Q120 96 114 112 M96 102 Q100 90 104 102" stroke={accentFill} strokeWidth="2.4" strokeLinecap="round" fill="none" />
+        </g>
+      )}
+
+      {sub === 'fedora' && (
+        <g>
+          <path d="M64 128 L74 74 Q100 84 126 74 L136 128 Z" fill={`url(#grad-${uid})`} stroke={outline} strokeWidth="1.6" strokeLinejoin="round" />
+          <path d="M64 118 H136 V128 H64 Z" fill={accentFill} stroke={outline} strokeWidth="1.2" />
+          <ellipse cx="100" cy="134" rx="76" ry="15" fill={color} stroke={outline} strokeWidth="1.6" />
+          <ellipse cx="100" cy="132" rx="44" ry="8" fill={softShade} />
+        </g>
+      )}
+
+      {sub === 'bowtie' && (
+        <g>
+          <path d="M36 92 L92 114 V126 L36 148 Z M164 92 L108 114 V126 L164 148 Z" fill={`url(#grad-${uid})`} stroke={outline} strokeWidth="1.6" strokeLinejoin="round" />
+          <rect x="90" y="108" width="20" height="24" rx="3" fill={accentFill} stroke={outline} strokeWidth="1.5" />
+        </g>
+      )}
+
+      {sub === 'earrings' && (
+        <g>
+          <circle cx="72" cy="126" r="28" fill="none" stroke={outline} strokeWidth="8" />
+          <circle cx="72" cy="126" r="28" fill="none" stroke={`url(#metal-${uid})`} strokeWidth="5.5" />
+          <circle cx="128" cy="126" r="28" fill="none" stroke={outline} strokeWidth="8" />
+          <circle cx="128" cy="126" r="28" fill="none" stroke={`url(#metal-${uid})`} strokeWidth="5.5" />
+        </g>
+      )}
+
+      {sub === 'necklace' && (
+        <g>
+          <path d="M58 64 C58 148 142 148 142 64" fill="none" stroke={outline} strokeWidth="5" strokeLinecap="round" />
+          <path d="M58 64 C58 148 142 148 142 64" fill="none" stroke={`url(#metal-${uid})`} strokeWidth="3" strokeDasharray="4 3" strokeLinecap="round" />
+          <circle cx="100" cy="146" r="10" fill={color} stroke={outline} strokeWidth="1.6" />
+          <circle cx="100" cy="146" r="5" fill={`url(#metal-${uid})`} />
+        </g>
+      )}
+
+      {sub === 'umbrella' && (
+        <g>
+          <path d="M30 116 C36 52 164 52 170 116 Q135 104 100 116 Q65 104 30 116 Z" fill={`url(#grad-${uid})`} stroke={outline} strokeWidth="1.6" strokeLinejoin="round" />
+          <path d="M100 54 V178 C100 192 118 192 118 178" fill="none" stroke={outline} strokeWidth="3.2" strokeLinecap="round" />
+          <path d="M100 62 L66 110 M100 62 L134 110" stroke={detail} strokeWidth="1.1" />
         </g>
       )}
     </svg>

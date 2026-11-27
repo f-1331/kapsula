@@ -1,8 +1,10 @@
 import { useState } from 'react';
+import { CONTACT_INFO } from '../config/contact';
 import { LANGUAGE_OPTIONS } from '../i18n/languages';
 import { useTranslation } from '../i18n/useTranslation';
 import { useKapsulaStore, type ViewTab } from '../store/useKapsulaStore';
 import { DESIGN_THEMES, getDesignThemeById } from '../styles/themes';
+import { QrContactModal } from './QrContactModal';
 
 export function StickyHeader() {
   const { t, lang, setLanguage } = useTranslation();
@@ -20,6 +22,7 @@ export function StickyHeader() {
   const [moreOpen, setMoreOpen] = useState(false);
   const [designOpen, setDesignOpen] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
+  const [qrOpen, setQrOpen] = useState(false);
 
   const desktopTabs: Array<{ id: ViewTab; label: string }> = [
     { id: 'stilist', label: t.nav.stilist },
@@ -120,8 +123,35 @@ export function StickyHeader() {
               })}
             </nav>
 
-            {/* Right: 10 Design Themes + 5 Languages + Quick Dark/Light */}
+            {/* Right: Phone + QR + 10 Design Themes + 5 Languages + Quick Dark/Light */}
             <div className="flex items-center gap-1.5 shrink-0">
+              {/* Direct Phone Pill on Desktop & QR Contact Trigger */}
+              <a
+                href={CONTACT_INFO.phoneHref}
+                className="hidden xl:inline-flex items-center gap-1.5 min-h-[38px] border border-[var(--hairline)] bg-[var(--paper-elevated)] px-2.5 text-[11px] font-tabular text-[var(--ink-2)] hover:border-[var(--ink)] hover:text-[var(--ink)] transition-colors"
+                title={CONTACT_INFO.phoneDisplay}
+              >
+                <span aria-hidden="true" className="text-[var(--accent)]">☎</span>
+                <span>{CONTACT_INFO.phoneDisplay}</span>
+              </a>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setQrOpen(true);
+                  setLangOpen(false);
+                  setDesignOpen(false);
+                }}
+                aria-label="QR Kod va Aloqa"
+                className="min-h-[38px] inline-flex items-center gap-1 border border-[var(--hairline)] bg-[var(--paper-elevated)] px-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--ink)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors cursor-pointer"
+                title="QR Kod & Aloqa"
+              >
+                <svg viewBox="0 0 16 16" className="h-3.5 w-3.5 fill-current shrink-0" aria-hidden="true">
+                  <path d="M1 1h6v6H1V1zm1.5 1.5v3h3v-3h-3zM9 1h6v6H9V1zm1.5 1.5v3h3v-3h-3zM1 9h6v6H1V9zm1.5 1.5v3h3v-3h-3zM9 9h2v2H9V9zm2 2h2v2h-2v-2zm2-2h2v2h-2V9zm-4 4h2v2H9v-2zm4 0h2v2h-2v-2z" />
+                </svg>
+                <span className="hidden sm:inline">QR</span>
+              </button>
+
               {/* Language Switcher */}
               <div className="relative">
                 <button
@@ -337,6 +367,26 @@ export function StickyHeader() {
                 );
               })}
             </div>
+
+            <div className="mt-3 pt-3 border-t border-[var(--hairline)] flex items-center justify-between gap-2">
+              <a
+                href={CONTACT_INFO.phoneHref}
+                className="flex-1 min-h-[40px] inline-flex items-center justify-center gap-1.5 bg-[var(--ink)] px-3 text-xs font-medium text-[var(--paper)] font-tabular"
+              >
+                <span aria-hidden="true">☎</span>
+                <span>{CONTACT_INFO.phoneDisplay}</span>
+              </a>
+              <button
+                type="button"
+                onClick={() => {
+                  setMoreOpen(false);
+                  setQrOpen(true);
+                }}
+                className="min-h-[40px] border border-[var(--accent)] bg-[var(--accent-soft)] px-3.5 text-xs uppercase tracking-[0.1em] text-[var(--accent)] font-semibold cursor-pointer"
+              >
+                QR Kod
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -384,6 +434,8 @@ export function StickyHeader() {
           </button>
         </div>
       </nav>
+
+      <QrContactModal open={qrOpen} initialMode="site" onClose={() => setQrOpen(false)} />
     </>
   );
 }

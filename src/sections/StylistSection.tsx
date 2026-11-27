@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import type { Occasion, PaletteId, UserGenderFilter, WeatherBand } from '../data/schema';
+import { CONTACT_INFO } from '../config/contact';
+import type { Garment, Occasion, PaletteId, UserGenderFilter, WeatherBand } from '../data/schema';
+import { estimateOutfitBudget } from '../engine/garment-specs';
 import { recommendOutfits, type OutfitRecommendation } from '../engine/stylist';
 import { useTranslation } from '../i18n/useTranslation';
 import { useKapsulaStore } from '../store/useKapsulaStore';
@@ -12,8 +14,11 @@ import {
   weatherBandDefaultTemp,
   type GeoLocationInfo,
 } from '../utils/weather-api';
+import { Card3D } from '../components/Card3D';
+import { GarmentImage } from '../components/GarmentImage';
 import { LookImage } from '../components/LookImage';
 import { PaletteArtwork } from '../components/PaletteArtwork';
+import { QrContactModal } from '../components/QrContactModal';
 import { ReadOnlyBoard } from '../components/ReadOnlyBoard';
 import { ScoreCounter } from '../components/ScoreCounter';
 import { WeatherIcon } from '../components/WeatherIcon';
@@ -69,6 +74,7 @@ export function StylistSection() {
 
   const [savedNoticeId, setSavedNoticeId] = useState<string | null>(null);
   const [cityModalOpen, setCityModalOpen] = useState(false);
+  const [qrOutfitUrl, setQrOutfitUrl] = useState<string | null>(null);
   const [citySearch, setCitySearch] = useState('');
   const [cityResults, setCityResults] = useState<GeoLocationInfo[]>(PRESET_CITIES);
   const [citySearching, setCitySearching] = useState(false);
@@ -104,6 +110,17 @@ export function StylistSection() {
 
   const topOutfit = stylistResult.outfits[0];
   const alternatives = stylistResult.outfits.slice(1, 6);
+
+  // Build 6-piece Mix & Match Modular Capsule from Top Pick + Alternatives
+  const capsuleMatrix = useMemo(() => {
+    const map = new Map<string, Garment>();
+    for (const outfit of stylistResult.outfits.slice(0, 4)) {
+      for (const g of outfit.garments) {
+        if (!map.has(g.id)) map.set(g.id, g);
+      }
+    }
+    return [...map.values()].slice(0, 6);
+  }, [stylistResult.outfits]);
 
   const handleWeatherCardClick = (band: WeatherBand) => {
     updateQuery({ weather: band }, weatherBandDefaultTemp(band), true);
@@ -612,8 +629,8 @@ export function StylistSection() {
                     “{localize(topOutfit.note)}”
                   </p>
 
-                  <div className="mb-6">
-                    <div className="flex h-2 w-full overflow-hidden border border-[var(--hairline)]">
+                  <div className="mb-4">
+                    <div className="flex h-2 w-full overflow-hidden border border-[var(--hairline)] mb-3">
                       {topOutfit.harmony.proportions.map((slice) => (
                         <div
                           key={slice.hex}
@@ -625,23 +642,44 @@ export function StylistSection() {
                         />
                       ))}
                     </div>
+                    <div className="flex items-center justify-between text-[11px] border border-[var(--hairline)] bg-[var(--paper)] px-3 py-1.5">
+                      <span className="text-[var(--muted)] uppercase tracking-[0.08em] text-[10px]">
+                        {localize('Taxminiy byudjet')}
+                      </span>
+                      <span className="font-semibold font-tabular text-[var(--ink)]">
+                        {localize(estimateOutfitBudget(topOutfit.garments).labelUz)}
+                      </span>
+                    </div>
                   </div>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-3 pt-4 border-t border-[var(--hairline)]">
+                <div className="flex flex-wrap items-center gap-2 pt-4 border-t border-[var(--hairline)]">
                   <button
                     type="button"
                     onClick={() => handleOpenInAtelier(topOutfit)}
-                    className="min-h-[46px] flex-1 bg-[var(--ink)] px-5 py-3 text-xs uppercase tracking-[0.14em] text-[var(--paper)] hover:bg-[var(--accent)] transition-colors cursor-pointer"
+                    className="min-h-[46px] flex-1 bg-[var(--ink)] px-4 py-3 text-xs uppercase tracking-[0.14em] text-[var(--paper)] hover:bg-[var(--accent)] transition-colors cursor-pointer"
                   >
                     {t.stylist.openInAtelier}
                   </button>
                   <button
                     type="button"
                     onClick={() => handleSaveTopPick(topOutfit)}
-                    className="min-h-[46px] border border-[var(--ink)] px-5 py-3 text-xs uppercase tracking-[0.14em] text-[var(--ink)] hover:bg-[var(--paper-2)] transition-colors cursor-pointer"
+                    className="min-h-[46px] border border-[var(--ink)] px-4 py-3 text-xs uppercase tracking-[0.14em] text-[var(--ink)] hover:bg-[var(--paper-2)] transition-colors cursor-pointer"
                   >
                     {savedNoticeId === topOutfit.id ? t.stylist.savedSuccess : t.stylist.saveOutfit}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setQrOutfitUrl(
+                        `${CONTACT_INFO.siteUrl}/?items=${encodeURIComponent(
+                          topOutfit.garments.map((g) => g.id).join(','),
+                        )}#atelye`,
+                      )
+                    }
+                    className="min-h-[46px] border border-[var(--accent)] bg-[var(--accent-soft)] px-3.5 py-3 text-xs uppercase tracking-[0.12em] text-[var(--accent)] font-semibold hover:bg-[var(--accent)] hover:text-[var(--accent-ink)] transition-colors cursor-pointer"
+                  >
+                    QR
                   </button>
                 </div>
               </div>
@@ -661,47 +699,90 @@ export function StylistSection() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
               {alternatives.map((alt) => (
-                <article
-                  key={alt.id}
-                  className="border border-[var(--hairline)] bg-[var(--paper-elevated)] p-3 flex flex-col justify-between"
-                >
-                  <div>
-                    {alt.matchedLook ? (
-                      <div className="mb-2.5">
-                        <LookImage
-                          look={alt.matchedLook}
-                          garments={manifest.garments}
-                          palette={paletteById.get(alt.matchedLook.palette)}
-                        />
-                      </div>
-                    ) : (
-                      <div className="mb-2.5">
-                        <ReadOnlyBoard slots={alt.slots} byId={byId} compact />
-                      </div>
-                    )}
+                <Card3D key={alt.id} intensity={6}>
+                  <article className="h-full border border-[var(--hairline)] bg-[var(--paper-elevated)] p-3 flex flex-col justify-between">
+                    <div>
+                      {alt.matchedLook ? (
+                        <div className="mb-2.5">
+                          <LookImage
+                            look={alt.matchedLook}
+                            garments={manifest.garments}
+                            palette={paletteById.get(alt.matchedLook.palette)}
+                          />
+                        </div>
+                      ) : (
+                        <div className="mb-2.5">
+                          <ReadOnlyBoard slots={alt.slots} byId={byId} compact />
+                        </div>
+                      )}
 
-                    <div className="flex items-baseline justify-between gap-2 mb-1">
-                      <span className="font-numeral text-2xl text-[var(--accent)]">
-                        {alt.harmony.score}
-                      </span>
-                      <span className="text-[11px] uppercase tracking-[0.1em] text-[var(--muted)] truncate">
-                        {localize(alt.harmony.schemeName)}
-                      </span>
+                      <div className="flex items-baseline justify-between gap-2 mb-1">
+                        <span className="font-numeral text-2xl text-[var(--accent)]">
+                          {alt.harmony.score}
+                        </span>
+                        <span className="text-[11px] uppercase tracking-[0.1em] text-[var(--muted)] truncate">
+                          {localize(alt.harmony.schemeName)}
+                        </span>
+                      </div>
+
+                      <p className="text-xs text-[var(--ink-2)] line-clamp-2 mb-3">
+                        {localize(alt.note)}
+                      </p>
                     </div>
 
-                    <p className="text-xs text-[var(--ink-2)] line-clamp-2 mb-3">
-                      {localize(alt.note)}
-                    </p>
-                  </div>
+                    <button
+                      type="button"
+                      onClick={() => handleOpenInAtelier(alt)}
+                      className="min-h-[44px] w-full border border-[var(--hairline-strong)] px-3 py-2 text-[11px] uppercase tracking-[0.14em] text-[var(--ink)] hover:border-[var(--ink)] hover:bg-[var(--paper-2)] transition-colors cursor-pointer"
+                    >
+                      {t.stylist.openInAtelier}
+                    </button>
+                  </article>
+                </Card3D>
+              ))}
+            </div>
+          </div>
+        )}
 
-                  <button
-                    type="button"
-                    onClick={() => handleOpenInAtelier(alt)}
-                    className="min-h-[44px] w-full border border-[var(--hairline-strong)] px-3 py-2 text-[11px] uppercase tracking-[0.14em] text-[var(--ink)] hover:border-[var(--ink)] hover:bg-[var(--paper-2)] transition-colors cursor-pointer"
-                  >
-                    {t.stylist.openInAtelier}
-                  </button>
-                </article>
+        {/* 6-Piece Mix & Match Capsule Matrix */}
+        {capsuleMatrix.length >= 4 && (
+          <div className="panel-3d mb-12 border border-[var(--hairline-strong)] bg-[var(--paper-elevated)] p-5 sm:p-6">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--hairline)] pb-3 mb-4">
+              <div>
+                <span className="micro-label text-[var(--accent)] block">
+                  {localize('Modulli Kapsula Matritsasi')}
+                </span>
+                <p className="text-xs text-[var(--muted)] mt-0.5">
+                  {localize('Bir-biriga mos 6 ta asosiy buyumdan kunlik kombinatsiyalar')}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  loadItemsToBoard(capsuleMatrix.map((g) => g.id));
+                  setActiveView('atelye');
+                }}
+                className="min-h-[38px] bg-[var(--ink)] px-3.5 text-[11px] uppercase tracking-[0.12em] text-[var(--paper)] hover:bg-[var(--accent)] transition-colors cursor-pointer"
+              >
+                {localize('3D Atelyeda yigʻish')}
+              </button>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+              {capsuleMatrix.map((g) => (
+                <div
+                  key={g.id}
+                  className="card-3d-lift border border-[var(--hairline)] bg-[var(--paper)] p-2.5 flex flex-col justify-between"
+                >
+                  <span className="text-[9px] uppercase tracking-[0.1em] text-[var(--muted)]">
+                    {t.categories[g.category]}
+                  </span>
+                  <div className="h-20 w-full my-1.5 flex items-center justify-center">
+                    <GarmentImage garment={g} className="h-full w-full" />
+                  </div>
+                  <p className="text-[11px] font-medium text-[var(--ink)] line-clamp-2 leading-tight">
+                    {localize(g.name_uz)}
+                  </p>
+                </div>
               ))}
             </div>
           </div>
@@ -812,6 +893,12 @@ export function StylistSection() {
           </div>
         </div>
       )}
+      <QrContactModal
+        open={Boolean(qrOutfitUrl)}
+        initialMode="outfit"
+        customUrl={qrOutfitUrl ?? CONTACT_INFO.siteUrl}
+        onClose={() => setQrOutfitUrl(null)}
+      />
     </section>
   );
 }

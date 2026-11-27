@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { analyzeHarmony, normalizeHex } from '../engine/color';
-import { findNearestGarmentsByColor } from '../engine/stylist';
+import { boardSlotsToGarments, findNearestGarmentsByColor } from '../engine/stylist';
 import { useTranslation } from '../i18n/useTranslation';
 import { useKapsulaStore } from '../store/useKapsulaStore';
 import { GarmentImage } from '../components/GarmentImage';
@@ -23,15 +23,46 @@ const COLOR_PRESETS: Array<{ label: string; colors: string[] }> = [
 export function ColorLabSection() {
   const { t, localize } = useTranslation();
   const manifest = useKapsulaStore((s) => s.manifest);
+  const slots = useKapsulaStore((s) => s.slots);
+  const colorLabColors = useKapsulaStore((s) => s.colorLabColors);
   const placeGarmentOnBoard = useKapsulaStore((s) => s.placeGarmentOnBoard);
+  const loadItemsToBoard = useKapsulaStore((s) => s.loadItemsToBoard);
+  const setAtelierBrandFilter = useKapsulaStore((s) => s.setAtelierBrandFilter);
+  const updateQuery = useKapsulaStore((s) => s.updateQuery);
   const setActiveView = useKapsulaStore((s) => s.setActiveView);
 
-  const [entries, setEntries] = useState<ColorSlotEntry[]>([
-    { id: 'c1', hex: '#151412', draft: '#151412', invalid: false },
-    { id: 'c2', hex: '#F4EFE6', draft: '#F4EFE6', invalid: false },
-    { id: 'c3', hex: '#B98E5E', draft: '#B98E5E', invalid: false },
-  ]);
+  const [entries, setEntries] = useState<ColorSlotEntry[]>(() =>
+    colorLabColors.map((hex, i) => ({
+      id: `init-${i}`,
+      hex,
+      draft: hex,
+      invalid: false,
+    })),
+  );
   const [wardrobePickerSlotId, setWardrobePickerSlotId] = useState<string | null>(null);
+
+  useEffect(() => {
+    setEntries(
+      colorLabColors.slice(0, 5).map((hex, i) => ({
+        id: `sync-${i}-${hex}`,
+        hex,
+        draft: hex,
+        invalid: false,
+      })),
+    );
+  }, [colorLabColors]);
+
+  const byId = useMemo(
+    () => new Map(manifest.garments.map((g) => [g.id, g])),
+    [manifest.garments],
+  );
+  const activeBoardColors = useMemo(
+    () =>
+      Array.from(
+        new Set(boardSlotsToGarments(slots, byId).map((g) => g.color.toUpperCase())),
+      ).slice(0, 5),
+    [slots, byId],
+  );
 
   const validHexes = useMemo(() => entries.map((e) => e.hex), [entries]);
 
@@ -126,8 +157,17 @@ export function ColorLabSection() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* Left: 2–5 Color Inputs + Presets */}
           <div className="lg:col-span-7 space-y-6">
-            {/* Presets */}
+            {/* Presets + Live Board Import */}
             <div className="flex flex-wrap items-center gap-2">
+              {activeBoardColors.length >= 2 && (
+                <button
+                  type="button"
+                  onClick={() => applyPreset(activeBoardColors)}
+                  className="min-h-[38px] inline-flex items-center gap-2 border border-[var(--accent)] bg-[var(--accent-soft)] px-3 py-1.5 text-xs font-medium text-[var(--accent)] hover:opacity-90 cursor-pointer"
+                >
+                  <span>{localize('Atelyedagi joriy obraz ranglari')}</span>
+                </button>
+              )}
               <span className="micro-label text-[var(--muted)] mr-1">
                 {t.colorLab.standalone.presetsLabel}:
               </span>
@@ -281,9 +321,44 @@ export function ColorLabSection() {
             </div>
           </div>
 
-          {/* Right: Shared RangLaboratoriyasi Panel */}
-          <div className="lg:col-span-5">
+          {/* Right: Shared RangLaboratoriyasi Panel + Direct Links */}
+          <div className="lg:col-span-5 space-y-3">
             <RangLaboratoriyasi analysis={analysis} />
+
+            <div className="border border-[var(--hairline-strong)] bg-[var(--paper-elevated)] p-3.5 grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button
+                type="button"
+                disabled={nearestGarments.length === 0}
+                onClick={() => {
+                  setAtelierBrandFilter('all');
+                  loadItemsToBoard(nearestGarments.map((item) => item.garment.id));
+                  setActiveView('atelye');
+                }}
+                className="min-h-[42px] px-3 py-2 bg-[var(--ink)] text-[var(--paper)] text-[11px] uppercase tracking-[0.1em] hover:bg-[var(--accent)] transition-colors cursor-pointer disabled:opacity-40"
+              >
+                {localize('3D Atelyeda kiyish')}
+              </button>
+              <button
+                type="button"
+                disabled={nearestGarments.length === 0}
+                onClick={() => {
+                  const counts = new Map<string, number>();
+                  for (const item of nearestGarments) {
+                    for (const p of item.garment.palettes) {
+                      counts.set(p, (counts.get(p) ?? 0) + 1);
+                    }
+                  }
+                  const topPal = [...counts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
+                  if (topPal) {
+                    updateQuery({ palette: topPal as typeof manifest.palettes[number]['id'] });
+                  }
+                  setActiveView('stilist');
+                }}
+                className="min-h-[42px] px-3 py-2 border border-[var(--ink)] bg-[var(--paper)] text-[var(--ink)] text-[11px] uppercase tracking-[0.1em] hover:bg-[var(--paper-2)] transition-colors cursor-pointer disabled:opacity-40"
+              >
+                {localize('Stilistda moslash')}
+              </button>
+            </div>
           </div>
         </div>
       </div>
