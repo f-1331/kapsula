@@ -51,6 +51,7 @@ export function Studio3DStage({
   const [rotX, setRotX] = useState(10);
   const [zoom, setZoom] = useState(1);
   const [autoSpin, setAutoSpin] = useState(true);
+  const [continuousSpin, setContinuousSpin] = useState(false);
   const [depthView, setDepthView] = useState(false);
   const [renderMode, setRenderMode] = useState<'webgl' | 'cards'>('webgl');
   const [webglFailed, setWebglFailed] = useState(false);
@@ -148,6 +149,7 @@ export function Studio3DStage({
     const startYaw = usingNativeWebGL ? liveYawRef.current : rotY;
     if (autoSpin) {
       setAutoSpin(false);
+      setContinuousSpin(false);
       setRotY(startYaw);
     }
     setIsDragging(true);
@@ -186,10 +188,22 @@ export function Studio3DStage({
     if (autoSpin) {
       setRotY(normalizeDeg(liveYawRef.current));
       setAutoSpin(false);
+      setContinuousSpin(false);
     } else {
+      setContinuousSpin(true);
       setAutoSpin(true);
     }
   };
+
+  // Gently settle initial showcase spin after 6.5s unless user toggled continuous 360° rotation
+  useEffect(() => {
+    if (!autoSpin || continuousSpin || !hasAny) return;
+    const id = window.setTimeout(() => {
+      setRotY(normalizeDeg(liveYawRef.current));
+      setAutoSpin(false);
+    }, 6500);
+    return () => window.clearTimeout(id);
+  }, [autoSpin, continuousSpin, hasAny]);
 
   const zSpread = depthView ? 1.8 : 1;
   const yawDisplay = normalizeDeg(rotY);
@@ -260,6 +274,7 @@ export function Studio3DStage({
             type="button"
             onClick={() => {
               setAutoSpin(false);
+              setContinuousSpin(false);
               liveYawRef.current = 24;
               setRotY(24);
               setRotX(10);
@@ -508,6 +523,7 @@ export function Studio3DStage({
                 type="button"
                 onClick={() => {
                   setAutoSpin(false);
+                  setContinuousSpin(false);
                   liveYawRef.current = preset.yaw;
                   setRotY(preset.yaw);
                   setRotX(preset.pitch);

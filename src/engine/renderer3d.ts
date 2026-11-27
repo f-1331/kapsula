@@ -679,19 +679,36 @@ function addBag3D(
   const shininess = 0.42;
 
   if (subtype === 'backpack') {
-    // Mounted realistically on the back (-Z)
+    // Mounted realistically on the back (-Z) with over-shoulder straps
     addBox3D(tris, 0, 0.42, -0.27 - spreadZ * 0.5, 0.18, 0.22, 0.095, body, 'bag', 0.28);
     addBox3D(tris, 0, 0.35, -0.37 - spreadZ * 0.5, 0.13, 0.09, 0.025, strap, 'bag', 0.35);
     return;
   }
 
-  const x = 0.62 + spreadX;
-  const y = subtype === 'belt_bag' ? 0.05 : subtype === 'baguette' || subtype === 'clutch' ? -0.14 : -0.18;
-  const z = 0.1 + spreadZ;
-
-  const hx = subtype === 'duffle' ? 0.18 : subtype === 'clutch' || subtype === 'baguette' ? 0.13 : 0.14;
+  const x = 0.52 + spreadX;
   const hy = subtype === 'tote' || subtype === 'woven_tote' ? 0.17 : subtype === 'clutch' || subtype === 'baguette' ? 0.08 : 0.13;
+  const hx = subtype === 'duffle' ? 0.16 : subtype === 'clutch' || subtype === 'baguette' ? 0.12 : 0.13;
   const hz = subtype === 'clutch' ? 0.038 : 0.072;
+  const riserTop = -0.62;
+  const y = subtype === 'belt_bag' ? 0.05 : riserTop + hy;
+  const z = 0.06 + spreadZ;
+
+  if (subtype !== 'belt_bag') {
+    // Solid showroom riser column anchored directly on podium (-1.03)
+    addLoftedBody(
+      tris,
+      [
+        { y: -1.03, x, z, rx: 0.13, rz: 0.11 },
+        { y: riserTop, x, z, rx: 0.12, rz: 0.10 },
+      ],
+      '#E2D9C9',
+      'podium',
+      0.2,
+      14,
+      true,
+      true,
+    );
+  }
 
   addBox3D(tris, x, y, z, hx, hy, hz, body, 'bag', shininess);
   // Flap / gold clasp detail
@@ -826,19 +843,21 @@ function addAccessory3D(
     return;
   }
 
-  // Side floating/worn jewelry, tie, gloves, watch, umbrella
-  const sideX = slot === 'accessory1' ? -0.58 - spreadX : 0.58 + spreadX;
-  const baseY = subtype === 'tie' || subtype === 'bowtie' || subtype === 'necklace' ? 0.66 : 0.26;
-  const cx = subtype === 'tie' || subtype === 'bowtie' || subtype === 'necklace' ? 0 : sideX;
-  const cz = subtype === 'tie' || subtype === 'bowtie' || subtype === 'necklace' ? 0.18 + spreadZ * 0.5 : 0.12 + spreadZ * 0.5;
+  // Side/wrist accessories anchored onto wrist cuff, chest necklace/tie, or podium floor (zero floating!)
+  const sideSign = slot === 'accessory1' ? -1 : 1;
+  const isNeckAccessory = subtype === 'tie' || subtype === 'bowtie' || subtype === 'necklace';
+  const isUmbrella = subtype === 'umbrella';
+  const cx = isNeckAccessory ? 0 : sideSign * (0.37 + spreadX * 0.6);
+  const baseY = isNeckAccessory ? 0.66 : isUmbrella ? -0.58 : 0.12;
+  const cz = isNeckAccessory ? 0.18 + spreadZ * 0.5 : 0.05 + spreadZ * 0.5;
   addBox3D(
     tris,
     cx,
     baseY,
     cz,
-    subtype === 'tie' ? 0.026 : 0.065,
-    subtype === 'tie' || subtype === 'umbrella' ? 0.19 : 0.065,
-    0.045,
+    subtype === 'tie' ? 0.026 : isUmbrella ? 0.022 : 0.048,
+    isUmbrella ? 0.45 : subtype === 'tie' ? 0.19 : 0.042,
+    isUmbrella ? 0.022 : 0.045,
     col,
     slot,
     shininess,

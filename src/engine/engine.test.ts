@@ -9,8 +9,9 @@ import { DESIGN_THEMES, getDesignThemeById } from '../styles/themes';
 import { detectGarmentSubtype } from '../components/GarmentSilhouette';
 import { CONTACT_INFO } from '../config/contact';
 import QRCode from 'qrcode';
+import * as THREE from 'three';
 import { estimateOutfitBudget, getGarmentSpec } from './garment-specs';
-import { buildOutfit3DScene } from './three-garment-builder';
+import { buildOutfit3DScene, FLOOR_Y, PLINTH_TOP_Y } from './three-garment-builder';
 import { buildOutfitMeshGeometry } from './renderer3d';
 import { analyzeHarmony, classifyColor } from './color';
 import {
@@ -353,5 +354,90 @@ describe('Stylist Engine — Coverage & Determinism', () => {
     const svg = await QRCode.toString(CONTACT_INFO.siteUrl, { type: 'svg' });
     expect(svg).toContain('<svg');
     expect(svg).toContain('</svg>');
+  });
+
+  it('enforces real-world gravity, ground contact & physical attachment across 3D garments and accessories', () => {
+    const pickWhere = (pred: (g: Manifest['garments'][number]) => boolean) =>
+      manifest.garments.find(pred) ?? manifest.garments[0]!;
+
+    const outer = pickWhere((g) => g.category === 'outerwear');
+    const top = pickWhere((g) => g.category === 'top');
+    const bottom = pickWhere((g) => g.category === 'bottom');
+    const shoes = pickWhere((g) => g.category === 'shoes');
+    const toteBag = pickWhere((g) => g.category === 'bag' && !g.id.includes('backpack') && !g.id.includes('belt'));
+    const backpack = pickWhere((g) => g.category === 'bag' && g.id.includes('backpack'));
+    const watch = pickWhere((g) => g.category === 'accessory' && g.id.includes('watch'));
+    const umbrella = pickWhere((g) => g.category === 'accessory' && g.id.includes('umbrella'));
+    const cap = pickWhere((g) => g.category === 'accessory' && (g.id.includes('cap') || g.id.includes('doppi')));
+    const glasses = pickWhere((g) => g.category === 'accessory' && g.id.includes('sunglasses'));
+
+    const all = [outer, top, bottom, shoes, toteBag, backpack, watch, umbrella, cap, glasses];
+    const byId = new Map(all.map((g) => [g.id, g]));
+
+    const built = buildOutfit3DScene(
+      {
+        outerwear: outer.id,
+        top: top.id,
+        bottom: bottom.id,
+        dress: null,
+        shoes: shoes.id,
+        bag: toteBag.id,
+        accessory1: watch.id,
+        accessory2: umbrella.id,
+      },
+      byId,
+    );
+    built.root.updateMatrixWorld(true);
+
+    // 1. Pedestal base flush on shadow floor
+    const pedBox = new THREE.Box3().setFromObject(built.pedestal);
+    expect(pedBox.min.y).toBeCloseTo(FLOOR_Y, 2);
+    // Articulated mannequin reaches from plinth top cleanly through crown (no broken spine/head gap)
+    expect(pedBox.max.y).toBeGreaterThan(1.75);
+
+    // 2. Shoes planted strictly on PLINTH_TOP_Y (zero levitation)
+    const shoeBox = new THREE.Box3().setFromObject(built.slotGroups.shoes!);
+    expect(Math.abs(shoeBox.min.y - PLINTH_TOP_Y)).toBeLessThan(0.005);
+
+    // 3. Tote bag + showroom riser rest strictly on PLINTH_TOP_Y (zero floating bag!)
+    const bagBox = new THREE.Box3().setFromObject(built.slotGroups.bag!);
+    expect(Math.abs(bagBox.min.y - PLINTH_TOP_Y)).toBeLessThan(0.005);
+
+    // 4. Umbrella stands vertically with ferrule flush on PLINTH_TOP_Y
+    const umbBox = new THREE.Box3().setFromObject(built.slotGroups.accessory2!);
+    expect(Math.abs(umbBox.min.y - PLINTH_TOP_Y)).toBeLessThan(0.005);
+
+    // 5. Watch attaches physically around wrist (x ≈ -0.308, y ≈ 0.91), never at random distant corner
+    const watchBox = new THREE.Box3().setFromObject(built.slotGroups.accessory1!);
+    const watchCenter = watchBox.getCenter(new THREE.Vector3());
+    expect(Math.abs(watchCenter.x + 0.31)).toBeLessThan(0.08);
+    expect(Math.abs(watchCenter.y - 0.91)).toBeLessThan(0.08);
+
+    // 6. Outerwear encapsulates inner torso along X (no inner clipping out past coat)
+    const outerBox = new THREE.Box3().setFromObject(built.slotGroups.outerwear!);
+    const topBox = new THREE.Box3().setFromObject(built.slotGroups.top!);
+    expect(outerBox.max.x).toBeGreaterThan(topBox.max.x);
+
+    // 7. Backpack + Hat + Sunglasses combo stays grounded/attached (backpack straps reach shoulder)
+    const backScene = buildOutfit3DScene(
+      {
+        outerwear: outer.id,
+        top: top.id,
+        bottom: bottom.id,
+        dress: null,
+        shoes: shoes.id,
+        bag: backpack.id,
+        accessory1: cap.id,
+        accessory2: glasses.id,
+      },
+      byId,
+    );
+    backScene.root.updateMatrixWorld(true);
+    const packBox = new THREE.Box3().setFromObject(backScene.slotGroups.bag!);
+    expect(packBox.max.y).toBeGreaterThan(1.42);
+    const hatBox = new THREE.Box3().setFromObject(backScene.slotGroups.accessory1!);
+    expect(hatBox.min.y).toBeGreaterThan(1.66);
+    const glassBox = new THREE.Box3().setFromObject(backScene.slotGroups.accessory2!);
+    expect(glassBox.max.z).toBeGreaterThan(0.09);
   });
 });

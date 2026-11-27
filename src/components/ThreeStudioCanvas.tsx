@@ -2,7 +2,7 @@ import { useEffect, useRef, type MutableRefObject } from 'react';
 import * as THREE from 'three';
 import type { Garment } from '../data/schema';
 import type { BoardSlots, SlotKey } from '../engine/stylist';
-import { buildOutfit3DScene, type OutfitSlotGroups } from '../engine/three-garment-builder';
+import { buildOutfit3DScene, FLOOR_Y, type OutfitSlotGroups } from '../engine/three-garment-builder';
 
 export interface ThreeStudioCanvasProps {
   slots: BoardSlots;
@@ -124,8 +124,11 @@ export function ThreeStudioCanvas({
     let isSoftwareGL = false;
     try {
       const dbg = gl.getExtension('WEBGL_debug_renderer_info');
-      const rendererStr = dbg ? String(gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) || '') : '';
-      isSoftwareGL = /swiftshader|llvmpipe|software|basic render/i.test(rendererStr);
+      const unmasked = dbg ? String(gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) || '') : '';
+      const basic = String(gl.getParameter(gl.RENDERER) || '');
+      isSoftwareGL = /swiftshader|llvmpipe|software|basic render|mesa|webkit webgl/i.test(
+        `${unmasked} ${basic}`,
+      );
     } catch {
       isSoftwareGL = false;
     }
@@ -178,15 +181,16 @@ export function ThreeStudioCanvas({
     rimLight.position.set(-1.2, 2.6, -2.8);
     scene.add(rimLight);
 
-    // Subtle reflective ground plane shadow catcher
+    // Subtle reflective ground plane shadow catcher flush with pedestal base
     const floorMat = new THREE.ShadowMaterial({ opacity: 0.22 });
     const floor = new THREE.Mesh(new THREE.CircleGeometry(2.2, 48), floorMat);
     floor.rotation.x = -Math.PI * 0.5;
-    floor.position.y = -0.045;
+    floor.position.y = FLOOR_Y;
     floor.receiveShadow = !isSoftwareGL;
     scene.add(floor);
 
     let rafId = 0;
+    let throttleTimerId = 0;
     let isDisposed = false;
     let inViewport = true;
     let dirty = true;
@@ -200,20 +204,35 @@ export function ThreeStudioCanvas({
     let lastRenderCostMs = isSoftwareGL ? 32 : 8;
     const tempVec = new THREE.Vector3();
 
+    const scheduleNext = (delayMs = 0) => {
+      if (isDisposed || document.hidden || !inViewport || rafId || throttleTimerId) return;
+      if (delayMs > 18) {
+        throttleTimerId = window.setTimeout(() => {
+          throttleTimerId = 0;
+          if (!isDisposed && !document.hidden && inViewport && !rafId) {
+            rafId = window.requestAnimationFrame(animate);
+          }
+        }, delayMs);
+      } else {
+        rafId = window.requestAnimationFrame(animate);
+      }
+    };
+
     const animate = (now: number) => {
       rafId = 0;
       if (isDisposed) return;
       if (document.hidden || !inViewport) return;
 
-      const dt = Math.min(0.08, Math.max(0.001, (now - lastFrameAt) / 1000));
+      const dt = Math.min(0.09, Math.max(0.001, (now - lastFrameAt) / 1000));
       lastFrameAt = now;
 
-      const minIntervalMs = isSoftwareGL || lastRenderCostMs > 24 ? 95 : 33;
+      const minIntervalMs = isSoftwareGL || lastRenderCostMs > 24 ? 120 : 40;
       const params = camParamsRef.current;
 
-      // Throttle GPU/CPU work while maintaining buttery smooth turntable progression
-      if (now - lastRenderAt < minIntervalMs && !dirty) {
-        rafId = window.requestAnimationFrame(animate);
+      // Defer next WebGL draw via timeout when throttled so Chromium UI/IPC never starves
+      const elapsed = now - lastRenderAt;
+      if (elapsed < minIntervalMs && !dirty) {
+        scheduleNext(minIntervalMs - elapsed);
         return;
       }
 
@@ -267,8 +286,8 @@ export function ThreeStudioCanvas({
         explodeAlpha = targetExplode;
       }
 
-      const radius = 3.25 / Math.max(0.65, curZoom);
-      const lookY = 0.85;
+      const radius = 3.42 / Math.max(0.65, curZoom);
+      const lookY = 0.88;
       camera.position.x = Math.sin(curYaw) * Math.cos(curPitch) * radius;
       camera.position.y = lookY + Math.sin(curPitch) * radius + 0.14;
       camera.position.z = Math.cos(curYaw) * Math.cos(curPitch) * radius;
@@ -321,12 +340,16 @@ export function ThreeStudioCanvas({
       lastRenderAt = now;
 
       if (params.autoSpin || moving) {
-        rafId = window.requestAnimationFrame(animate);
+        scheduleNext(minIntervalMs);
       }
     };
 
     const wakeLoop = () => {
       dirty = true;
+      if (throttleTimerId) {
+        window.clearTimeout(throttleTimerId);
+        throttleTimerId = 0;
+      }
       if (!rafId && !isDisposed && !document.hidden && inViewport) {
         lastFrameAt = performance.now();
         rafId = window.requestAnimationFrame(animate);
@@ -414,6 +437,7 @@ export function ThreeStudioCanvas({
       isDisposed = true;
       wakeLoopRef.current = null;
       if (rafId) window.cancelAnimationFrame(rafId);
+      if (throttleTimerId) window.clearTimeout(throttleTimerId);
       resizeObs?.disconnect();
       ioObs?.disconnect();
       document.removeEventListener('visibilitychange', onVisChange);
